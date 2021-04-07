@@ -1,0 +1,29 @@
+{
+  "name": "grafana-mqtt",
+  "version": "1.0.0",
+  "description": "MQTT Datasource Plugin",
+  "scripts": {
+    "build": "grafana-toolkit plugin:build",
+    "test": "grafana-toolkit plugin:test",
+    "dev": "grafana-toolkit plugin:dev",
+    "watch": "grafana-toolkit plugin:dev --watch",
+    "sign": "grafana-toolkit plugin:sign",
+    "start": "yarn watch"
+  },
+  "author": "Todd Treece",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@grafana/data": "latest",
+    "@grafana/runtime": "latest",
+    "@grafana/toolkit": "latest",
+    "@grafana/ui": "latest",
+    "@types/lodash": "latest",
+    "aedes": "^0.45.0"
+  },
+  "resolutions": {
+    "rxjs": "6.6.3"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}
