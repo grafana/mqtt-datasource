@@ -1,4 +1,4 @@
-module github.com/toddtrece/mqtt-datasource
+module github.com/toddtreece/mqtt-datasource
 
 go 1.16
 

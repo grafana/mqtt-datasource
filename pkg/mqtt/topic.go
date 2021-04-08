@@ -6,8 +6,8 @@ import (
 )
 
 type Message struct {
-	timestamp time.Time
-	value     string
+	Timestamp time.Time
+	Value     string
 }
 
 type TopicMap struct {

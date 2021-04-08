@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	paho "github.com/eclipse/paho.mqtt.golang"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
@@ -17,12 +17,12 @@ type Options struct {
 }
 
 type Client struct {
-	client *mqtt.Client
+	client *paho.Client
 	topics TopicMap
 }
 
 func NewClient(o Options) (*Client, error) {
-	opts := mqtt.NewClientOptions()
+	opts := paho.NewClientOptions()
 
 	opts.AddBroker(fmt.Sprintf("tcp://%s:%d", o.Host, o.Port))
 	opts.SetClientID(fmt.Sprintf("grafana_%d", rand.Int()))
@@ -37,7 +37,7 @@ func NewClient(o Options) (*Client, error) {
 
 	log.DefaultLogger.Info("MQTT Connecting")
 
-	client := mqtt.NewClient(opts)
+	client := paho.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		return nil, fmt.Errorf("error connecting to MQTT broker: %s", token.Error())
 	}
@@ -56,13 +56,14 @@ func (c *Client) GetMessages(topic string) ([]Message, bool) {
 	return c.topics.Load(topic)
 }
 
-func (c *Client) HandleMessage(client mqtt.Client, msg mqtt.Message) {
+func (c *Client) HandleMessage(client paho.Client, msg paho.Message) {
+	log.DefaultLogger.Debug(fmt.Sprintf("Received MQTT Message %+v", msg))
 	topic, ok := c.topics.Load(msg.Topic())
 
 	if ok {
 		message := Message{
-			timestamp: time.Now(),
-			value:     string(msg.Payload()),
+			Timestamp: time.Now(),
+			Value:     string(msg.Payload()),
 		}
 		topic = append(topic, message)
 		c.topics.Store(msg.Topic(), topic)
@@ -75,9 +76,10 @@ func (c *Client) Subscribe(topic string) {
 	_, ok := c.topics.Load(topic)
 
 	if !ok {
+		log.DefaultLogger.Debug(fmt.Sprintf("Subscribing to %s", topic))
 		var messages []Message
 		c.topics.Store(topic, messages)
-		client.Subscribe(topic, 2, c.HandleMessage)
+		client.Subscribe(topic, 0, c.HandleMessage)
 	}
 }
 

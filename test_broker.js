@@ -7,6 +7,12 @@ const ONE_SECOND = 1_000;
 server.listen(PORT, () => {
   console.log('server started and listening on port ', PORT);
   setInterval(() => {
-    aedes.publish({ topic: 'test', message: Math.random() });
+    aedes.publish({
+      topic: 'test',
+      cmd: 'publish',
+      qos: 2,
+      retain: false,
+      payload: Math.random().toString(),
+    });
   }, ONE_SECOND);
 });

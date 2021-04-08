@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strconv"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -12,7 +14,7 @@ import (
 	"github.com/toddtreece/mqtt-datasource/pkg/mqtt"
 )
 
-func NewDatasource() datasource.ServeOpts {
+func GetDatasourceOpts() datasource.ServeOpts {
 	im := datasource.NewInstanceManager(newDatasourceInstance)
 	ds := &Handler{
 		im: im,
@@ -30,14 +32,14 @@ type Handler struct {
 
 func (h *Handler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
-	mqttClient, err := h.getClient(req.PluginContext)
+	ds, err := h.getDatasource(req.PluginContext)
 
 	if err != nil {
 		return nil, err
 	}
 
 	for _, q := range req.Queries {
-		res := h.query(mqttClient, q)
+		res := h.query(ds.Client, q)
 		response.Responses[q.RefID] = res
 	}
 
@@ -48,7 +50,7 @@ type queryModel struct {
 	Topic string `json:"queryText"`
 }
 
-func (h *Handler) query(client *mqtt.Client, query backend.DataQuery) backend.DataResponse {
+func (h *Handler) query(client MQTTClient, query backend.DataQuery) backend.DataResponse {
 	var qm queryModel
 
 	response := backend.DataResponse{}
@@ -61,12 +63,19 @@ func (h *Handler) query(client *mqtt.Client, query backend.DataQuery) backend.Da
 	// ensure the client is subscribed to the topic
 	client.Subscribe(qm.Topic)
 
-	var timestamps []string
+	var timestamps []time.Time
 	var values []float64
-	messages := client.GetMessages(qm.Topic)
+
+	messages, ok := client.GetMessages(qm.Topic)
+	if !ok {
+		return response
+	}
+
 	for _, m := range messages {
-		timestamps = append(timestamps, m.timestamp)
-		values = append(values, m.value)
+		if value, err := strconv.ParseFloat(m.Value, 64); err == nil {
+			timestamps = append(timestamps, m.Timestamp)
+			values = append(values, value)
+		}
 	}
 
 	frame := data.NewFrame("Messages")
@@ -83,7 +92,7 @@ func (h *Handler) query(client *mqtt.Client, query backend.DataQuery) backend.Da
 }
 
 func (h *Handler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	mqttClient, err := h.getClient(req.PluginContext)
+	ds, err := h.getDatasource(req.PluginContext)
 	if err != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
@@ -91,7 +100,7 @@ func (h *Handler) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}, nil
 	}
 
-	if mqttClient.IsConnected() {
+	if ds.Client.IsConnected() {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
 			Message: "MQTT Disconnected",
@@ -104,18 +113,18 @@ func (h *Handler) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	}, nil
 }
 
-func (h *Handler) getClient(pluginCtx backend.PluginContext) (*mqtt.Client, error) {
+func (h *Handler) getDatasource(pluginCtx backend.PluginContext) (*MQTTDatasource, error) {
 	s, err := h.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	mqttClient, ok := s.(*mqtt.Client)
+	mqttDatasource, ok := s.(*MQTTDatasource)
 	if !ok {
-		return nil, errors.New("invalid type assertion; is not *mqtt.Client")
+		return nil, errors.New("invalid type assertion; is not *MQTTDatasource")
 	}
 
-	return mqttClient, nil
+	return mqttDatasource, nil
 }
 
 func newDatasourceInstance(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -129,5 +138,7 @@ func newDatasourceInstance(s backend.DataSourceInstanceSettings) (instancemgmt.I
 		return nil, err
 	}
 
-	return &client, nil
+	return &MQTTDatasource{
+		Client: client,
+	}, nil
 }
