@@ -35,6 +35,17 @@ func NewClient(o Options) (*Client, error) {
 		opts.SetPassword(o.Password)
 	}
 
+	opts.SetPingTimeout(10 * time.Second)
+	opts.SetKeepAlive(10 * time.Second)
+	opts.SetAutoReconnect(true)
+	opts.SetMaxReconnectInterval(10 * time.Second)
+	opts.SetConnectionLostHandler(func(c paho.Client, err error) {
+		log.DefaultLogger.Error(fmt.Sprintf("MQTT Connection Lost: %s\n" + err.Error()))
+	})
+	opts.SetReconnectingHandler(func(c paho.Client, options *paho.ClientOptions) {
+		log.DefaultLogger.Debug("MQTT Reconnecting")
+	})
+
 	log.DefaultLogger.Info("MQTT Connecting")
 
 	client := paho.NewClient(opts)
