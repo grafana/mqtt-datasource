@@ -10,4 +10,4 @@ node test_broker
 
 You can then add the topic `test` to a graph:
 
-![screenshot](./screenshot.png)
+![screenshot](./test_broker.gif)
