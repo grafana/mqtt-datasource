@@ -2,6 +2,7 @@ import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface MqttQuery extends DataQuery {
   queryText?: string;
+  stream?: boolean;
 }
 
 export interface MqttDataSourceOptions extends DataSourceJsonData {

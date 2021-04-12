@@ -2,20 +2,19 @@ package plugin
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"strconv"
-	"time"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/toddtreece/mqtt-datasource/pkg/mqtt"
 )
 
 func GetDatasourceOpts() datasource.ServeOpts {
-	im := datasource.NewInstanceManager(newDatasourceInstance)
+	im := datasource.NewInstanceManager(NewServerInstance)
 	ds := &Handler{
 		im: im,
 	}
@@ -23,7 +22,12 @@ func GetDatasourceOpts() datasource.ServeOpts {
 	return datasource.ServeOpts{
 		QueryDataHandler:   ds,
 		CheckHealthHandler: ds,
+		StreamHandler:      ds,
 	}
+}
+
+func NewServerInstance(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return NewMQTTDatasource(settings)
 }
 
 type Handler struct {
@@ -39,56 +43,11 @@ func (h *Handler) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	for _, q := range req.Queries {
-		res := h.query(ds.Client, q)
+		res := ds.Query(q)
 		response.Responses[q.RefID] = res
 	}
 
 	return response, nil
-}
-
-type queryModel struct {
-	Topic string `json:"queryText"`
-}
-
-func (h *Handler) query(client MQTTClient, query backend.DataQuery) backend.DataResponse {
-	var qm queryModel
-
-	response := backend.DataResponse{}
-	response.Error = json.Unmarshal(query.JSON, &qm)
-
-	if response.Error != nil {
-		return response
-	}
-
-	// ensure the client is subscribed to the topic
-	client.Subscribe(qm.Topic)
-
-	var timestamps []time.Time
-	var values []float64
-
-	messages, ok := client.GetMessages(qm.Topic)
-	if !ok {
-		return response
-	}
-
-	for _, m := range messages {
-		if value, err := strconv.ParseFloat(m.Value, 64); err == nil {
-			timestamps = append(timestamps, m.Timestamp)
-			values = append(values, value)
-		}
-	}
-
-	frame := data.NewFrame("Messages")
-	frame.Fields = append(frame.Fields,
-		data.NewField("time", nil, timestamps),
-	)
-
-	frame.Fields = append(frame.Fields,
-		data.NewField("values", nil, values),
-	)
-
-	response.Frames = append(response.Frames, frame)
-	return response
 }
 
 func (h *Handler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -113,6 +72,52 @@ func (h *Handler) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	}, nil
 }
 
+func (h *Handler) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	ds, err := h.getDatasource(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+	ds.Client.Subscribe(req.Path)
+
+	bytes, err := data.FrameToJSON(ToFrame([]mqtt.Message{}), true, false) // only schema
+	if err != nil {
+		return nil, err
+	}
+	return &backend.SubscribeStreamResponse{
+		Status:       backend.SubscribeStreamStatusOK,
+		UseRunStream: true,
+		Data:         bytes, // just the schema
+
+	}, nil
+}
+
+func (h *Handler) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	ds, err := h.getDatasource(req.PluginContext)
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			backend.Logger.Info("stop streaming (context canceled)")
+			return nil
+		case message := <-*ds.Client.Stream():
+			err := ds.SendMessage(message, req, sender)
+			if err != nil {
+				log.DefaultLogger.Error(fmt.Sprintf("unable to send message: %s", err.Error()))
+			}
+
+		}
+	}
+}
+
+func (h *Handler) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	return &backend.PublishStreamResponse{
+		Status: backend.PublishStreamStatusPermissionDenied, // ?? Unsupported
+	}, nil
+}
+
 func (h *Handler) getDatasource(pluginCtx backend.PluginContext) (*MQTTDatasource, error) {
 	s, err := h.im.Get(pluginCtx)
 	if err != nil {
@@ -125,20 +130,4 @@ func (h *Handler) getDatasource(pluginCtx backend.PluginContext) (*MQTTDatasourc
 	}
 
 	return mqttDatasource, nil
-}
-
-func newDatasourceInstance(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	options, err := LoadOptions(s)
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := mqtt.NewClient(options)
-	if err != nil {
-		return nil, err
-	}
-
-	return &MQTTDatasource{
-		Client: client,
-	}, nil
 }
