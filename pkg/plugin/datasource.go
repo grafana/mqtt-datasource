@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 )
 
 type MQTTClient interface {
+	Stream() *chan mqtt.StreamMessage
 	IsConnected() bool
 	IsSubscribed(topic string) bool
 	Messages(topic string) ([]mqtt.Message, bool)
@@ -18,7 +20,8 @@ type MQTTClient interface {
 }
 
 type MQTTDatasource struct {
-	Client MQTTClient
+	Client        MQTTClient
+	channelPrefix string
 }
 
 func GetDatasourceSettings(s backend.DataSourceInstanceSettings) (*mqtt.Options, error) {
@@ -68,7 +71,8 @@ func NewMQTTDatasource(s backend.DataSourceInstanceSettings) (*MQTTDatasource, e
 	}
 
 	ds := MQTTDatasource{
-		Client: client,
+		Client:        client,
+		channelPrefix: fmt.Sprintf("ds/%d/", s.ID),
 	}
 
 	return &ds, nil
@@ -93,9 +97,35 @@ func (m *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
 	}
 
 	frame := ToFrame(messages)
+	frame.SetMeta(&data.FrameMeta{
+		Channel: m.channelPrefix + qm.Topic,
+	})
 
 	response.Frames = append(response.Frames, frame)
 	return response
+}
+
+func (m *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	if msg.Topic != req.Path {
+		return nil
+	}
+
+	message := mqtt.Message{
+		Timestamp: time.Now(),
+		Value:     msg.Value,
+	}
+
+	frame := ToFrame([]mqtt.Message{message})
+	bytes, err := data.FrameToJSON(frame, false, true)
+	if err != nil {
+		return err
+	}
+
+	packet := &backend.StreamPacket{
+		Data: bytes,
+	}
+
+	return sender.Send(packet)
 }
 
 func (m *MQTTDatasource) Dispose() {
