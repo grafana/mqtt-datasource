@@ -10,7 +10,7 @@ type Props = QueryEditorProps<DataSource, MqttQuery, MqttDataSourceOptions>;
 export const QueryEditor = (props: Props) => {
   const { query, onChange } = props;
   const [queryText, setQueryText] = useState(query.queryText ?? '');
-  useEffect(() => onChange({ ...query, queryText }), [queryText]);
+  useEffect(() => onChange({ ...query, queryText, stream: true }), [queryText]);
 
   return (
     <Form onSubmit={() => {}}>

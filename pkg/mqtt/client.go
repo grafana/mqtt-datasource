@@ -24,6 +24,7 @@ type StreamMessage struct {
 type Client struct {
 	client *paho.Client
 	topics TopicMap
+	stream chan StreamMessage
 }
 
 func NewClient(o Options) (*Client, error) {
@@ -60,6 +61,7 @@ func NewClient(o Options) (*Client, error) {
 
 	return &Client{
 		client: &client,
+		stream: make(chan StreamMessage),
 	}, nil
 }
 
@@ -81,6 +83,10 @@ func (c *Client) Messages(path string) ([]Message, bool) {
 	return topic.messages, true
 }
 
+func (c *Client) Stream() *chan StreamMessage {
+	return &c.stream
+}
+
 func (c *Client) HandleMessage(client paho.Client, msg paho.Message) {
 	log.DefaultLogger.Debug(fmt.Sprintf("Received MQTT Message %+v", msg))
 	topic, ok := c.topics.Load(msg.Topic())
@@ -99,6 +105,13 @@ func (c *Client) HandleMessage(client paho.Client, msg paho.Message) {
 		}
 
 		c.topics.Store(topic)
+
+		streamMessage := StreamMessage{Topic: msg.Topic(), Value: string(msg.Payload())}
+		select {
+		case c.stream <- streamMessage:
+		default:
+			// don't block if nothing is reading from the channel
+		}
 	}
 }
 
