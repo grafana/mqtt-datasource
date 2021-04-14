@@ -3,12 +3,10 @@ package plugin
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/toddtreece/mqtt-datasource/pkg/mqtt"
 )
@@ -59,7 +57,7 @@ func (h *Handler) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}, nil
 	}
 
-	if ds.Client.IsConnected() {
+	if !ds.Client.IsConnected() {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
 			Message: "MQTT Disconnected",
@@ -97,17 +95,15 @@ func (h *Handler) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		return err
 	}
 
+	defer ds.Client.Unsubscribe(req.Path)
+
 	for {
 		select {
 		case <-ctx.Done():
 			backend.Logger.Info("stop streaming (context canceled)")
 			return nil
-		case message := <-*ds.Client.Stream():
-			err := ds.SendMessage(message, req, sender)
-			if err != nil {
-				log.DefaultLogger.Error(fmt.Sprintf("unable to send message: %s", err.Error()))
-			}
-
+		case message := <-ds.Client.Stream():
+			go ds.SendMessage(message, req, sender)
 		}
 	}
 }

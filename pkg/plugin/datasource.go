@@ -7,16 +7,18 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/toddtreece/mqtt-datasource/pkg/mqtt"
 )
 
 type MQTTClient interface {
-	Stream() *chan mqtt.StreamMessage
+	Stream() chan mqtt.StreamMessage
 	IsConnected() bool
 	IsSubscribed(topic string) bool
 	Messages(topic string) ([]mqtt.Message, bool)
 	Subscribe(topic string)
+	Unsubscribe(topic string)
 }
 
 type MQTTDatasource struct {
@@ -97,16 +99,19 @@ func (m *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
 	}
 
 	frame := ToFrame(messages)
-	frame.SetMeta(&data.FrameMeta{
-		Channel: m.channelPrefix + qm.Topic,
-	})
+
+	if qm.Topic != "" {
+		frame.SetMeta(&data.FrameMeta{
+			Channel: m.channelPrefix + qm.Topic,
+		})
+	}
 
 	response.Frames = append(response.Frames, frame)
 	return response
 }
 
 func (m *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
-	if msg.Topic != req.Path {
+	if !m.Client.IsSubscribed(req.Path) {
 		return nil
 	}
 
@@ -125,6 +130,7 @@ func (m *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunStr
 		Data: bytes,
 	}
 
+	log.DefaultLogger.Debug(fmt.Sprintf("Sending message to client for topic %s", msg.Topic))
 	return sender.Send(packet)
 }
 

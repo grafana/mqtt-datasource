@@ -2,7 +2,6 @@ const aedes = require('aedes')();
 const server = require('net').createServer(aedes.handle);
 
 const PORT = 1883;
-
 const publishers = {};
 
 const toMillis = {
@@ -41,4 +40,7 @@ const createPublisher = ({ topic, qos }) => {
 server.listen(PORT, () => {
   console.log('server started and listening on port ', PORT);
   aedes.on('subscribe', subscriptions => subscriptions.forEach(createPublisher));
+  aedes.on('connectionError', console.error);
+  aedes.on('clientDisconnect', client => console.log(`disconnect: ${client.id}`));
+  aedes.on('client', client => console.log(`connect: ${client.id}`));
 });

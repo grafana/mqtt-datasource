@@ -32,3 +32,7 @@ func (tm *TopicMap) Load(path string) (*Topic, bool) {
 func (tm *TopicMap) Store(topic *Topic) {
 	tm.Map.Store(topic.path, topic)
 }
+
+func (tm *TopicMap) Delete(path string) {
+	tm.Map.Delete(path)
+}

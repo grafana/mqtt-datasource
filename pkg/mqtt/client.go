@@ -41,12 +41,12 @@ func NewClient(o Options) (*Client, error) {
 		opts.SetPassword(o.Password)
 	}
 
-	opts.SetPingTimeout(10 * time.Second)
-	opts.SetKeepAlive(10 * time.Second)
+	opts.SetPingTimeout(60 * time.Second)
+	opts.SetKeepAlive(60 * time.Second)
 	opts.SetAutoReconnect(true)
 	opts.SetMaxReconnectInterval(10 * time.Second)
 	opts.SetConnectionLostHandler(func(c paho.Client, err error) {
-		log.DefaultLogger.Error(fmt.Sprintf("MQTT Connection Lost: %s\n" + err.Error()))
+		log.DefaultLogger.Error(fmt.Sprintf("MQTT Connection Lost: %s", err.Error()))
 	})
 	opts.SetReconnectingHandler(func(c paho.Client, options *paho.ClientOptions) {
 		log.DefaultLogger.Debug("MQTT Reconnecting")
@@ -61,7 +61,7 @@ func NewClient(o Options) (*Client, error) {
 
 	return &Client{
 		client: &client,
-		stream: make(chan StreamMessage),
+		stream: make(chan StreamMessage, 1000),
 	}, nil
 }
 
@@ -83,12 +83,12 @@ func (c *Client) Messages(path string) ([]Message, bool) {
 	return topic.messages, true
 }
 
-func (c *Client) Stream() *chan StreamMessage {
-	return &c.stream
+func (c *Client) Stream() chan StreamMessage {
+	return c.stream
 }
 
 func (c *Client) HandleMessage(client paho.Client, msg paho.Message) {
-	log.DefaultLogger.Debug(fmt.Sprintf("Received MQTT Message %+v", msg))
+	log.DefaultLogger.Debug(fmt.Sprintf("Received MQTT Message for topic %s", msg.Topic()))
 	topic, ok := c.topics.Load(msg.Topic())
 
 	if ok {
@@ -127,6 +127,13 @@ func (c *Client) Subscribe(t string) {
 		c.topics.Store(&topic)
 		client.Subscribe(t, 0, c.HandleMessage)
 	}
+}
+
+func (c *Client) Unsubscribe(t string) {
+	log.DefaultLogger.Debug(fmt.Sprintf("Unsubscribing from MQTT topic: %s", t))
+	client := *c.client
+	client.Unsubscribe(t)
+	c.topics.Delete(t)
 }
 
 func (c *Client) Dispose() {
