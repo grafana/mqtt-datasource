@@ -22,7 +22,7 @@ type StreamMessage struct {
 }
 
 type Client struct {
-	client *paho.Client
+	client paho.Client
 	topics TopicMap
 	stream chan StreamMessage
 }
@@ -60,14 +60,13 @@ func NewClient(o Options) (*Client, error) {
 	}
 
 	return &Client{
-		client: &client,
+		client: client,
 		stream: make(chan StreamMessage, 1000),
 	}, nil
 }
 
 func (c *Client) IsConnected() bool {
-	client := *c.client
-	return client.IsConnectionOpen()
+	return c.client.IsConnectionOpen()
 }
 
 func (c *Client) IsSubscribed(path string) bool {
@@ -116,7 +115,6 @@ func (c *Client) HandleMessage(client paho.Client, msg paho.Message) {
 }
 
 func (c *Client) Subscribe(t string) {
-	client := *c.client
 	_, ok := c.topics.Load(t)
 
 	if !ok {
@@ -125,19 +123,17 @@ func (c *Client) Subscribe(t string) {
 			path: t,
 		}
 		c.topics.Store(&topic)
-		client.Subscribe(t, 0, c.HandleMessage)
+		c.client.Subscribe(t, 0, c.HandleMessage)
 	}
 }
 
 func (c *Client) Unsubscribe(t string) {
 	log.DefaultLogger.Debug(fmt.Sprintf("Unsubscribing from MQTT topic: %s", t))
-	client := *c.client
-	client.Unsubscribe(t)
+	c.client.Unsubscribe(t)
 	c.topics.Delete(t)
 }
 
 func (c *Client) Dispose() {
-	client := *c.client
 	log.DefaultLogger.Info("MQTT Disconnecting")
-	client.Disconnect(250)
+	c.client.Disconnect(250)
 }
