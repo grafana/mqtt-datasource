@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
-  "name": "mqtt",
-  "id": "grafana-mqtt",
+  "name": "MQTT",
+  "id": "mqtt-datasource",
   "metrics": true,
   "backend": true,
   "executable": "gpx_mqtt",
@@ -10,7 +10,7 @@
     "description": "MQTT Client Datasource Plugin",
     "author": {
       "name": "Todd Treece",
-      "url": ""
+      "url": "https://github.com/toddtreece"
     },
     "keywords": [
       "mqtt",
@@ -23,11 +23,11 @@
     "links": [
       {
         "name": "Website",
-        "url": "https://github.com/grafana/grafana-starter-datasource-backend"
+        "url": "https://github.com/grafana/mqtt-datasource"
       },
       {
         "name": "License",
-        "url": "https://github.com/grafana/grafana-starter-datasource-backend/blob/master/LICENSE"
+        "url": "https://github.com/grafana/mqtt-backend/blob/master/LICENSE"
       }
     ],
     "screenshots": [],

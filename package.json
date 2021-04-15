@@ -1,5 +1,5 @@
 {
-  "name": "grafana-mqtt",
+  "name": "grafana-mqtt-datasource",
   "version": "1.0.0",
   "description": "MQTT Datasource Plugin",
   "scripts": {

@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/toddtreece/mqtt-datasource/pkg/mqtt"
+	"github.com/grafana/mqtt-datasource/pkg/mqtt"
 )
 
 func GetDatasourceOpts() datasource.ServeOpts {
