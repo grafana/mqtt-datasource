@@ -9,7 +9,9 @@ import (
 )
 
 func main() {
-	err := datasource.Serve(plugin.GetDatasourceOpts())
+
+	im := datasource.NewInstanceManager(plugin.NewServerInstance)
+	err := datasource.Serve(plugin.GetDatasourceOpts(im))
 
 	if err != nil {
 		log.DefaultLogger.Error(err.Error())

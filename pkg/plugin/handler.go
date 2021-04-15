@@ -13,16 +13,15 @@ import (
 	"github.com/grafana/mqtt-datasource/pkg/mqtt"
 )
 
-func GetDatasourceOpts() datasource.ServeOpts {
-	im := datasource.NewInstanceManager(NewServerInstance)
-	ds := &Handler{
+func GetDatasourceOpts(im instancemgmt.InstanceManager) datasource.ServeOpts {
+	handler := &Handler{
 		im: im,
 	}
 
 	return datasource.ServeOpts{
-		QueryDataHandler:   ds,
-		CheckHealthHandler: ds,
-		StreamHandler:      ds,
+		QueryDataHandler:   handler,
+		CheckHealthHandler: handler,
+		StreamHandler:      handler,
 	}
 }
 
