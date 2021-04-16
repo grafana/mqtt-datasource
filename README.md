@@ -4,8 +4,6 @@
 
 The MQTT data source plugin allows you to visualize streaming MQTT data from within Grafana.
 
-![mqtt dashboard](./test_broker.gif)
-
 ## Requirements
 
 The MQTT data source has the following requirements:
@@ -60,6 +58,9 @@ This plugin currently supports MQTT v3.1.x.
 
 The query editor allows you to specify which MQTT topics the panel will subscribe to. Refer to the [MQTT v3.1.1 specification](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718106)
 for more information about valid topic names and filters.
+
+![mqtt dashboard](./test_broker.gif)
+
 
 ## Learn more
 
