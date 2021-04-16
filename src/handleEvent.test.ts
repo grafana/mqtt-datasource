@@ -1,5 +1,5 @@
 import { ChangeEvent } from 'react';
-import { handleEvent } from './handleEvent';
+import { handlerFactory } from './handleEvent';
 
 const changeEvent = {
   currentTarget: {
@@ -7,18 +7,30 @@ const changeEvent = {
   },
 } as ChangeEvent<HTMLInputElement>;
 
-describe('handleEvent', () => {
+describe('handlerFactory', () => {
   it('returns value from event', () => {
-    const handler = handleEvent();
-    expect(handler(changeEvent)).toMatchInlineSnapshot(`"test"`);
+    const cb = jest.fn();
+    const handler = handlerFactory({ a: { b: 'c' } }, cb);
+    handler('a.b')(changeEvent);
+    expect(cb.mock.calls[0][0]).toMatchInlineSnapshot(`
+      Object {
+        "a": Object {
+          "b": "test",
+        },
+      }
+    `);
   });
 
-  it('calls the handler functions left to right', () => {
-    const one = (v: string) => `${v}-1`;
-    const two = (v: string) => `${v}-2`;
-    const three = (v: string) => `${v}-3`;
-
-    const handler = handleEvent(one, two, three);
-    expect(handler(changeEvent)).toMatchInlineSnapshot(`"test-1-2-3"`);
+  it('calls the formatting function', () => {
+    const cb = jest.fn();
+    const handler = handlerFactory({ a: { b: 'c' } }, cb);
+    handler('a.b', v => v.toUpperCase())(changeEvent);
+    expect(cb.mock.calls[0][0]).toMatchInlineSnapshot(`
+      Object {
+        "a": Object {
+          "b": "TEST",
+        },
+      }
+    `);
   });
 });

@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Form, Field, Input } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from './datasource';
 import { MqttDataSourceOptions, MqttQuery } from './types';
-import { handleEvent } from 'handleEvent';
+import { handlerFactory } from 'handleEvent';
 
 type Props = QueryEditorProps<DataSource, MqttQuery, MqttDataSourceOptions>;
 
 export const QueryEditor = (props: Props) => {
   const { query, onChange } = props;
-  const [queryText, setQueryText] = useState(query.queryText ?? '');
-  useEffect(() => onChange({ ...query, queryText, stream: true }), [queryText]);
+  const handleEvent = handlerFactory(query, onChange);
 
   return (
     <Form onSubmit={() => {}}>
@@ -19,10 +18,10 @@ export const QueryEditor = (props: Props) => {
           <Input
             name="queryText"
             required
-            value={queryText}
+            value={query.queryText}
             css=""
             autoComplete="off"
-            onChange={handleEvent(setQueryText)}
+            onChange={handleEvent('queryText')}
           />
         </Field>
       )}
