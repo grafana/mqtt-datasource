@@ -4,7 +4,7 @@
 
 The MQTT data source plugin allows you to visualize streaming MQTT data from within Grafana.
 
-![mqtt dashboard](./test_broker.js)
+![mqtt dashboard](./test_broker.gif)
 
 ## Requirements
 
