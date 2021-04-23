@@ -2,23 +2,25 @@
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
   "name": "MQTT",
-  "id": "mqtt-datasource",
+  "id": "grafana-mqtt-datasource",
   "metrics": true,
   "backend": true,
+  "category": "iot",
   "executable": "gpx_mqtt",
   "info": {
     "description": "MQTT Client Datasource Plugin",
     "author": {
-      "name": "Todd Treece",
-      "url": "https://github.com/toddtreece"
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
     },
     "keywords": [
       "mqtt",
-      "iot"
+      "iot",
+      "streaming"
     ],
     "logos": {
-      "small": "img/logo.jpg",
-      "large": "img/logo.jpg"
+      "small": "img/mqtt.svg",
+      "large": "img/mqtt.svg"
     },
     "links": [
       {
@@ -35,7 +37,7 @@
     "updated": "%TODAY%"
   },
   "dependencies": {
-    "grafanaDependency": ">=7.0.0",
+    "grafanaDependency": ">=7.5.0",
     "plugins": []
   }
 }
