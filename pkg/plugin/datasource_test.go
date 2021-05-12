@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/mqtt-datasource/pkg/mqtt"
 	"github.com/grafana/mqtt-datasource/pkg/plugin"
 	"github.com/stretchr/testify/require"
@@ -41,21 +40,6 @@ func TestCheckHealthHandler(t *testing.T) {
 		require.Equal(t, res.Status, backend.HealthStatusError)
 		require.Equal(t, res.Message, "MQTT Disconnected")
 	})
-}
-
-type fakeInstanceManager struct {
-	client *fakeMQTTClient
-	err    error
-}
-
-func (im *fakeInstanceManager) Get(pc backend.PluginContext) (instancemgmt.Instance, error) {
-	return &plugin.MQTTDatasource{
-		Client: im.client,
-	}, im.err
-}
-
-func (im *fakeInstanceManager) Do(pc backend.PluginContext, fn instancemgmt.InstanceCallbackFunc) error {
-	return nil
 }
 
 type fakeMQTTClient struct {
