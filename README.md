@@ -28,12 +28,10 @@ This plugin currently supports MQTT v3.1.x.
 
 ### Verify that the plugin is installed
 
-1. In Grafana Enterprise from the left-hand menu, navigate to **Configuration** > **Data sources**.
+1. In Grafana from the left-hand menu, navigate to **Configuration** > **Data sources**.
 2. From the top-right corner, click the **Add data source** button.
-3. Search for `MQTT` in the search field, and hover over the AppDynamics search result.
+3. Search for `MQTT` in the search field, and hover over the MQTT search result.
 4. Click the **Select** button for MQTT.
-   - If you can click the **Select** button, then it is installed.
-   - If the button is missing or disabled, then the plugin is not installed. If you still need help, [contact Grafana Labs](https://grafana.com/contact).
 
 ## Configure the data source
 

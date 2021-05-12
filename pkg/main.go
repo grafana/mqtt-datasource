@@ -9,11 +9,7 @@ import (
 )
 
 func main() {
-
-	im := datasource.NewInstanceManager(plugin.NewServerInstance)
-	err := datasource.Serve(plugin.GetDatasourceOpts(im))
-
-	if err != nil {
+	if err := datasource.Manage("grafana-mqtt-datasource", plugin.NewMQTTInstance, datasource.ManageOpts{}); err != nil {
 		log.DefaultLogger.Error(err.Error())
 		os.Exit(1)
 	}

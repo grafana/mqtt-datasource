@@ -13,15 +13,12 @@ import (
 
 func TestCheckHealthHandler(t *testing.T) {
 	t.Run("HealthStatusOK when can connect", func(t *testing.T) {
-		im := fakeInstanceManager{
-			client: &fakeMQTTClient{
-				connected:  true,
-				subscribed: false,
-			}, err: nil}
+		ds := plugin.NewMQTTDatasource(&fakeMQTTClient{
+			connected:  true,
+			subscribed: false,
+		}, 5)
 
-		ds := plugin.GetDatasourceOpts(&im)
-
-		res, _ := ds.CheckHealthHandler.CheckHealth(
+		res, _ := ds.CheckHealth(
 			context.Background(),
 			&backend.CheckHealthRequest{},
 		)
@@ -31,15 +28,12 @@ func TestCheckHealthHandler(t *testing.T) {
 	})
 
 	t.Run("HealthStatusError when disconnected", func(t *testing.T) {
-		im := fakeInstanceManager{
-			client: &fakeMQTTClient{
-				connected:  false,
-				subscribed: false,
-			}, err: nil}
+		ds := plugin.NewMQTTDatasource(&fakeMQTTClient{
+			connected:  false,
+			subscribed: false,
+		}, 5)
 
-		ds := plugin.GetDatasourceOpts(&im)
-
-		res, _ := ds.CheckHealthHandler.CheckHealth(
+		res, _ := ds.CheckHealth(
 			context.Background(),
 			&backend.CheckHealthRequest{},
 		)
