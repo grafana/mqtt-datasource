@@ -24,7 +24,7 @@ describe('handlerFactory', () => {
   it('calls the formatting function', () => {
     const cb = jest.fn();
     const handler = handlerFactory({ a: { b: 'c' } }, cb);
-    handler('a.b', v => v.toUpperCase())(changeEvent);
+    handler('a.b', (v) => v.toUpperCase())(changeEvent);
     expect(cb.mock.calls[0][0]).toMatchInlineSnapshot(`
       Object {
         "a": Object {
