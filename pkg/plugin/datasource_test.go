@@ -3,7 +3,6 @@ package plugin_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/mqtt-datasource/pkg/mqtt"
@@ -41,28 +40,6 @@ func TestCheckHealthHandler(t *testing.T) {
 		require.Equal(t, res.Status, backend.HealthStatusError)
 		require.Equal(t, res.Message, "MQTT Disconnected")
 	})
-}
-
-func TestToFrame(t *testing.T) {
-	frame := plugin.ToFrame("test/data", []mqtt.Message{
-		{
-			Timestamp: time.Unix(1, 0),
-			Value:     "1",
-		},
-	})
-	v, err := frame.Fields[1].FloatAt(0)
-	require.NoError(t, err)
-	require.Equal(t, v, float64(1))
-
-	frame = plugin.ToFrame("test/data", []mqtt.Message{
-		{
-			Timestamp: time.Unix(1, 0),
-			Value:     `{"gx": -0.5182926829268293, "gy": -0.3582317073170732, "gz": 0.1753048780487805, "ax": 0.20599365234375, "ay": -0.050048828125, "az": 1.03582763671875}`,
-		},
-	})
-	v, err = frame.Fields[1].FloatAt(0)
-	require.NoError(t, err)
-	require.Equal(t, v, float64(1))
 }
 
 type fakeMQTTClient struct {

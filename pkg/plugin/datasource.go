@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -149,29 +148,6 @@ func (ds *MQTTDatasource) PublishStream(ctx context.Context, req *backend.Publis
 
 type queryModel struct {
 	Topic string `json:"queryText"`
-}
-
-func ToFrame(topic string, messages []mqtt.Message) *data.Frame {
-	var timestamps []time.Time
-	var values []float64
-
-	for _, m := range messages {
-		if value, err := strconv.ParseFloat(m.Value, 64); err == nil {
-			timestamps = append(timestamps, m.Timestamp)
-			values = append(values, value)
-		}
-	}
-
-	frame := data.NewFrame(topic)
-	frame.Fields = append(frame.Fields,
-		data.NewField("Time", nil, timestamps),
-	)
-
-	frame.Fields = append(frame.Fields,
-		data.NewField("Value", nil, values),
-	)
-
-	return frame
 }
 
 func (m *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
