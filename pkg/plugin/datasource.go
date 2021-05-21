@@ -108,7 +108,7 @@ func (ds *MQTTDatasource) CheckHealth(ctx context.Context, req *backend.CheckHea
 func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	ds.Client.Subscribe(req.Path)
 
-	bytes, err := data.FrameToJSON(ToFrame([]mqtt.Message{}), true, false) // only schema
+	bytes, err := data.FrameToJSON(ToFrame(req.Path, []mqtt.Message{}), true, false) // only schema
 	if err != nil {
 		return nil, err
 	}
@@ -130,6 +130,9 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 			backend.Logger.Info("stop streaming (context canceled)")
 			return nil
 		case message := <-ds.Client.Stream():
+			if message.Topic != req.Path {
+				continue
+			}
 			err := ds.SendMessage(message, req, sender)
 			if err != nil {
 				log.DefaultLogger.Error(fmt.Sprintf("unable to send message: %s", err.Error()))
@@ -148,7 +151,7 @@ type queryModel struct {
 	Topic string `json:"queryText"`
 }
 
-func ToFrame(messages []mqtt.Message) *data.Frame {
+func ToFrame(topic string, messages []mqtt.Message) *data.Frame {
 	var timestamps []time.Time
 	var values []float64
 
@@ -159,13 +162,13 @@ func ToFrame(messages []mqtt.Message) *data.Frame {
 		}
 	}
 
-	frame := data.NewFrame("Messages")
+	frame := data.NewFrame(topic)
 	frame.Fields = append(frame.Fields,
-		data.NewField("time", nil, timestamps),
+		data.NewField("Time", nil, timestamps),
 	)
 
 	frame.Fields = append(frame.Fields,
-		data.NewField("values", nil, values),
+		data.NewField("Value", nil, values),
 	)
 
 	return frame
@@ -189,7 +192,7 @@ func (m *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
 		return response
 	}
 
-	frame := ToFrame(messages)
+	frame := ToFrame(qm.Topic, messages)
 
 	if qm.Topic != "" {
 		frame.SetMeta(&data.FrameMeta{
@@ -211,7 +214,7 @@ func (m *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunStr
 		Value:     msg.Value,
 	}
 
-	frame := ToFrame([]mqtt.Message{message})
+	frame := ToFrame(msg.Topic, []mqtt.Message{message})
 	bytes, err := data.FrameToJSON(frame, false, true)
 	if err != nil {
 		return err
