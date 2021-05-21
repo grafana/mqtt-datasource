@@ -12,13 +12,11 @@ import (
 
 func ToFrame(topic string, messages []mqtt.Message) *data.Frame {
 	count := len(messages)
-	if count < 1 {
-		return nil
-	}
-
-	first := messages[0].Value
-	if strings.HasPrefix(first, "{") {
-		return jsonMessagesToFrame(topic, messages)
+	if count > 0 {
+		first := messages[0].Value
+		if strings.HasPrefix(first, "{") {
+			return jsonMessagesToFrame(topic, messages)
+		}
 	}
 
 	// Fall through to expecting values
