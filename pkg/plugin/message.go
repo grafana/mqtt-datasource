@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -44,7 +45,11 @@ func jsonMessagesToFrame(topic string, messages []mqtt.Message) *data.Frame {
 	var body map[string]float64
 	err := json.Unmarshal([]byte(messages[0].Value), &body)
 	if err != nil {
-		return nil // TODO error?  frame with error????
+		frame := data.NewFrame(topic)
+		frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityError,
+			Text: fmt.Sprintf("error unmarshalling json message: %s", err.Error()),
+		})
+		return frame
 	}
 
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, count)
