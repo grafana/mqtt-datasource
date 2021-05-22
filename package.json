@@ -3,8 +3,8 @@
   "version": "0.0.1-dev",
   "description": "MQTT Datasource Plugin",
   "scripts": {
-    "build": "grafana-toolkit plugin:build",
-    "test": "grafana-toolkit plugin:test",
+    "build": "rm -rf dist && grafana-toolkit plugin:build && mage build:backend",
+    "test": "grafana-toolkit plugin:test && mage test",
     "dev": "grafana-toolkit plugin:dev",
     "watch": "grafana-toolkit plugin:dev --watch",
     "sign": "grafana-toolkit plugin:sign",

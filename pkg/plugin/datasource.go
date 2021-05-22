@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -108,13 +107,8 @@ func (ds *MQTTDatasource) CheckHealth(ctx context.Context, req *backend.CheckHea
 func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	ds.Client.Subscribe(req.Path)
 
-	bytes, err := data.FrameToJSON(ToFrame([]mqtt.Message{}), true, false) // only schema
-	if err != nil {
-		return nil, err
-	}
 	return &backend.SubscribeStreamResponse{
 		Status: backend.SubscribeStreamStatusOK,
-		Data:   bytes, // just the schema
 	}, nil
 }
 
@@ -130,6 +124,9 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 			backend.Logger.Info("stop streaming (context canceled)")
 			return nil
 		case message := <-ds.Client.Stream():
+			if message.Topic != req.Path {
+				continue
+			}
 			err := ds.SendMessage(message, req, sender)
 			if err != nil {
 				log.DefaultLogger.Error(fmt.Sprintf("unable to send message: %s", err.Error()))
@@ -146,29 +143,6 @@ func (ds *MQTTDatasource) PublishStream(ctx context.Context, req *backend.Publis
 
 type queryModel struct {
 	Topic string `json:"queryText"`
-}
-
-func ToFrame(messages []mqtt.Message) *data.Frame {
-	var timestamps []time.Time
-	var values []float64
-
-	for _, m := range messages {
-		if value, err := strconv.ParseFloat(m.Value, 64); err == nil {
-			timestamps = append(timestamps, m.Timestamp)
-			values = append(values, value)
-		}
-	}
-
-	frame := data.NewFrame("Messages")
-	frame.Fields = append(frame.Fields,
-		data.NewField("time", nil, timestamps),
-	)
-
-	frame.Fields = append(frame.Fields,
-		data.NewField("values", nil, values),
-	)
-
-	return frame
 }
 
 func (m *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
@@ -189,7 +163,7 @@ func (m *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
 		return response
 	}
 
-	frame := ToFrame(messages)
+	frame := ToFrame(qm.Topic, messages)
 
 	if qm.Topic != "" {
 		frame.SetMeta(&data.FrameMeta{
@@ -211,8 +185,8 @@ func (m *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunStr
 		Value:     msg.Value,
 	}
 
-	frame := ToFrame([]mqtt.Message{message})
-	bytes, err := data.FrameToJSON(frame, false, true)
+	frame := ToFrame(msg.Topic, []mqtt.Message{message})
+	bytes, err := data.FrameToJSON(frame, true, true) // send schema every frame - for now!
 	if err != nil {
 		return err
 	}
