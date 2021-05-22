@@ -24,7 +24,7 @@ func TestSimpleValueMessage(t *testing.T) {
 
 func TestJSONValuesMessage(t *testing.T) {
 	timestamp := time.Unix(1, 0)
-	values := []interface{}{
+	values := []float64{
 		-0.5182926829268293,
 		-0.3582317073170732,
 		0.1753048780487805,
@@ -32,7 +32,8 @@ func TestJSONValuesMessage(t *testing.T) {
 		-0.050048828125,
 		1.03582763671875,
 	}
-	msg := fmt.Sprintf(`{"ax": %v, "ay": %v, "az": %v, "gx": %v, "gy": %v, "gz": %v}`, values...)
+	msg := fmt.Sprintf(`{"ax": %v, "ay": %v, "az": %v, "gx": %v, "gy": %v, "gz": %v}`,
+		values[0], values[1], values[2], values[3], values[4], values[5])
 	frame := plugin.ToFrame("test/data", []mqtt.Message{
 		{
 			Timestamp: timestamp,
