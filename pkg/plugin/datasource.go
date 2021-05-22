@@ -107,13 +107,8 @@ func (ds *MQTTDatasource) CheckHealth(ctx context.Context, req *backend.CheckHea
 func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	ds.Client.Subscribe(req.Path)
 
-	bytes, err := data.FrameToJSON(ToFrame(req.Path, []mqtt.Message{}), true, false) // only schema
-	if err != nil {
-		return nil, err
-	}
 	return &backend.SubscribeStreamResponse{
 		Status: backend.SubscribeStreamStatusOK,
-		Data:   bytes, // just the schema
 	}, nil
 }
 
@@ -191,7 +186,7 @@ func (m *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunStr
 	}
 
 	frame := ToFrame(msg.Topic, []mqtt.Message{message})
-	bytes, err := data.FrameToJSON(frame, false, true)
+	bytes, err := data.FrameToJSON(frame, true, true) // send schema every frame - for now!
 	if err != nil {
 		return err
 	}
