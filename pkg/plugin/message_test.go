@@ -23,16 +23,34 @@ func TestSimpleValueMessage(t *testing.T) {
 }
 
 func TestJSONValuesMessage(t *testing.T) {
+	timestamp := time.Unix(1, 0)
+	values := []interface{}{
+		-0.5182926829268293,
+		-0.3582317073170732,
+		0.1753048780487805,
+		0.20599365234375,
+		-0.050048828125,
+		1.03582763671875,
+	}
+	msg := fmt.Sprintf(`{"ax": %v, "ay": %v, "az": %v, "gx": %v, "gy": %v, "gz": %v}`, values...)
 	frame := plugin.ToFrame("test/data", []mqtt.Message{
 		{
-			Timestamp: time.Unix(1, 0),
-			Value:     `{"gx": -0.5182926829268293, "gy": -0.3582317073170732, "gz": 0.1753048780487805, "ax": 0.20599365234375, "ay": -0.050048828125, "az": 1.03582763671875}`,
+			Timestamp: timestamp,
+			Value:     msg,
 		},
 	})
+	numFields := len(values) + 1
 	require.NotNil(t, frame)
-
-	str, err := frame.StringTable(100, 5)
+	str, err := frame.StringTable(numFields, 1)
 	require.NoError(t, err)
 	fmt.Printf("FRAME: %s", str)
-	require.Equal(t, 7, len(frame.Fields))
+	require.Equal(t, numFields, len(frame.Fields))
+	v, ok := frame.Fields[0].ConcreteAt(0)
+	require.Equal(t, true, ok)
+	require.Equal(t, v, timestamp)
+	for idx, val := range values {
+		v, err := frame.Fields[idx+1].FloatAt(0)
+		require.NoError(t, err)
+		require.Equal(t, val, v)
+	}
 }
