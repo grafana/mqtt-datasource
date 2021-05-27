@@ -112,7 +112,7 @@ func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.Subs
 	}, nil
 }
 
-func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	defer ds.Client.Unsubscribe(req.Path)
 
 	for {
@@ -175,7 +175,7 @@ func (m *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
 	return response
 }
 
-func (m *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+func (m *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if !m.Client.IsSubscribed(req.Path) {
 		return nil
 	}
@@ -186,15 +186,7 @@ func (m *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunStr
 	}
 
 	frame := ToFrame(msg.Topic, []mqtt.Message{message})
-	bytes, err := data.FrameToJSON(frame, true, true) // send schema every frame - for now!
-	if err != nil {
-		return err
-	}
-
-	packet := &backend.StreamPacket{
-		Data: bytes,
-	}
 
 	log.DefaultLogger.Debug(fmt.Sprintf("Sending message to client for topic %s", msg.Topic))
-	return sender.Send(packet)
+	return sender.SendFrame(frame, data.IncludeAll)
 }
