@@ -18,7 +18,7 @@ The MQTT data source has the following requirements:
 - The plugin currently does not support all of the MQTT CONNECT packet options.
 - The plugin currently does not support TLS.
 - Including multiple topics in a panel is not yet well supported.
-
+- This plugin automatically supports topics publishing json formatted messages.
 
 ## Install the plugin
 
