@@ -26,10 +26,6 @@ The MQTT data source has the following requirements:
 2. Build the plugin by running `yarn install` and then `yarn build`.
 3. Run `mage reloadPlugin` or restart Grafana for the plugin to load.
 
-1. Navigate to [The plugin on Github](https://github.com/MasslessParticle/ciac-datasource).
-1. Clone the plugin to your grafana plugins directory
-1. Restart Grafana
-
 ### Meet compatibility requirements
 
 This plugin currently supports MQTT v3.1.x.
