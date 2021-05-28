@@ -42,9 +42,6 @@ func TestJSONValuesMessage(t *testing.T) {
 	})
 	numFields := len(values) + 1
 	require.NotNil(t, frame)
-	str, err := frame.StringTable(numFields, 1)
-	require.NoError(t, err)
-	fmt.Printf("FRAME: %s", str)
 	require.Equal(t, numFields, len(frame.Fields))
 	v, ok := frame.Fields[0].ConcreteAt(0)
 	require.Equal(t, true, ok)

@@ -3,7 +3,6 @@ package plugin
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
@@ -13,6 +12,29 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/mqtt-datasource/pkg/mqtt"
 )
+
+// NewMQTTDatasource creates a new datasource instance.
+func NewMQTTInstance(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	settings, err := getDatasourceSettings(s)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := mqtt.NewClient(*settings)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewMQTTDatasource(client, s.UID), nil
+}
+
+func getDatasourceSettings(s backend.DataSourceInstanceSettings) (*mqtt.Options, error) {
+	settings := &mqtt.Options{}
+	if err := json.Unmarshal(s.JSONData, settings); err != nil {
+		return nil, err
+	}
+	return settings, nil
+}
 
 type MQTTClient interface {
 	Stream() chan mqtt.StreamMessage
@@ -26,18 +48,9 @@ type MQTTClient interface {
 type MQTTDatasource struct {
 	Client        MQTTClient
 	channelPrefix string
-	closeCh       chan struct{}
 }
 
-func GetDatasourceSettings(s backend.DataSourceInstanceSettings) (*mqtt.Options, error) {
-	settings := &mqtt.Options{}
-	if err := json.Unmarshal(s.JSONData, settings); err != nil {
-		return nil, err
-	}
-	return settings, nil
-}
-
-// Make sure SampleDatasource implements required interfaces.
+// Make sure MQTTDatasource implements required interfaces.
 // This is important to do since otherwise we will only get a
 // not implemented error response from plugin in runtime.
 var (
@@ -48,38 +61,22 @@ var (
 )
 
 // NewMQTTDatasource creates a new datasource instance.
-func NewMQTTDatasource(client MQTTClient, id int64) *MQTTDatasource {
+func NewMQTTDatasource(client MQTTClient, uid string) *MQTTDatasource {
 	return &MQTTDatasource{
 		Client:        client,
-		channelPrefix: fmt.Sprintf("ds/%d/", id),
-		closeCh:       make(chan struct{}),
+		channelPrefix: fmt.Sprintf("ds/%s/", uid),
 	}
-}
-
-// NewMQTTDatasource creates a new datasource instance.
-func NewMQTTInstance(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	settings, err := GetDatasourceSettings(s)
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := mqtt.NewClient(*settings)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewMQTTDatasource(client, s.ID), nil
 }
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources
 // when a new instance created. As soon as datasource settings change detected
 // by SDK old datasource instance will be disposed and a new one will be created
-// using NewSampleDatasource factory function.
+// using NewMQTTDatasource factory function.
 func (ds *MQTTDatasource) Dispose() {
-	close(ds.closeCh)
+	// Nothing to clean up yet.
 }
 
-func (ds *MQTTDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (ds *MQTTDatasource) QueryData(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -90,7 +87,7 @@ func (ds *MQTTDatasource) QueryData(ctx context.Context, req *backend.QueryDataR
 	return response, nil
 }
 
-func (ds *MQTTDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (ds *MQTTDatasource) CheckHealth(_ context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if !ds.Client.IsConnected() {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
@@ -104,7 +101,7 @@ func (ds *MQTTDatasource) CheckHealth(ctx context.Context, req *backend.CheckHea
 	}, nil
 }
 
-func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+func (ds *MQTTDatasource) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	ds.Client.Subscribe(req.Path)
 
 	return &backend.SubscribeStreamResponse{
@@ -117,9 +114,6 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 
 	for {
 		select {
-		case <-ds.closeCh:
-			log.DefaultLogger.Info("Datasource restart")
-			return errors.New("datasource closed")
 		case <-ctx.Done():
 			backend.Logger.Info("stop streaming (context canceled)")
 			return nil
@@ -135,9 +129,9 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 	}
 }
 
-func (ds *MQTTDatasource) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+func (ds *MQTTDatasource) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	return &backend.PublishStreamResponse{
-		Status: backend.PublishStreamStatusPermissionDenied, // ?? Unsupported
+		Status: backend.PublishStreamStatusPermissionDenied,
 	}, nil
 }
 
@@ -145,7 +139,7 @@ type queryModel struct {
 	Topic string `json:"queryText"`
 }
 
-func (m *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
+func (ds *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
 	var qm queryModel
 
 	response := backend.DataResponse{}
@@ -155,10 +149,10 @@ func (m *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
 		return response
 	}
 
-	// ensure the client is subscribed to the topic
-	m.Client.Subscribe(qm.Topic)
+	// ensure the client is subscribed to the topic.
+	ds.Client.Subscribe(qm.Topic)
 
-	messages, ok := m.Client.Messages(qm.Topic)
+	messages, ok := ds.Client.Messages(qm.Topic)
 	if !ok {
 		return response
 	}
@@ -167,7 +161,7 @@ func (m *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
 
 	if qm.Topic != "" {
 		frame.SetMeta(&data.FrameMeta{
-			Channel: m.channelPrefix + qm.Topic,
+			Channel: ds.channelPrefix + qm.Topic,
 		})
 	}
 
@@ -175,8 +169,8 @@ func (m *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
 	return response
 }
 
-func (m *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	if !m.Client.IsSubscribed(req.Path) {
+func (ds *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	if !ds.Client.IsSubscribed(req.Path) {
 		return nil
 	}
 

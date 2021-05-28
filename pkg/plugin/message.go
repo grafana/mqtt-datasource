@@ -38,7 +38,7 @@ func ToFrame(topic string, messages []mqtt.Message) *data.Frame {
 
 func jsonMessagesToFrame(topic string, messages []mqtt.Message) *data.Frame {
 	count := len(messages)
-	if count < 1 {
+	if count == 0 {
 		return nil
 	}
 
@@ -66,7 +66,7 @@ func jsonMessagesToFrame(topic string, messages []mqtt.Message) *data.Frame {
 		fields[key] = field
 		keys = append(keys, key)
 	}
-	sort.Strings(keys) // keeys stable field order
+	sort.Strings(keys) // keys stable field order.
 
 	// Add rows 1...n
 	for row, m := range messages {
