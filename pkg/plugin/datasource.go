@@ -110,6 +110,7 @@ func (ds *MQTTDatasource) SubscribeStream(_ context.Context, req *backend.Subscr
 }
 
 func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	ds.Client.Subscribe(req.Path)
 	defer ds.Client.Unsubscribe(req.Path)
 
 	for {
