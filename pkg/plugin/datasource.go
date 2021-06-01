@@ -102,8 +102,6 @@ func (ds *MQTTDatasource) CheckHealth(_ context.Context, _ *backend.CheckHealthR
 }
 
 func (ds *MQTTDatasource) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	ds.Client.Subscribe(req.Path)
-
 	return &backend.SubscribeStreamResponse{
 		Status: backend.SubscribeStreamStatusOK,
 	}, nil
