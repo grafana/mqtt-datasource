@@ -10,7 +10,7 @@
     "sign": "grafana-toolkit plugin:sign",
     "start": "yarn watch"
   },
-  "author": "Todd Treece",
+  "author": "Grafana Labs",
   "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/data": "next",
