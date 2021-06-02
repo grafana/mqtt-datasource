@@ -86,45 +86,45 @@ func (c *Client) Stream() chan StreamMessage {
 	return c.stream
 }
 
-func (c *Client) HandleMessage(client paho.Client, msg paho.Message) {
+func (c *Client) HandleMessage(_ paho.Client, msg paho.Message) {
 	log.DefaultLogger.Debug(fmt.Sprintf("Received MQTT Message for topic %s", msg.Topic()))
 	topic, ok := c.topics.Load(msg.Topic())
+	if !ok {
+		return
+	}
 
-	if ok {
-		// store message for query
-		message := Message{
-			Timestamp: time.Now(),
-			Value:     string(msg.Payload()),
-		}
-		topic.messages = append(topic.messages, message)
+	// store message for query
+	message := Message{
+		Timestamp: time.Now(),
+		Value:     string(msg.Payload()),
+	}
+	topic.messages = append(topic.messages, message)
 
-		// limit the size of the retained messages
-		if len(topic.messages) > 1000 {
-			topic.messages = topic.messages[1:]
-		}
+	// limit the size of the retained messages
+	if len(topic.messages) > 1000 {
+		topic.messages = topic.messages[1:]
+	}
 
-		c.topics.Store(topic)
+	c.topics.Store(topic)
 
-		streamMessage := StreamMessage{Topic: msg.Topic(), Value: string(msg.Payload())}
-		select {
-		case c.stream <- streamMessage:
-		default:
-			// don't block if nothing is reading from the channel
-		}
+	streamMessage := StreamMessage{Topic: msg.Topic(), Value: string(msg.Payload())}
+	select {
+	case c.stream <- streamMessage:
+	default:
+		// don't block if nothing is reading from the channel
 	}
 }
 
 func (c *Client) Subscribe(t string) {
-	_, ok := c.topics.Load(t)
-
-	if !ok {
-		log.DefaultLogger.Debug(fmt.Sprintf("Subscribing to MQTT topic: %s", t))
-		topic := Topic{
-			path: t,
-		}
-		c.topics.Store(&topic)
-		c.client.Subscribe(t, 0, c.HandleMessage)
+	if _, ok := c.topics.Load(t); ok {
+		return
 	}
+	log.DefaultLogger.Debug(fmt.Sprintf("Subscribing to MQTT topic: %s", t))
+	topic := Topic{
+		path: t,
+	}
+	c.topics.Store(&topic)
+	c.client.Subscribe(t, 0, c.HandleMessage)
 }
 
 func (c *Client) Unsubscribe(t string) {

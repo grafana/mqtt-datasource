@@ -15,7 +15,7 @@ func TestCheckHealthHandler(t *testing.T) {
 		ds := plugin.NewMQTTDatasource(&fakeMQTTClient{
 			connected:  true,
 			subscribed: false,
-		}, 5)
+		}, "xyz")
 
 		res, _ := ds.CheckHealth(
 			context.Background(),
@@ -30,7 +30,7 @@ func TestCheckHealthHandler(t *testing.T) {
 		ds := plugin.NewMQTTDatasource(&fakeMQTTClient{
 			connected:  false,
 			subscribed: false,
-		}, 5)
+		}, "xyz")
 
 		res, _ := ds.CheckHealth(
 			context.Background(),
@@ -63,6 +63,6 @@ func (c *fakeMQTTClient) Stream() chan mqtt.StreamMessage {
 	return make(chan mqtt.StreamMessage)
 }
 
-func (c *fakeMQTTClient) Subscribe(topic string) {}
+func (c *fakeMQTTClient) Subscribe(_ string) {}
 
-func (c *fakeMQTTClient) Unsubscribe(topic string) {}
+func (c *fakeMQTTClient) Unsubscribe(_ string) {}
