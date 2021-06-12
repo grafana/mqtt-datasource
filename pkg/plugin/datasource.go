@@ -30,9 +30,15 @@ func NewMQTTInstance(s backend.DataSourceInstanceSettings) (instancemgmt.Instanc
 
 func getDatasourceSettings(s backend.DataSourceInstanceSettings) (*mqtt.Options, error) {
 	settings := &mqtt.Options{}
+
 	if err := json.Unmarshal(s.JSONData, settings); err != nil {
 		return nil, err
 	}
+
+	if password, exists := s.DecryptedSecureJSONData["password"]; exists {
+		settings.Password = password
+	}
+
 	return settings, nil
 }
 
