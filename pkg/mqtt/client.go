@@ -13,7 +13,7 @@ type Options struct {
 	Host     string `json:"host"`
 	Port     uint16 `json:"port"`
 	Username string `json:"username"`
-	Password string `json:"-"`
+	Password string `json:"password"`
 }
 
 type StreamMessage struct {
