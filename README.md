@@ -23,7 +23,7 @@ The MQTT data source has the following requirements:
 ## Install the plugin
 
 ### Installation Pre-requisites
-Refer to: [Building a Backend Datasource Plugin](https://grafana.com/tutorials/build-a-data-source-backend-plugin/)
+Refer to: [Building a Backend Datasource Plugin](https://grafana.com/tutorials/build-a-streaming-data-source-plugin/)
 ### Installation Steps
 
 1. Clone the plugin to your Grafana plugins directory.
