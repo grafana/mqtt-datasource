@@ -18,9 +18,22 @@ The MQTT data source has the following requirements:
 - The plugin currently does not support all of the MQTT CONNECT packet options.
 - The plugin currently does not support TLS.
 - Including multiple topics in a panel is not yet well supported.
-- This plugin automatically supports topics publishing json formatted messages.
-
+- This plugin automatically supports topics publishing very simple JSON formatted messages. Note that only the following structure is supported as of now:
+```
+{
+    'value1': 1.0,
+    'value2': 2,
+    'value3': 3.33,
+    ...
+}
+```
+We do plan to support more complex JSON data structures in the upcoming releases. Contributions are highly encouraged!
+- This plugin currently attaches timestamps to the messages when they are received, so there is no way to have custom timestamp for messages.
 ## Install the plugin
+
+### Installation Pre-requisites
+Refer to: [Building a Streaming Datasource Backend Plugin](https://grafana.com/tutorials/build-a-streaming-data-source-plugin/)
+### Installation Steps
 
 1. Clone the plugin to your Grafana plugins directory.
 2. Build the plugin by running `yarn install` and then `yarn build`.
@@ -29,6 +42,8 @@ The MQTT data source has the following requirements:
 ### Meet compatibility requirements
 
 This plugin currently supports MQTT v3.1.x.
+
+__Note: Since this plugin uses the Grafana Live Streaming API, make sure to use Grafana v8.0+__
 
 ### Verify that the plugin is installed
 
