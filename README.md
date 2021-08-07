@@ -33,17 +33,18 @@ We do plan to support more complex JSON data structures in the upcoming releases
 
 ### Installation Pre-requisites
 Refer to: [Building a Streaming Datasource Backend Plugin](https://grafana.com/tutorials/build-a-streaming-data-source-plugin/)
-### Installation Steps
 
-1. Clone the plugin to your Grafana plugins directory.
-2. Build the plugin by running `yarn install` and then `yarn build`.
-3. Run `mage reloadPlugin` or restart Grafana for the plugin to load.
-
+Details: [Ubuntu](https://github.com/grafana/mqtt-datasource/issues/15#issuecomment-894477802) [Windows](https://github.com/grafana/mqtt-datasource/issues/15#issuecomment-894534196)
 ### Meet compatibility requirements
 
 This plugin currently supports MQTT v3.1.x.
 
 __Note: Since this plugin uses the Grafana Live Streaming API, make sure to use Grafana v8.0+__
+### Installation Steps
+
+1. Clone the plugin to your Grafana plugins directory.
+2. Build the plugin by running `yarn install` and then `yarn build`.
+3. Run `mage reloadPlugin` or restart Grafana for the plugin to load.
 
 ### Verify that the plugin is installed
 
