@@ -44,6 +44,9 @@ __Note: Since this plugin uses the Grafana Live Streaming API, make sure to use 
 
 1. Clone the plugin to your Grafana plugins directory.
 2. Build the plugin by running `yarn install` and then `yarn build`.
+
+NOTE: The `yarn build` command above might fail on a non-unix-like system, like Windows, where you can try replacing the `rm -rf` command with `rimraf` in the `./package.json` file to make it work.
+
 3. Run `mage reloadPlugin` or restart Grafana for the plugin to load.
 
 ### Verify that the plugin is installed
