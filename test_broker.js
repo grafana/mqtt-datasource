@@ -31,7 +31,7 @@ const createPublisher = ({ topic, qos }) => {
         cmd: 'publish',
         qos,
         retain: false,
-        payload: Math.random(),
+        payload: Math.random().toString(),
       });
     }, interval);
   }
