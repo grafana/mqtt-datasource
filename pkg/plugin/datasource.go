@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -179,13 +178,12 @@ func (ds *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunSt
 		return nil
 	}
 
-	message := mqtt.Message{
-		Timestamp: time.Now(),
-		Value:     msg.Value,
+	messageJSON, err := json.Marshal(msg.Value)
+	if err != nil {
+		log.DefaultLogger.Debug(fmt.Sprintf("Marshalling message for topic %s failed", msg.Topic))
+		return nil
 	}
 
-	frame := ToFrame(msg.Topic, []mqtt.Message{message})
-
 	log.DefaultLogger.Debug(fmt.Sprintf("Sending message to client for topic %s", msg.Topic))
-	return sender.SendFrame(frame, data.IncludeAll)
+	return sender.SendJSON(messageJSON)
 }
