@@ -178,12 +178,7 @@ func (ds *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunSt
 		return nil
 	}
 
-	messageJSON, err := json.Marshal(json.RawMessage(msg.Value))
-
-	if err != nil {
-		log.DefaultLogger.Debug(fmt.Sprintf("Marshalling message for topic %s failed", msg.Topic))
-		return nil
-	}
+	messageJSON := json.RawMessage(msg.Value)
 
 	log.DefaultLogger.Debug(fmt.Sprintf("Sending message to client for topic %s", msg.Topic))
 	return sender.SendJSON(messageJSON)
