@@ -21,9 +21,9 @@ The MQTT data source has the following requirements:
 - This plugin automatically supports topics publishing very simple JSON formatted messages. Note that only the following structure is supported as of now:
 ```
 {
-    'value1': 1.0,
-    'value2': 2,
-    'value3': 3.33,
+    "value1": 1.0,
+    "value2": 2,
+    "value3": 3.33,
     ...
 }
 ```
