@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -157,12 +156,7 @@ func (ds *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
 	// ensure the client is subscribed to the topic.
 	ds.Client.Subscribe(qm.Topic)
 
-	messages, ok := ds.Client.Messages(qm.Topic)
-	if !ok {
-		return response
-	}
-
-	frame := ToFrame(qm.Topic, messages)
+	frame := data.NewFrame(qm.Topic)
 
 	if qm.Topic != "" {
 		frame.SetMeta(&data.FrameMeta{
@@ -179,13 +173,8 @@ func (ds *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunSt
 		return nil
 	}
 
-	message := mqtt.Message{
-		Timestamp: time.Now(),
-		Value:     msg.Value,
-	}
-
-	frame := ToFrame(msg.Topic, []mqtt.Message{message})
+	messageJSON := json.RawMessage(msg.Value)
 
 	log.DefaultLogger.Debug(fmt.Sprintf("Sending message to client for topic %s", msg.Topic))
-	return sender.SendFrame(frame, data.IncludeAll)
+	return sender.SendJSON(messageJSON)
 }

@@ -12,7 +12,55 @@ const toMillis = {
 };
 
 const createPublisher = ({ topic, qos }) => {
-  let i = 0;
+  if (topic == "imu") {
+    let i = 0;
+    console.log(`publishing to topic:`, topic);
+    publishers[topic] = setInterval(() => {
+      var j = {
+        "sample": i, 
+        "properties": ["acceleration", "velocity"], 
+        "sensors": ["accelerometer", "gyroscope"], 
+        "axes": ["x", "y", "z"], 
+        "sensor": {
+          "accelerometer": {
+            "x": Math.random(), 
+            "y": Math.random(), 
+            "z": Math.random()
+          }, 
+          "gyroscope": {
+            "x": Math.random(), 
+            "y": Math.random(), 
+            "z": Math.random()
+          }
+        }, 
+        "axis": {
+          "x": {
+            "accelerometer": Math.random(), 
+            "gyroscope": Math.random()
+          }, 
+          "y": {
+            "accelerometer": Math.random(), 
+            "gyroscope": Math.random()
+          }, 
+          "z": {
+            "accelerometer": Math.random(), 
+            "gyroscope": Math.random()
+          }
+        }
+      };
+      var out = JSON.stringify(j);
+      aedes.publish({
+        topic,
+        cmd: 'publish',
+        qos,
+        retain: false,
+        payload: out,
+      });
+      i+=1;
+    }, 1000);
+    return
+  }
+
   const [duration, value] = topic.split('/');
   const fn = toMillis[duration];
 
