@@ -2,7 +2,6 @@ package plugin
 
 import (
 	"encoding/json"
-	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -11,12 +10,12 @@ import (
 	"github.com/grafana/mqtt-datasource/pkg/mqtt"
 )
 
-func ToFrame(topic string, messages []mqtt.Message) *data.Frame {
+func ToFrame(fields map[string]*data.Field, topic string, messages []mqtt.Message) *data.Frame {
 	count := len(messages)
 	if count > 0 {
 		first := messages[0].Value
 		if strings.HasPrefix(first, "{") {
-			return jsonMessagesToFrame(topic, messages)
+			return jsonMessagesToFrame(fields, topic, messages)
 		}
 	}
 
@@ -36,61 +35,74 @@ func ToFrame(topic string, messages []mqtt.Message) *data.Frame {
 	return data.NewFrame(topic, timeField, valueField)
 }
 
-func jsonMessagesToFrame(topic string, messages []mqtt.Message) *data.Frame {
+// unnestMap recursively unwraps a given arbitrary map, thereby appending its concrete values under the resulting path.
+func unnestMap(v interface{}, newmap map[string]interface{}, key string) map[string]interface{} {
+	switch v := v.(type) {
+	case map[string]interface{}: // Object
+		for k, val := range v {
+			unnestMap(val, newmap, key+"."+k)
+		}
+	case []interface{}: // Array
+		for newkey := 0; newkey < len(v); newkey++ {
+			newmap[key+"["+strconv.Itoa(newkey)+"]"] = v[newkey]
+		}
+	default: // Number (float64), String (string), Boolean (bool), Null (nil)
+		newmap[key] = v
+	}
+	return newmap
+
+}
+
+// changeMapStructure transforms a nested arbitrary map to a simple key value layout.
+func changeMapStructure(nestedMap map[string]interface{}) map[string]interface{} {
+	newmap := make(map[string]interface{})
+	for k, v := range nestedMap {
+		newmap = unnestMap(v, newmap, k)
+	}
+	return newmap
+}
+
+func jsonMessagesToFrame(fields map[string]*data.Field, topic string, messages []mqtt.Message) *data.Frame {
 	count := len(messages)
 	if count == 0 {
 		return nil
 	}
-
-	var body map[string]float64
-	err := json.Unmarshal([]byte(messages[0].Value), &body)
-	if err != nil {
-		frame := data.NewFrame(topic)
-		frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityError,
-			Text: fmt.Sprintf("error unmarshalling json message: %s", err.Error()),
-		})
-		return frame
-	}
-
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, count)
 	timeField.Name = "Time"
-	timeField.SetConcrete(0, messages[0].Timestamp)
-
-	// Create a field for each key and set the first value
-	keys := make([]string, 0, len(body))
-	fields := make(map[string]*data.Field, len(body))
-	for key, val := range body {
-		field := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, count)
-		field.Name = key
-		field.SetConcrete(0, val)
-		fields[key] = field
-		keys = append(keys, key)
-	}
-	sort.Strings(keys) // keys stable field order.
-
-	// Add rows 1...n
 	for row, m := range messages {
-		if row == 0 {
-			continue
-		}
-
-		err := json.Unmarshal([]byte(m.Value), &body)
-		if err != nil {
-			continue // bad row?
-		}
-
 		timeField.SetConcrete(row, m.Timestamp)
-		for key, val := range body {
-			field, ok := fields[key]
-			if ok {
-				field.SetConcrete(row, val)
+		var body map[string]interface{}
+		if err := json.Unmarshal([]byte(m.Value), &body); err != nil {
+			return nil
+		}
+		for key, val := range changeMapStructure(body) {
+			var t data.FieldType
+			field, exists := fields[key]
+			switch val.(type) {
+			case float64:
+				t = data.FieldTypeNullableFloat64
+			case string:
+				t = data.FieldTypeNullableString
+			case bool:
+				t = data.FieldTypeNullableBool
+			default:
+				delete(fields, key)
+				continue
 			}
+			if !exists || field.Type() != t {
+				field = data.NewFieldFromFieldType(t, count)
+				field.Name = key
+				fields[key] = field
+			}
+			field.SetConcrete(row, val)
 		}
 	}
-
 	frame := data.NewFrame(topic, timeField)
-	for _, key := range keys {
-		frame.Fields = append(frame.Fields, fields[key])
+	for _, f := range fields {
+		frame.Fields = append(frame.Fields, f)
 	}
+	sort.Slice(frame.Fields, func(i, j int) bool {
+		return frame.Fields[i].Name < frame.Fields[j].Name
+	})
 	return frame
 }

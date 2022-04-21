@@ -116,6 +116,7 @@ func (ds *MQTTDatasource) SubscribeStream(_ context.Context, req *backend.Subscr
 func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	ds.Client.Subscribe(req.Path)
 	defer ds.Client.Unsubscribe(req.Path)
+	fields := make(map[string]*data.Field)
 
 	for {
 		select {
@@ -126,7 +127,7 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 			if message.Topic != req.Path {
 				continue
 			}
-			err := ds.SendMessage(message, req, sender)
+			err := ds.SendMessage(fields, message, req, sender)
 			if err != nil {
 				log.DefaultLogger.Error(fmt.Sprintf("unable to send message: %s", err.Error()))
 			}
@@ -162,7 +163,7 @@ func (ds *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
 		return response
 	}
 
-	frame := ToFrame(qm.Topic, messages)
+	frame := ToFrame(make(map[string]*data.Field), qm.Topic, messages)
 
 	if qm.Topic != "" {
 		frame.SetMeta(&data.FrameMeta{
@@ -173,8 +174,7 @@ func (ds *MQTTDatasource) Query(query backend.DataQuery) backend.DataResponse {
 	response.Frames = append(response.Frames, frame)
 	return response
 }
-
-func (ds *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+func (ds *MQTTDatasource) SendMessage(fields map[string]*data.Field, msg mqtt.StreamMessage, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if !ds.Client.IsSubscribed(req.Path) {
 		return nil
 	}
@@ -184,7 +184,7 @@ func (ds *MQTTDatasource) SendMessage(msg mqtt.StreamMessage, req *backend.RunSt
 		Value:     msg.Value,
 	}
 
-	frame := ToFrame(msg.Topic, []mqtt.Message{message})
+	frame := ToFrame(fields, msg.Topic, []mqtt.Message{message})
 
 	log.DefaultLogger.Debug(fmt.Sprintf("Sending message to client for topic %s", msg.Topic))
 	return sender.SendFrame(frame, data.IncludeAll)
