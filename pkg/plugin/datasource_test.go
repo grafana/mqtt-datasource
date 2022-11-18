@@ -47,6 +47,10 @@ type fakeMQTTClient struct {
 	subscribed bool
 }
 
+func (c *fakeMQTTClient) GetTopic(_ string) (*mqtt.Topic, bool) {
+	return nil, false
+}
+
 func (c *fakeMQTTClient) IsConnected() bool {
 	return c.connected
 }
@@ -59,10 +63,10 @@ func (c *fakeMQTTClient) Messages(_ string) ([]mqtt.Message, bool) {
 	return []mqtt.Message{}, true
 }
 
-func (c *fakeMQTTClient) Stream() chan mqtt.StreamMessage {
-	return make(chan mqtt.StreamMessage)
+func (c *fakeMQTTClient) Flush(_ string) ([]mqtt.Message, bool) {
+	return []mqtt.Message{}, true
 }
 
-func (c *fakeMQTTClient) Subscribe(_ string) {}
-
-func (c *fakeMQTTClient) Unsubscribe(_ string) {}
+func (c *fakeMQTTClient) Subscribe(_ *mqtt.Topic) {}
+func (c *fakeMQTTClient) Unsubscribe(_ string)    {}
+func (c *fakeMQTTClient) Dispose()                {}
