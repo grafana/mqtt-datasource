@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from 'react';
-import { Form, Field, FieldSet, Input } from '@grafana/ui';
+import { InlineField, InlineFieldRow, FieldSet, Input, SecretInput } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { MqttDataSourceOptions, MqttSecureJsonData } from './types';
 import { handlerFactory } from './handleEvent';
@@ -12,9 +12,7 @@ export const ConfigEditor = (props: Props) => {
     options,
     options: { jsonData, secureJsonData, secureJsonFields },
   } = props;
-  const { host, port, username } = jsonData;
-
-  // const { password } = (secureJsonData ?? {}) as MqttSecureJsonData;
+  const { uri, username } = jsonData;
   const handleChange = handlerFactory(options, onOptionsChange);
 
   const onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -41,63 +39,52 @@ export const ConfigEditor = (props: Props) => {
   };
 
   return (
-    <Form onSubmit={() => {}}>
-      {() => (
-        <>
-          <FieldSet label="Connection">
-            <Field label="Host">
-              <Input
-                name="host"
-                required
-                value={host}
-                css=""
-                autoComplete="off"
-                onChange={handleChange('jsonData.host')}
-              />
-            </Field>
-            <Field label="Port">
-              <Input
-                type="number"
-                name="port"
-                required
-                value={port}
-                css=""
-                autoComplete="off"
-                onChange={handleChange('jsonData.port', Number)}
-              />
-            </Field>
-          </FieldSet>
+    <>
+      <FieldSet label="Connection">
+        <InlineFieldRow>
+          <InlineField
+            label="URI"
+            labelWidth={10}
+            tooltip="Supported schemes: TCP (tcp://), TLS (tls://), or WebSocket (ws://)"
+          >
+            <Input
+              width={30}
+              name="uri"
+              required
+              value={uri}
+              autoComplete="off"
+              placeholder="tcp://localhost:1883"
+              onChange={handleChange('jsonData.uri')}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      </FieldSet>
 
-          <FieldSet label="Authentication">
-            <Field label="Username">
-              <Input
-                name="username"
-                value={username}
-                css=""
-                autoComplete="off"
-                onChange={handleChange('jsonData.username')}
-              />
-            </Field>
-            <Field label="Password">
-              <Input
-                type="password"
-                name="password"
-                css=""
-                autoComplete="off"
-                // placeholder="************************"
-                placeholder={secureJsonFields?.password ? 'configured' : ''}
-                value={secureJsonData?.password ?? ''}
-                onChange={onPasswordChange}
-                onReset={onResetPassword}
-                // onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                //   handleChange('secureJsonData.password')(event);
-                //   handleChange('secureJsonFields.password', Boolean)(event);
-                // }}
-              />
-            </Field>
-          </FieldSet>
-        </>
-      )}
-    </Form>
+      <FieldSet label="Authentication">
+        <InlineFieldRow>
+          <InlineField label="Username" labelWidth={10}>
+            <Input
+              width={30}
+              name="username"
+              value={username}
+              autoComplete="off"
+              onChange={handleChange('jsonData.username')}
+            />
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Password" labelWidth={10}>
+            <SecretInput
+              width={30}
+              name="password"
+              isConfigured={!!secureJsonFields.password}
+              value={secureJsonData?.password ?? ''}
+              onChange={onPasswordChange}
+              onReset={onResetPassword}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      </FieldSet>
+    </>
   );
 };
