@@ -2,11 +2,9 @@ module github.com/grafana/mqtt-datasource
 
 go 1.19
 
-replace github.com/grafana/grafana-plugin-sdk-go => /home/todd/grafana-plugin-sdk-go
-
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.2
-	github.com/grafana/grafana-plugin-sdk-go v0.142.0
+	github.com/grafana/grafana-plugin-sdk-go v0.144.0
 	github.com/stretchr/testify v1.8.1
 )
 
