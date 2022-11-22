@@ -13,10 +13,10 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@grafana/data": "9.2.0",
-    "@grafana/runtime": "9.2.0",
-    "@grafana/toolkit": "9.2.0",
-    "@grafana/ui": "9.2.0",
+    "@grafana/data": "9.1.0",
+    "@grafana/runtime": "9.1.0",
+    "@grafana/toolkit": "9.1.0",
+    "@grafana/ui": "9.1.0",
     "@types/lodash": "latest",
     "aedes": "^0.45.0"
   },
