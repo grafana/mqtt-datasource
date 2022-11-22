@@ -3,44 +3,52 @@ package plugin
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/mqtt-datasource/pkg/mqtt"
 )
 
 func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	defer ds.Client.Unsubscribe(req.Path)
-	topic, ok := ds.Client.GetTopic(req.Path)
-	if !ok {
-		return fmt.Errorf("topic not found: %s", req.Path)
+	chunks := strings.Split(req.Path, "/")
+	if len(chunks) < 2 {
+		return fmt.Errorf("invalid path: %s", req.Path)
 	}
 
-	interval := topic.Interval
-	if interval < (time.Millisecond * 100) {
-		interval = time.Millisecond * 100
+	interval, err := time.ParseDuration(chunks[0])
+	if err != nil {
+		return err
 	}
+
+	ds.Client.Subscribe(req.Path)
+	defer ds.Client.Unsubscribe(req.Path)
+
 	ticker := time.NewTicker(interval)
 
 	for {
 		select {
 		case <-ctx.Done():
-			backend.Logger.Debug("stopped streaming (context canceled)", "topic", req.Path)
+			log.DefaultLogger.Debug("stopped streaming (context canceled)", "path", req.Path)
 			ds.Client.Unsubscribe(req.Path)
 			ticker.Stop()
 			return nil
 		case <-ticker.C:
 			topic, ok := ds.Client.GetTopic(req.Path)
 			if !ok {
+				log.DefaultLogger.Debug("topic not found", "path", req.Path)
 				break
 			}
-			frame := topic.ToDataFrame()
+			frame, err := topic.ToDataFrame()
+			if err != nil {
+				log.DefaultLogger.Error("failed to convert topic to data frame", "path", req.Path, "error", err)
+				break
+			}
 			topic.Messages = []mqtt.Message{}
-			if err := sender.SendFrame(frame, data.IncludeDataOnly); err != nil {
-				ticker.Stop()
-				ds.Client.Unsubscribe(req.Path)
-				return err
+			if err := sender.SendFrame(frame, data.IncludeAll); err != nil {
+				log.DefaultLogger.Error("failed to send data frame", "path", req.Path, "error", err)
 			}
 
 		}

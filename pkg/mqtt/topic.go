@@ -1,7 +1,6 @@
 package mqtt
 
 import (
-	"encoding/json"
 	"path"
 	"sync"
 	"time"
@@ -18,22 +17,18 @@ type Topic struct {
 	Path     string `json:"topic"`
 	Interval time.Duration
 	Messages []Message
+	framer   *framer
 }
 
 func (t *Topic) Key() string {
 	return path.Join(t.Interval.String(), t.Path)
 }
 
-func (t *Topic) ToDataFrame() *data.Frame {
-	ts := make([]time.Time, 0, len(t.Messages))
-	value := make([]json.RawMessage, 0, len(t.Messages))
-
-	for _, m := range t.Messages {
-		ts = append(ts, m.Timestamp)
-		value = append(value, m.Value)
+func (t *Topic) ToDataFrame() (*data.Frame, error) {
+	if t.framer == nil {
+		t.framer = newFramer()
 	}
-
-	return data.NewFrame("", data.NewField("Time", nil, ts), data.NewField(t.Path, nil, value))
+	return t.framer.toFrame(t.Messages)
 }
 
 type TopicMap struct {
@@ -64,8 +59,8 @@ func (tm *TopicMap) AddMessage(path string, message Message) {
 	})
 }
 
-func (tm *TopicMap) Store(topic *Topic) {
-	tm.Map.Store(topic.Key(), topic)
+func (tm *TopicMap) Store(t *Topic) {
+	tm.Map.Store(t.Key(), t)
 }
 
 func (tm *TopicMap) Delete(path string) {

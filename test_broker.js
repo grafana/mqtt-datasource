@@ -5,10 +5,10 @@ const PORT = 1883;
 const publishers = {};
 
 const toMillis = {
-  millisecond: ms => ms,
-  second: sec => sec * 1000,
-  minute: min => min * 60 * 1000,
-  hour: hour => hour * 60 * 60 * 1000,
+  millisecond: (ms) => ms,
+  second: (sec) => sec * 1000,
+  minute: (min) => min * 60 * 1000,
+  hour: (hour) => hour * 60 * 60 * 1000,
 };
 
 const createPublisher = ({ topic, qos }) => {
@@ -24,14 +24,20 @@ const createPublisher = ({ topic, qos }) => {
   const interval = fn(value);
 
   if (!publishers[topic]) {
-    console.log(`publishing to topic:`, topic);
     publishers[topic] = setInterval(() => {
+      let payload = Math.random();
+
+      // use json object to test intervals less than 1 second
+      if (interval % 1000 === 0) {
+        payload = JSON.stringify({ a: payload, b: { d: [payload] } });
+      }
+
       aedes.publish({
         topic,
         cmd: 'publish',
         qos,
         retain: false,
-        payload: Math.random().toString(),
+        payload: payload.toString(),
       });
     }, interval);
   }
@@ -39,8 +45,8 @@ const createPublisher = ({ topic, qos }) => {
 
 server.listen(PORT, () => {
   console.log('server started and listening on port ', PORT);
-  aedes.on('subscribe', subscriptions => subscriptions.forEach(createPublisher));
+  aedes.on('subscribe', (subscriptions) => subscriptions.forEach(createPublisher));
   aedes.on('connectionError', console.error);
-  aedes.on('clientDisconnect', client => console.log(`disconnect: ${client.id}`));
-  aedes.on('client', client => console.log(`connect: ${client.id}`));
+  aedes.on('clientDisconnect', (client) => console.log(`disconnect: ${client.id}`));
+  aedes.on('client', (client) => console.log(`connect: ${client.id}`));
 });

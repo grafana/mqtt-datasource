@@ -40,10 +40,7 @@ func (ds *MQTTDatasource) query(query backend.DataQuery) backend.DataResponse {
 
 	t.Interval = query.Interval
 
-	// ensure the client is subscribed to the topic.
-	ds.Client.Subscribe(&t)
-
-	frame := t.ToDataFrame()
+	frame := data.NewFrame("")
 	frame.SetMeta(&data.FrameMeta{
 		Channel: path.Join(ds.channelPrefix, t.Key()),
 	})

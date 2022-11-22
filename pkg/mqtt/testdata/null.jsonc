@@ -1,0 +1,41 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: mqtt
+//  Dimensions: 1 Fields by 1 Rows
+//  +-------------------------------+
+//  | Name: Time                    |
+//  | Labels:                       |
+//  | Type: []time.Time             |
+//  +-------------------------------+
+//  | 1969-12-31 19:01:40 -0500 EST |
+//  +-------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "mqtt",
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            100000
+          ]
+        ]
+      }
+    }
+  ]
+}

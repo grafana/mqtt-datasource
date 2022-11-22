@@ -1,0 +1,66 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: mqtt
+//  Dimensions: 3 Fields by 1 Rows
+//  +-------------------------------+------------------+-------------------------+
+//  | Name: Time                    | Name: a          | Name: b                 |
+//  | Labels:                       | Labels:          | Labels:                 |
+//  | Type: []time.Time             | Type: []*float64 | Type: []json.RawMessage |
+//  +-------------------------------+------------------+-------------------------+
+//  | 1969-12-31 19:01:40 -0500 EST | 1                | [1,2,3]                 |
+//  +-------------------------------+------------------+-------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "mqtt",
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "a",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "b",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            100000
+          ],
+          [
+            1
+          ],
+          [
+            [
+              1,
+              2,
+              3
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

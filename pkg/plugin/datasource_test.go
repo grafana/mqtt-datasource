@@ -59,14 +59,6 @@ func (c *fakeMQTTClient) IsSubscribed(_ string) bool {
 	return c.subscribed
 }
 
-func (c *fakeMQTTClient) Messages(_ string) ([]mqtt.Message, bool) {
-	return []mqtt.Message{}, true
-}
-
-func (c *fakeMQTTClient) Flush(_ string) ([]mqtt.Message, bool) {
-	return []mqtt.Message{}, true
-}
-
-func (c *fakeMQTTClient) Subscribe(_ *mqtt.Topic) {}
-func (c *fakeMQTTClient) Unsubscribe(_ string)    {}
-func (c *fakeMQTTClient) Dispose()                {}
+func (c *fakeMQTTClient) Subscribe(_ string) *mqtt.Topic { return nil }
+func (c *fakeMQTTClient) Unsubscribe(_ string)           {}
+func (c *fakeMQTTClient) Dispose()                       {}

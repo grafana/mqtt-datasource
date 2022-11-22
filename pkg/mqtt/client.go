@@ -3,6 +3,8 @@ package mqtt
 import (
 	"fmt"
 	"math/rand"
+	"path"
+	"strings"
 	"time"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
@@ -10,10 +12,10 @@ import (
 )
 
 type Client interface {
-	GetTopic(path string) (*Topic, bool)
+	GetTopic(string) (*Topic, bool)
 	IsConnected() bool
-	Subscribe(topic *Topic)
-	Unsubscribe(topic string)
+	Subscribe(string) *Topic
+	Unsubscribe(string)
 	Dispose()
 }
 
@@ -47,7 +49,7 @@ func NewClient(o Options) (Client, error) {
 	opts.SetAutoReconnect(true)
 	opts.SetMaxReconnectInterval(10 * time.Second)
 	opts.SetConnectionLostHandler(func(c paho.Client, err error) {
-		log.DefaultLogger.Error(fmt.Sprintf("MQTT Connection Lost: %s", err.Error()))
+		log.DefaultLogger.Error("MQTT Connection lost", "error", err)
 	})
 	opts.SetReconnectingHandler(func(c paho.Client, options *paho.ClientOptions) {
 		log.DefaultLogger.Debug("MQTT Reconnecting")
@@ -81,13 +83,33 @@ func (c *client) GetTopic(reqPath string) (*Topic, bool) {
 	return c.topics.Load(reqPath)
 }
 
-func (c *client) Subscribe(t *Topic) {
-	if _, ok := c.topics.Load(t.Key()); ok {
-		return
+func (c *client) Subscribe(reqPath string) *Topic {
+	chunks := strings.Split(reqPath, "/")
+	if len(chunks) < 2 {
+		log.DefaultLogger.Error("Invalid path", "path", reqPath)
+		return nil
 	}
-	log.DefaultLogger.Debug(fmt.Sprintf("Subscribing to MQTT topic: %s", t.Path))
+	interval, err := time.ParseDuration(chunks[0])
+	if err != nil {
+		log.DefaultLogger.Error("Invalid interval", "path", reqPath, "interval", chunks[0])
+		return nil
+	}
+
+	topicPath := path.Join(chunks[1:]...)
+	t := &Topic{
+		Path:     topicPath,
+		Interval: interval,
+	}
+	if t, ok := c.topics.Load(topicPath); ok {
+		return t
+	}
+
+	log.DefaultLogger.Debug("Subscribing to MQTT topic", "topic", t.Path)
+	if token := c.client.Subscribe(t.Path, 0, c.HandleMessage); token.Wait() && token.Error() != nil {
+		log.DefaultLogger.Error("Error subscribing to MQTT topic", "topic", t.Path, "error", token.Error())
+	}
 	c.topics.Store(t)
-	c.client.Subscribe(t.Path, 0, c.HandleMessage)
+	return t
 }
 
 func (c *client) Unsubscribe(reqPath string) {
@@ -95,8 +117,10 @@ func (c *client) Unsubscribe(reqPath string) {
 	if !ok {
 		return
 	}
-	log.DefaultLogger.Debug(fmt.Sprintf("Unsubscribing from MQTT topic: %s", t.Path))
-	c.client.Unsubscribe(t.Path)
+	log.DefaultLogger.Debug("Unsubscribing from MQTT topic", "topic", t.Path)
+	if token := c.client.Unsubscribe(t.Path); token.Wait() && token.Error() != nil {
+		log.DefaultLogger.Error("Error unsubscribing from MQTT topic", "topic", t.Path, "error", token.Error())
+	}
 	c.topics.Delete(t.Key())
 }
 
