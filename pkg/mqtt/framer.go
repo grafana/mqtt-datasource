@@ -61,12 +61,12 @@ func (df *framer) key() string {
 	return strings.Join(df.path, "")
 }
 
-func (df *framer) addNil() error {
+func (df *framer) addNil() {
 	if idx, ok := df.fieldMap[df.key()]; ok {
 		df.fields[idx].Set(0, nil)
-		return nil
+		return
 	}
-	return fmt.Errorf("nil value for unknown field %s", df.key())
+	log.DefaultLogger.Debug("nil value for unknown field", "key", df.key())
 }
 
 func (df *framer) addValue(fieldType data.FieldType, v interface{}) {
