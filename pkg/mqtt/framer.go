@@ -35,19 +35,22 @@ func (df *framer) next() error {
 		df.addValue(data.FieldTypeJSON, json.RawMessage(df.iterator.SkipAndReturnBytes()))
 	case jsoniter.ObjectValue:
 		size := len(df.path)
+		if size > 0 {
+			df.addValue(data.FieldTypeJSON, json.RawMessage(df.iterator.SkipAndReturnBytes()))
+			break
+		}
 		for fname := df.iterator.ReadObject(); fname != ""; fname = df.iterator.ReadObject() {
 			if size == 0 {
-				df.path = []string{fname}
-				df.next()
-				continue
+				df.path = append(df.path, fname)
+				if err := df.next(); err != nil {
+					return err
+				}
 			}
-			df.addValue(data.FieldTypeJSON, json.RawMessage(df.iterator.SkipAndReturnBytes()))
-			df.path = []string{}
 		}
-
 	case jsoniter.InvalidValue:
 		return fmt.Errorf("invalid value")
 	}
+	df.path = []string{}
 	return nil
 }
 
@@ -58,23 +61,26 @@ func (df *framer) key() string {
 	return strings.Join(df.path, "")
 }
 
-func (df *framer) addNil() {
+func (df *framer) addNil() error {
 	if idx, ok := df.fieldMap[df.key()]; ok {
 		df.fields[idx].Set(0, nil)
-	} else {
-		log.DefaultLogger.Warn("Skip nil field", "key", df.key())
+		return nil
 	}
+	return fmt.Errorf("nil value for unknown field %s", df.key())
 }
 
 func (df *framer) addValue(fieldType data.FieldType, v interface{}) {
 	if idx, ok := df.fieldMap[df.key()]; ok {
+		if df.fields[idx].Type() != fieldType {
+			log.DefaultLogger.Debug("field type mismatch", "key", df.key(), "existing", df.fields[idx], "new", fieldType)
+			return
+		}
 		df.fields[idx].Append(v)
 		return
 	}
-
-	field := data.NewFieldFromFieldType(fieldType, 1)
+	field := data.NewFieldFromFieldType(fieldType, df.fields[0].Len())
 	field.Name = df.key()
-	field.Set(0, v)
+	field.Append(v)
 	df.fields = append(df.fields, field)
 	df.fieldMap[df.key()] = len(df.fields) - 1
 }
@@ -102,10 +108,20 @@ func (df *framer) toFrame(messages []Message) (*data.Frame, error) {
 		df.iterator = jsoniter.ParseBytes(jsoniter.ConfigDefault, message.Value)
 		err := df.next()
 		if err != nil {
-			return nil, err
+			log.DefaultLogger.Error("error parsing message", "error", err)
+			continue
 		}
 		df.fields[0].Append(message.Timestamp)
+		df.extendFields(df.fields[0].Len() - 1)
 	}
 
 	return data.NewFrame("mqtt", df.fields...), nil
+}
+
+func (df *framer) extendFields(idx int) {
+	for _, f := range df.fields {
+		if idx+1 > f.Len() {
+			f.Extend(idx + 1 - f.Len())
+		}
+	}
 }

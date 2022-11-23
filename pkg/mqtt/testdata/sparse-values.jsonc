@@ -1,0 +1,89 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: mqtt
+//  Dimensions: 4 Fields by 4 Rows
+//  +-------------------------------+------------------+------------------+------------------+
+//  | Name: Time                    | Name: a          | Name: b          | Name: c          |
+//  | Labels:                       | Labels:          | Labels:          | Labels:          |
+//  | Type: []time.Time             | Type: []*float64 | Type: []*float64 | Type: []*float64 |
+//  +-------------------------------+------------------+------------------+------------------+
+//  | 1969-12-31 19:00:00 -0500 EST | 1                | 2                | null             |
+//  | 1969-12-31 19:01:00 -0500 EST | null             | 3                | null             |
+//  | 1969-12-31 19:02:00 -0500 EST | 4                | null             | null             |
+//  | 1969-12-31 19:03:00 -0500 EST | null             | null             | 5                |
+//  +-------------------------------+------------------+------------------+------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "mqtt",
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "a",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "b",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "c",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            0,
+            60000,
+            120000,
+            180000
+          ],
+          [
+            1,
+            null,
+            4,
+            null
+          ],
+          [
+            2,
+            3,
+            null,
+            null
+          ],
+          [
+            null,
+            null,
+            null,
+            5
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -37,6 +37,23 @@ func Test_framer(t *testing.T) {
 		runTest(t, "object", map[string]interface{}{"a": 1, "b": 2})
 	})
 
+	t.Run("object with changing field type", func(t *testing.T) {
+		runTest(t, "object-changing-type",
+			map[string]interface{}{"a": 1, "b": 2},
+			map[string]interface{}{"a": "test", "b": false},
+			map[string]interface{}{"a": 3, "b": 4},
+		)
+	})
+
+	t.Run("sparse fields", func(t *testing.T) {
+		runTest(t, "sparse-values",
+			map[string]interface{}{"a": 1, "b": 2},
+			map[string]interface{}{"b": 3},
+			map[string]interface{}{"a": 4},
+			map[string]interface{}{"c": 5},
+		)
+	})
+
 	t.Run("nested-object", func(t *testing.T) {
 		runTest(t, "nested-object", map[string]interface{}{"a": 1, "b": map[string]any{"c": []any{1, 2, 3}}})
 	})
@@ -46,10 +63,15 @@ func Test_framer(t *testing.T) {
 	})
 }
 
-func runTest(t *testing.T, name string, v any) {
+func runTest(t *testing.T, name string, values ...any) {
 	t.Helper()
 	f := newFramer()
-	frame, err := f.toFrame([]Message{{Timestamp: time.Unix(100, 0), Value: toJSON(v)}})
+	timestamp := time.Unix(0, 0)
+	messages := []Message{}
+	for i, v := range values {
+		messages = append(messages, Message{Timestamp: timestamp.Add(time.Duration(i) * time.Minute), Value: toJSON(v)})
+	}
+	frame, err := f.toFrame(messages)
 	require.NoError(t, err)
 	require.NotNil(t, frame)
 	experimental.CheckGoldenJSONFrame(t, "testdata", name, frame, update)
