@@ -16,19 +16,8 @@ The MQTT data source has the following requirements:
 ## Known limitations
 
 - The plugin currently does not support all of the MQTT CONNECT packet options.
-- The plugin currently does not support TLS.
-- Including multiple topics in a panel is not yet well supported.
-- This plugin automatically supports topics publishing very simple JSON formatted messages. Note that only the following structure is supported as of now:
-```
-{
-    "value1": 1.0,
-    "value2": 2,
-    "value3": 3.33,
-    ...
-}
-```
-We do plan to support more complex JSON data structures in the upcoming releases. Contributions are highly encouraged!
-- This plugin currently attaches timestamps to the messages when they are received, so there is no way to have custom timestamp for messages.
+- This plugin automatically supports topics publishing numbers, strings, booleans, and JSON formatted values. Nested object values can be extracted using the `Extract Fields` transformation.
+- This plugin automatically attaches timestamps to the messages when they are received. Timestamps included in the message body can be parsed using the `Convert field type` transformation.
 ## Install the plugin
 
 ### Installation Pre-requisites

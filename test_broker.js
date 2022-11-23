@@ -29,7 +29,7 @@ const createPublisher = ({ topic, qos }) => {
 
       // use json object to test intervals less than 1 second
       if (interval % 1000 === 0) {
-        payload = JSON.stringify({ a: payload, b: { d: [payload] } });
+        payload = JSON.stringify({ a: payload,  b: { c: {d: [payload] }} });
       }
 
       aedes.publish({
