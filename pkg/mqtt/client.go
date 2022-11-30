@@ -3,34 +3,37 @@ package mqtt
 import (
 	"fmt"
 	"math/rand"
+	"path"
+	"strings"
 	"time"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
+type Client interface {
+	GetTopic(string) (*Topic, bool)
+	IsConnected() bool
+	Subscribe(string) *Topic
+	Unsubscribe(string)
+	Dispose()
+}
+
 type Options struct {
-	Host     string `json:"host"`
-	Port     uint16 `json:"port"`
+	URI      string `json:"uri"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-type StreamMessage struct {
-	Topic string
-	Value string
-}
-
-type Client struct {
+type client struct {
 	client paho.Client
 	topics TopicMap
-	stream chan StreamMessage
 }
 
-func NewClient(o Options) (*Client, error) {
+func NewClient(o Options) (Client, error) {
 	opts := paho.NewClientOptions()
 
-	opts.AddBroker(fmt.Sprintf("tcp://%s:%d", o.Host, o.Port))
+	opts.AddBroker(o.URI)
 	opts.SetClientID(fmt.Sprintf("grafana_%d", rand.Int()))
 
 	if o.Username != "" {
@@ -46,7 +49,7 @@ func NewClient(o Options) (*Client, error) {
 	opts.SetAutoReconnect(true)
 	opts.SetMaxReconnectInterval(10 * time.Second)
 	opts.SetConnectionLostHandler(func(c paho.Client, err error) {
-		log.DefaultLogger.Error(fmt.Sprintf("MQTT Connection Lost: %s", err.Error()))
+		log.DefaultLogger.Error("MQTT Connection lost", "error", err)
 	})
 	opts.SetReconnectingHandler(func(c paho.Client, options *paho.ClientOptions) {
 		log.DefaultLogger.Debug("MQTT Reconnecting")
@@ -54,86 +57,74 @@ func NewClient(o Options) (*Client, error) {
 
 	log.DefaultLogger.Info("MQTT Connecting")
 
-	client := paho.NewClient(opts)
-	if token := client.Connect(); token.Wait() && token.Error() != nil {
+	pahoClient := paho.NewClient(opts)
+	if token := pahoClient.Connect(); token.Wait() && token.Error() != nil {
 		return nil, fmt.Errorf("error connecting to MQTT broker: %s", token.Error())
 	}
 
-	return &Client{
-		client: client,
-		stream: make(chan StreamMessage, 1000),
+	return &client{
+		client: pahoClient,
 	}, nil
 }
 
-func (c *Client) IsConnected() bool {
+func (c *client) IsConnected() bool {
 	return c.client.IsConnectionOpen()
 }
 
-func (c *Client) IsSubscribed(path string) bool {
-	_, ok := c.topics.Load(path)
-	return ok
-}
-
-func (c *Client) Messages(path string) ([]Message, bool) {
-	topic, ok := c.topics.Load(path)
-	if !ok {
-		return nil, ok
-	}
-	return topic.messages, true
-}
-
-func (c *Client) Stream() chan StreamMessage {
-	return c.stream
-}
-
-func (c *Client) HandleMessage(_ paho.Client, msg paho.Message) {
-	log.DefaultLogger.Debug(fmt.Sprintf("Received MQTT Message for topic %s", msg.Topic()))
-	topic, ok := c.topics.Load(msg.Topic())
-	if !ok {
-		return
-	}
-
-	// store message for query
+func (c *client) HandleMessage(_ paho.Client, msg paho.Message) {
 	message := Message{
 		Timestamp: time.Now(),
-		Value:     string(msg.Payload()),
+		Value:     msg.Payload(),
 	}
-	topic.messages = append(topic.messages, message)
-
-	// limit the size of the retained messages
-	if len(topic.messages) > 1000 {
-		topic.messages = topic.messages[1:]
-	}
-
-	c.topics.Store(topic)
-
-	streamMessage := StreamMessage{Topic: msg.Topic(), Value: string(msg.Payload())}
-	select {
-	case c.stream <- streamMessage:
-	default:
-		// don't block if nothing is reading from the channel
-	}
+	c.topics.AddMessage(msg.Topic(), message)
 }
 
-func (c *Client) Subscribe(t string) {
-	if _, ok := c.topics.Load(t); ok {
+func (c *client) GetTopic(reqPath string) (*Topic, bool) {
+	return c.topics.Load(reqPath)
+}
+
+func (c *client) Subscribe(reqPath string) *Topic {
+	chunks := strings.Split(reqPath, "/")
+	if len(chunks) < 2 {
+		log.DefaultLogger.Error("Invalid path", "path", reqPath)
+		return nil
+	}
+	interval, err := time.ParseDuration(chunks[0])
+	if err != nil {
+		log.DefaultLogger.Error("Invalid interval", "path", reqPath, "interval", chunks[0])
+		return nil
+	}
+
+	topicPath := path.Join(chunks[1:]...)
+	t := &Topic{
+		Path:     topicPath,
+		Interval: interval,
+	}
+	if t, ok := c.topics.Load(topicPath); ok {
+		return t
+	}
+
+	log.DefaultLogger.Debug("Subscribing to MQTT topic", "topic", t.Path)
+	if token := c.client.Subscribe(t.Path, 0, c.HandleMessage); token.Wait() && token.Error() != nil {
+		log.DefaultLogger.Error("Error subscribing to MQTT topic", "topic", t.Path, "error", token.Error())
+	}
+	c.topics.Store(t)
+	return t
+}
+
+func (c *client) Unsubscribe(reqPath string) {
+	t, ok := c.GetTopic(reqPath)
+	if !ok {
 		return
 	}
-	log.DefaultLogger.Debug(fmt.Sprintf("Subscribing to MQTT topic: %s", t))
-	topic := Topic{
-		path: t,
+	log.DefaultLogger.Debug("Unsubscribing from MQTT topic", "topic", t.Path)
+	if token := c.client.Unsubscribe(t.Path); token.Wait() && token.Error() != nil {
+		log.DefaultLogger.Error("Error unsubscribing from MQTT topic", "topic", t.Path, "error", token.Error())
 	}
-	c.topics.Store(&topic)
-	c.client.Subscribe(t, 0, c.HandleMessage)
+	c.topics.Delete(t.Key())
 }
 
-func (c *Client) Unsubscribe(t string) {
-	log.DefaultLogger.Debug(fmt.Sprintf("Unsubscribing from MQTT topic: %s", t))
-	c.client.Unsubscribe(t)
-	c.topics.Delete(t)
-}
-
-func (c *Client) Dispose() {
+func (c *client) Dispose() {
 	log.DefaultLogger.Info("MQTT Disconnecting")
 	c.client.Disconnect(250)
 }

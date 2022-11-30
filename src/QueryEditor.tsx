@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Field, Input } from '@grafana/ui';
+import { Input, InlineFieldRow, InlineField } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from './datasource';
 import { MqttDataSourceOptions, MqttQuery } from './types';
@@ -8,23 +8,23 @@ import { handlerFactory } from 'handleEvent';
 type Props = QueryEditorProps<DataSource, MqttQuery, MqttDataSourceOptions>;
 
 export const QueryEditor = (props: Props) => {
-  const { query, onChange } = props;
+  const { query, onChange, onRunQuery } = props;
   const handleEvent = handlerFactory(query, onChange);
 
   return (
-    <Form onSubmit={() => {}}>
-      {() => (
-        <Field label="Topic">
+    <>
+      <InlineFieldRow>
+        <InlineField label="Topic" labelWidth={8} grow>
           <Input
-            name="queryText"
+            name="topic"
             required
-            value={query.queryText}
-            css=""
-            autoComplete="off"
-            onChange={handleEvent('queryText')}
+            placeholder='e.g. "home/bedroom/temperature"'
+            value={query.topic}
+            onBlur={onRunQuery}
+            onChange={handleEvent('topic')}
           />
-        </Field>
-      )}
-    </Form>
+        </InlineField>
+      </InlineFieldRow>
+    </>
   );
 };
