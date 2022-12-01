@@ -4,14 +4,37 @@
 
 The MQTT data source plugin allows you to visualize streaming MQTT data from within Grafana.
 
-This datasource is under active development, all feedback and help is encouraged!
-
 ## Requirements
 
 The MQTT data source has the following requirements:
 
 - Grafana user with a server or organization administration role; refer to [Permissions](https://grafana.com/docs/grafana/latest/permissions/).
 - Access to a MQTT broker.
+
+## Configure the data source
+
+[Add a data source](https://grafana.com/docs/grafana/latest/datasources/add-a-data-source/) by filling in the following fields:
+
+#### Basic fields
+
+| Field | Description                                        |
+| ----- | -------------------------------------------------- |
+| Name  | A name for this particular MQTT data source |
+| URI   | The scehme, host, and port of the MQTT Broker. Supported schemes: TCP (tcp://), TLS (tls://), and WebSocket (ws://)             |
+
+#### Authentication fields
+
+| Field    | Description                                                       |
+| -------- | ----------------------------------------------------------------- |
+| Username | (Optional) The username to use when connecting to the MQTT broker |
+| Password | (Optional) The password to use when connecting to the MQTT broker |
+
+## Query the data source
+
+The query editor allows you to specify which MQTT topics the panel will subscribe to. Refer to the [MQTT v3.1.1 specification](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718106)
+for more information about valid topic names and filters.
+
+![mqtt dashboard](./test_broker.gif)
 
 ## Known limitations
 
@@ -44,29 +67,3 @@ NOTE: The `yarn build` command above might fail on a non-unix-like system, like 
 2. From the top-right corner, click the **Add data source** button.
 3. Search for `MQTT` in the search field, and hover over the MQTT search result.
 4. Click the **Select** button for MQTT.
-
-## Configure the data source
-
-[Add a data source](https://grafana.com/docs/grafana/latest/datasources/add-a-data-source/) by filling in the following fields:
-
-#### Basic fields
-
-| Field | Description                                        |
-| ----- | -------------------------------------------------- |
-| Name  | A name for this particular AppDynamics data source |
-| Host  | The hostname or IP of the MQTT Broker              |
-| Port  | The port used by the MQTT Broker (default 1883)    |
-
-#### Authentication fields
-
-| Field    | Description                                                       |
-| -------- | ----------------------------------------------------------------- |
-| Username | (Optional) The username to use when connecting to the MQTT broker |
-| Password | (Optional) The password to use when connecting to the MQTT broker |
-
-## Query the data source
-
-The query editor allows you to specify which MQTT topics the panel will subscribe to. Refer to the [MQTT v3.1.1 specification](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc398718106)
-for more information about valid topic names and filters.
-
-![mqtt dashboard](./test_broker.gif)
