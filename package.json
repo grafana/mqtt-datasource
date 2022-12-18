@@ -15,7 +15,7 @@
   "devDependencies": {
     "@grafana/data": "9.1.0",
     "@grafana/runtime": "9.1.0",
-    "@grafana/toolkit": "9.1.0",
+    "@grafana/toolkit": "^9.3.2",
     "@grafana/ui": "9.1.0",
     "@types/lodash": "latest",
     "aedes": "^0.45.0"

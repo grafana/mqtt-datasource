@@ -12,7 +12,7 @@ export const ConfigEditor = (props: Props) => {
     options,
     options: { jsonData, secureJsonData, secureJsonFields },
   } = props;
-  const { uri, username } = jsonData;
+  const { uri, username,rootCertPath,privateKeyPath,certificatePath } = jsonData;
   const handleChange = handlerFactory(options, onOptionsChange);
 
   const onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -23,6 +23,7 @@ export const ConfigEditor = (props: Props) => {
       },
     });
   };
+  
 
   const onResetPassword = () => {
     onOptionsChange({
@@ -59,6 +60,59 @@ export const ConfigEditor = (props: Props) => {
           </InlineField>
         </InlineFieldRow>
       </FieldSet>
+      <FieldSet label="TLS">
+      <InlineFieldRow>
+          <InlineField
+            label="Root certificate"
+            labelWidth={30}
+            tooltip="Root certificate"
+          >
+            <Input
+              width={60}
+              name="uri"
+              required
+              value={rootCertPath}
+              autoComplete="off"
+              placeholder=""
+              onChange={handleChange('jsonData.rootCertPath')}
+            />
+          </InlineField>
+        </InlineFieldRow> 
+        <InlineFieldRow>
+          <InlineField
+            label="Private Key Path"
+            labelWidth={30}
+            tooltip="Private Key Path"
+          >
+            <Input
+              width={60}
+              name="uri"
+              required
+              value={privateKeyPath}
+              autoComplete="off"
+              placeholder=""
+              onChange={handleChange('jsonData.privateKeyPath')}
+            />
+          </InlineField>
+        </InlineFieldRow> 
+        <InlineFieldRow>
+          <InlineField
+            label="Certificate"
+            labelWidth={30}
+            tooltip="Certificate"
+          >
+            <Input
+              width={60}
+              name="uri"
+              required
+              value={certificatePath}
+              autoComplete="off"
+              placeholder=""
+              onChange={handleChange('jsonData.certificatePath')}
+            />
+          </InlineField>
+        </InlineFieldRow>  
+      </FieldSet>
 
       <FieldSet label="Authentication">
         <InlineFieldRow>
@@ -83,7 +137,7 @@ export const ConfigEditor = (props: Props) => {
               onReset={onResetPassword}
             />
           </InlineField>
-        </InlineFieldRow>
+        </InlineFieldRow>         
       </FieldSet>
     </>
   );

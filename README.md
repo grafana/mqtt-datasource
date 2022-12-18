@@ -20,7 +20,7 @@ The MQTT data source has the following requirements:
 | Field | Description                                        |
 | ----- | -------------------------------------------------- |
 | Name  | A name for this particular MQTT data source |
-| URI   | The scehme, host, and port of the MQTT Broker. Supported schemes: TCP (tcp://), TLS (tls://), and WebSocket (ws://)             |
+| URI   | The scheme, host, and port of the MQTT Broker. Supported schemes: TCP (tcp://), TLS (tls://), and WebSocket (ws://)             |
 
 #### Authentication fields
 
@@ -28,6 +28,21 @@ The MQTT data source has the following requirements:
 | -------- | ----------------------------------------------------------------- |
 | Username | (Optional) The username to use when connecting to the MQTT broker |
 | Password | (Optional) The password to use when connecting to the MQTT broker |
+
+#### TLS fields
+
+TLS are used by IOT brokers such as AWS IOT Core. In order to connect, use the tls connection scheme.
+
+| Field    | Description                                                       |
+| -------- | ----------------------------------------------------------------- |
+| Root certificate | (Optional) The path to the root certificate on the server|
+| Private Key Path | (Optional) The path to the private key file on the server|
+| Certificate Path | (Optional) The path to the certificate file on the server|
+
+## Using wildcards
+
+It is possible to subscribe to topic such as TOPIC/# in order to subscribe to a subtree of messages by using the keyword \__WILDCARD__ in place of the # char.
+The subscription becomes: DATA/\__WILDCARD__ (Double underscore before and after `WILDCARD`)
 
 ## Query the data source
 
