@@ -3,6 +3,7 @@ package mqtt
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -109,9 +110,18 @@ func (c *client) IsConnected() bool {
 }
 
 func (c *client) HandleMessage(_ paho.Client, msg paho.Message) {
+	var payload = msg.Payload()
+	var data map[string]interface{}
+	err := json.Unmarshal([]byte(msg.Payload()), &data)
+	data["Topic"] = msg.Topic()
+	if err == nil {
+		log.DefaultLogger.Info("%s", data)
+		payload, _ = json.Marshal(data)
+	}
+
 	message := Message{
 		Timestamp: time.Now(),
-		Value:     msg.Payload(),
+		Value:     payload,
 	}
 	c.topics.AddMessage(msg.Topic(), message)
 }
@@ -121,7 +131,6 @@ func (c *client) GetTopic(reqPath string) (*Topic, bool) {
 }
 
 func (c *client) Subscribe(reqPath string) *Topic {
-	log.DefaultLogger.Info("==:>GetTopic:Subscribe")
 	chunks := strings.Split(reqPath, "/")
 	if len(chunks) < 2 {
 		log.DefaultLogger.Error("Invalid path", "path", reqPath)
