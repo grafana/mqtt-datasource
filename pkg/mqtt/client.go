@@ -1,7 +1,11 @@
 package mqtt
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"path"
 	"strings"
@@ -20,9 +24,12 @@ type Client interface {
 }
 
 type Options struct {
-	URI      string `json:"uri"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	CertificatePath string `json:"certificatePath"`
+	RootCertPath    string `json:"rootCertPath"`
+	PrivateKeyPath  string `json:"privateKeyPath"`
+	URI             string `json:"uri"`
+	Username        string `json:"username"`
+	Password        string `json:"password"`
 }
 
 type client struct {
@@ -30,11 +37,42 @@ type client struct {
 	topics TopicMap
 }
 
+func NewTLSConfig(o Options) (config *tls.Config, err error) {
+	certpool := x509.NewCertPool()
+	pemCerts, err := ioutil.ReadFile(o.RootCertPath)
+	if err != nil {
+		return
+	}
+	certpool.AppendCertsFromPEM(pemCerts)
+
+	cert, err := tls.LoadX509KeyPair(o.CertificatePath, o.PrivateKeyPath)
+	if err != nil {
+		return
+	}
+
+	config = &tls.Config{
+		RootCAs:      certpool,
+		ClientAuth:   tls.NoClientCert,
+		ClientCAs:    nil,
+		Certificates: []tls.Certificate{cert},
+	}
+	return
+}
+
 func NewClient(o Options) (Client, error) {
+
 	opts := paho.NewClientOptions()
 
 	opts.AddBroker(o.URI)
 	opts.SetClientID(fmt.Sprintf("grafana_%d", rand.Int()))
+
+	if o.CertificatePath != "" {
+		tlsconfig, err := NewTLSConfig(o)
+		if err != nil {
+			log.DefaultLogger.Error("Failed to create TLS configuration: %v", err)
+		}
+		opts.SetTLSConfig(tlsconfig)
+	}
 
 	if o.Username != "" {
 		opts.SetUsername(o.Username)
@@ -72,9 +110,18 @@ func (c *client) IsConnected() bool {
 }
 
 func (c *client) HandleMessage(_ paho.Client, msg paho.Message) {
+	var payload = msg.Payload()
+	var data map[string]interface{}
+	err := json.Unmarshal([]byte(msg.Payload()), &data)
+	data["Topic"] = msg.Topic()
+	if err == nil {
+		log.DefaultLogger.Info("%s", data)
+		payload, _ = json.Marshal(data)
+	}
+
 	message := Message{
 		Timestamp: time.Now(),
-		Value:     msg.Payload(),
+		Value:     payload,
 	}
 	c.topics.AddMessage(msg.Topic(), message)
 }
@@ -103,10 +150,10 @@ func (c *client) Subscribe(reqPath string) *Topic {
 	if t, ok := c.topics.Load(topicPath); ok {
 		return t
 	}
-
-	log.DefaultLogger.Debug("Subscribing to MQTT topic", "topic", t.Path)
-	if token := c.client.Subscribe(t.Path, 0, c.HandleMessage); token.Wait() && token.Error() != nil {
-		log.DefaultLogger.Error("Error subscribing to MQTT topic", "topic", t.Path, "error", token.Error())
+	var topic = strings.Replace(t.Path, "__WILDCARD__", "#", -1)
+	log.DefaultLogger.Info("Subscribing to MQTT topic", "topic", topic)
+	if token := c.client.Subscribe(topic, 0, c.HandleMessage); token.Wait() && token.Error() != nil {
+		log.DefaultLogger.Error("Error subscribing to MQTT topic", "topic", topic, "error", token.Error())
 	}
 	c.topics.Store(t)
 	return t

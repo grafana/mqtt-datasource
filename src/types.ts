@@ -8,8 +8,12 @@ export interface MqttQuery extends DataQuery {
 export interface MqttDataSourceOptions extends DataSourceJsonData {
   uri: string;
   username?: string;
+  rootCertPath?: string;
+  privateKeyPath?: string;
+  certificatePath?: string;
 }
 
 export interface MqttSecureJsonData {
   password?: string;
 }
+

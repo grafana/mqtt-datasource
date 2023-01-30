@@ -2,6 +2,8 @@ package mqtt
 
 import (
 	"path"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -51,7 +53,7 @@ func (tm *TopicMap) AddMessage(path string, message Message) {
 		if !ok {
 			return false
 		}
-		if topic.Path == path {
+		if TopicMatches(topic.Path, path) {
 			topic.Messages = append(topic.Messages, message)
 			tm.Store(topic)
 		}
@@ -65,4 +67,16 @@ func (tm *TopicMap) Store(t *Topic) {
 
 func (tm *TopicMap) Delete(path string) {
 	tm.Map.Delete(path)
+}
+
+func TopicMatches(topic string, intopic string) bool {
+	var regex = strings.Replace(topic, "/__WILDCARD__", "/(.*)", -1)
+	m1 := regexp.MustCompile(regex)
+	var grp = m1.ReplaceAllString(intopic, "$1")
+	if grp == "" {
+		return intopic == topic
+	}
+	var intopic2 = strings.Replace(intopic, grp, "__WILDCARD__", -1)
+
+	return strings.Compare(topic, intopic2) == 0
 }
