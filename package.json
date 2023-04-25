@@ -1,9 +1,10 @@
 {
   "name": "grafana-mqtt-datasource",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "MQTT Datasource Plugin",
   "scripts": {
     "build": "rm -rf dist && grafana-toolkit plugin:build && mage build:backend",
+    "spellcheck": "cspell -c cspell.config.json \"**/*.{ts,tsx,js,go,md,mdx,yml,yaml,json,scss,css}\"",
     "test": "grafana-toolkit plugin:test && mage test",
     "dev": "grafana-toolkit plugin:dev",
     "watch": "grafana-toolkit plugin:dev --watch",
@@ -18,7 +19,8 @@
     "@grafana/toolkit": "9.1.0",
     "@grafana/ui": "9.1.0",
     "@types/lodash": "latest",
-    "aedes": "^0.45.0"
+    "aedes": "^0.45.0",
+    "cspell": "6.13.3"
   },
   "resolutions": {
     "rxjs": "7.5.6"
