@@ -66,3 +66,21 @@ func (tm *TopicMap) Store(t *Topic) {
 func (tm *TopicMap) Delete(path string) {
 	tm.Map.Delete(path)
 }
+
+func (tm *TopicMap) CheckForOtherSubscribers(topic *Topic) *Topic {
+	var result *Topic = nil
+	tm.Map.Range(func(key, t any) bool {
+		otherTopic, ok := t.(*Topic)
+		if !ok {
+			return false
+		} else if key == topic.Key() {
+			return true
+		} else if otherTopic.Path == topic.Path {
+			result = otherTopic
+			return false
+		} else {
+			return true
+		}
+	})
+	return result
+}

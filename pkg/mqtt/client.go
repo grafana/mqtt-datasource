@@ -117,9 +117,14 @@ func (c *client) Unsubscribe(reqPath string) {
 	if !ok {
 		return
 	}
-	log.DefaultLogger.Debug("Unsubscribing from MQTT topic", "topic", t.Path)
-	if token := c.client.Unsubscribe(t.Path); token.Wait() && token.Error() != nil {
-		log.DefaultLogger.Error("Error unsubscribing from MQTT topic", "topic", t.Path, "error", token.Error())
+	otherTopic := c.topics.CheckForOtherSubscribers(t)
+	if otherTopic == nil {
+		log.DefaultLogger.Debug("Unsubscribing from MQTT topic", "topic", t.Path)
+		if token := c.client.Unsubscribe(t.Path); token.Wait() && token.Error() != nil {
+			log.DefaultLogger.Error("Error unsubscribing from MQTT topic", "topic", t.Path, "error", token.Error())
+		}
+	} else {
+		log.DefaultLogger.Debug("Will not unsubscribe from MQTT topic because another subscriber is listening to the same topic", "topic", t.Path, "subscriber", t.Key(), "other subscriber", otherTopic.Key())
 	}
 	c.topics.Delete(t.Key())
 }
