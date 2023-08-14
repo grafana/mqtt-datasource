@@ -28,3 +28,6 @@ e2e-results/
 
 # Editor
 .idea
+
+mqtt5*
+AmazonRootCA*.pem

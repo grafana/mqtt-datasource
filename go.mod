@@ -1,4 +1,4 @@
-module github.com/grafana/mqtt-datasource
+module github.com/ISSACS-PSG/mqtt-datasource
 
 go 1.20
 
