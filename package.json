@@ -1,6 +1,6 @@
 {
-  "name": "grafana-mqtt-datasource",
-  "version": "1.0.0-beta.2",
+  "name": "issacs-mqtt-datasource",
+  "version": "1.0.1",
   "description": "MQTT Datasource Plugin",
   "scripts": {
     "build": "rm -rf dist && grafana-toolkit plugin:build && mage build:backend",
