@@ -2,15 +2,17 @@ package main
 
 import (
 	"os"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/mqtt-datasource/pkg/plugin"
+	"github.com/ISSACS-PSG/mqtt-datasource/pkg/plugin"
+	"github.com/ISSACS-PSG/mqtt-datasource/pkg/mqtt"
 )
 
 func main() {
-	if err := datasource.Manage("grafana-mqtt-datasource", plugin.NewMQTTInstance, datasource.ManageOpts{}); err != nil {
-		log.DefaultLogger.Error(err.Error())
-		os.Exit(1)
-	}
+	settings := &mqtt.Options{}
+	settings.URI = "tls://a1ovt7grzmwsh8-ats.iot.us-east-1.amazonaws.com:8883"
+	client, err := mqtt.NewClient(*settings)
+	fmt.Info(client)
 }

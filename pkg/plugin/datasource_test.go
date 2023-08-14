@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/mqtt-datasource/pkg/mqtt"
-	"github.com/grafana/mqtt-datasource/pkg/plugin"
+	"github.com/ISSACS-PSG/mqtt-datasource/pkg/mqtt"
+	"github.com/ISSACS-PSG/mqtt-datasource/pkg/plugin"
 	"github.com/stretchr/testify/require"
 )
 

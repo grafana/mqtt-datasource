@@ -6,6 +6,8 @@ import (
 	"path"
 	"strings"
 	"time"
+	"crypto/tls"
+	"crypto/x509"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -30,19 +32,55 @@ type client struct {
 	topics TopicMap
 }
 
+// Adapted from https://github.com/eclipse/paho.mqtt.golang/blob/master/cmd/ssl/main.go
+// Also see https://www.eclipse.org/paho/clients/golang/
+// https://adrianhesketh.com/2019/11/04/aws-iot-with-go/
+func NewTLSConfig() (config *tls.Config, err error) {
+	// Import trusted certificates from CAfile.pem.
+	certpool := x509.NewCertPool()
+	pemCerts, err := ioutil.ReadFile("/home/kxm613/mqtt-datasource/pkg/mqtt/AmazonRootCA1.pem")
+	if err != nil {
+		fmt.Fatalf("ReadFile: %v", err)
+		return
+	}
+	certpool.AppendCertsFromPEM(pemCerts)
+
+	// Import client certificate/key pair.
+	cert, err := tls.LoadX509KeyPair(
+		"/home/kxm613/mqtt-datasource/pkg/mqtt/mqtt5.certificate.pem",
+		"/home/kxm613/mqtt-datasource/pkg/mqtt/mqtt5.private.key")
+
+	if err != nil {
+		fmt.Fatalf("failedLoadX509KeyPair: %v", err)
+		return
+	}
+
+	// Create tls.Config with desired tls properties
+	config = &tls.Config{
+		// RootCAs = certs used to verify server cert.
+		RootCAs: certpool,
+		// ClientAuth = whether to request cert from server.
+		// Since the server is set up for SSL, this happens
+		// anyways.
+		ClientAuth: tls.NoClientCert,
+		// ClientCAs = certs used to validate client cert.
+		ClientCAs: nil,
+		// Certificates = list of certs client sends to server.
+		Certificates: []tls.Certificate{cert},
+	}
+	return
+}
+
 func NewClient(o Options) (Client, error) {
+	tlsconfig, err := NewTLSConfig()
+
+	if err != nil {
+		fmt.Fatalf("failed to create TLS configuration: %v", err)
+	}
+	
 	opts := paho.NewClientOptions()
-
 	opts.AddBroker(o.URI)
-	opts.SetClientID(fmt.Sprintf("grafana_%d", rand.Int()))
-
-	if o.Username != "" {
-		opts.SetUsername(o.Username)
-	}
-
-	if o.Password != "" {
-		opts.SetPassword(o.Password)
-	}
+	opts.SetClientID(fmt.Sprintf("grafana_%d", rand.Int())).SetTLSConfig(tlsconfig)
 
 	opts.SetPingTimeout(60 * time.Second)
 	opts.SetKeepAlive(60 * time.Second)
