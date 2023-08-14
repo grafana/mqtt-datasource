@@ -33,11 +33,6 @@ type client struct {
 	topics TopicMap
 }
 
-//var f paho.MessageHandler = func(client paho.Client, msg paho.Message) {
-//	fmt.Printf("TOPIC: %s\n", msg.Topic())
-//	fmt.Printf("MSG: %s\n", msg.Payload())
-//}
-
 // Adapted from https://github.com/eclipse/paho.mqtt.golang/blob/master/cmd/ssl/main.go
 // Also see https://www.eclipse.org/paho/clients/golang/
 // https://adrianhesketh.com/2019/11/04/aws-iot-with-go/
@@ -121,6 +116,9 @@ func (c *client) HandleMessage(_ paho.Client, msg paho.Message) {
 		Value:     msg.Payload(),
 	}
 	c.topics.AddMessage(msg.Topic(), message)
+	// for testing
+	fmt.Printf("TOPIC: %s\n", msg.Topic())
+	fmt.Printf("MSG: %s\n", msg.Payload())
 }
 
 func (c *client) GetTopic(reqPath string) (*Topic, bool) {

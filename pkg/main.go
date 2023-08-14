@@ -14,6 +14,9 @@ func main() {
 	settings := &mqtt.Options{}
 	settings.URI = "tls://a1ovt7grzmwsh8-ats.iot.us-east-1.amazonaws.com:8883"
 	client, _ := mqtt.NewClient(*settings)
-	client.Subscribe("printers/status")
+	client.Subscribe("100ms/printers/status")
 	fmt.Println(client)
+	for {
+		
+	}
 }
