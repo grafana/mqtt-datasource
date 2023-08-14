@@ -14,5 +14,5 @@ func main() {
 	settings := &mqtt.Options{}
 	settings.URI = "tls://a1ovt7grzmwsh8-ats.iot.us-east-1.amazonaws.com:8883"
 	client, err := mqtt.NewClient(*settings)
-	fmt.Info(client)
+	fmt.Println(client)
 }

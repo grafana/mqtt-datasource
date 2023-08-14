@@ -8,6 +8,7 @@ import (
 	"time"
 	"crypto/tls"
 	"crypto/x509"
+	"io/ioutil"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -40,7 +41,7 @@ func NewTLSConfig() (config *tls.Config, err error) {
 	certpool := x509.NewCertPool()
 	pemCerts, err := ioutil.ReadFile("/home/kxm613/mqtt-datasource/pkg/mqtt/AmazonRootCA1.pem")
 	if err != nil {
-		fmt.Fatalf("ReadFile: %v", err)
+		fmt.Errorf("ReadFile: %v", err)
 		return
 	}
 	certpool.AppendCertsFromPEM(pemCerts)
@@ -51,7 +52,7 @@ func NewTLSConfig() (config *tls.Config, err error) {
 		"/home/kxm613/mqtt-datasource/pkg/mqtt/mqtt5.private.key")
 
 	if err != nil {
-		fmt.Fatalf("failedLoadX509KeyPair: %v", err)
+		fmt.Errorf("failedLoadX509KeyPair: %v", err)
 		return
 	}
 
@@ -75,7 +76,7 @@ func NewClient(o Options) (Client, error) {
 	tlsconfig, err := NewTLSConfig()
 
 	if err != nil {
-		fmt.Fatalf("failed to create TLS configuration: %v", err)
+		fmt.Errorf("failed to create TLS configuration: %v", err)
 	}
 	
 	opts := paho.NewClientOptions()
