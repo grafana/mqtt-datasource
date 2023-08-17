@@ -32,7 +32,6 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 		select {
 		case <-ctx.Done():
 			log.DefaultLogger.Debug("stopped streaming (context canceled)", "path", req.Path)
-			ds.Client.Unsubscribe(req.Path)
 			ticker.Stop()
 			return nil
 		case <-ticker.C:
