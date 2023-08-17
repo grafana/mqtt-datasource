@@ -117,11 +117,18 @@ func (c *client) Unsubscribe(reqPath string) {
 	if !ok {
 		return
 	}
+	c.topics.Delete(t.Key())
+
+	if exists := c.topics.HasSubscription(t.Path); exists {
+		// There are still other subscriptions to this path,
+		// so we shouldn't unsubscribe yet.
+		return
+	}
+
 	log.DefaultLogger.Debug("Unsubscribing from MQTT topic", "topic", t.Path)
 	if token := c.client.Unsubscribe(t.Path); token.Wait() && token.Error() != nil {
 		log.DefaultLogger.Error("Error unsubscribing from MQTT topic", "topic", t.Path, "error", token.Error())
 	}
-	c.topics.Delete(t.Key())
 }
 
 func (c *client) Dispose() {
