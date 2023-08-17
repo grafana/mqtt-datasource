@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.0-beta.3] - 2023-08-17
+
+- Fix for #44
+
 ## [1.0.0-beta.2] - 2023-04-25
 
 - Update Plugin SDK dependency
