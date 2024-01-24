@@ -2,6 +2,7 @@ package mqtt
 
 import (
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -96,4 +97,11 @@ func (tm *TopicMap) Store(t *Topic) {
 // Delete deletes the topic for the given key.
 func (tm *TopicMap) Delete(key string) {
 	tm.Map.Delete(key)
+}
+
+// replace all __PLUS__ with + and one __HASH__ with #
+// Question: Why does grafana not allow + and # in query?
+func resolveTopic(topic string) string {
+	resolvedTopic := strings.ReplaceAll(topic, "__PLUS__", "+")
+	return strings.Replace(resolvedTopic, "__HASH__", "#", -1)
 }
