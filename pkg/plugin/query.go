@@ -38,13 +38,24 @@ func (ds *MQTTDatasource) query(query backend.DataQuery) backend.DataResponse {
 		return response
 	}
 
-	t.Interval = query.Interval
+	// Subscribe
+	if len(t.Payload) == 0 {
+		t.Interval = query.Interval
 
-	frame := data.NewFrame("")
-	frame.SetMeta(&data.FrameMeta{
-		Channel: path.Join(ds.channelPrefix, t.Key()),
-	})
+		frame := data.NewFrame("")
+		frame.SetMeta(&data.FrameMeta{
+			Channel: path.Join(ds.channelPrefix, t.Key()),
+		})
 
-	response.Frames = append(response.Frames, frame)
+		response.Frames = append(response.Frames, frame)
+		return response
+	}
+
+	// Publish
+	resp, err := ds.Client.Publish(t.Path, t.Payload, t.ResponsePath)
+
+	field := data.NewField("Body", data.Labels{}, []json.RawMessage{resp})
+	response.Frames = append(response.Frames, data.NewFrame("Response", field))
+	response.Error = err
 	return response
 }
