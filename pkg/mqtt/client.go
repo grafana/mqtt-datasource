@@ -147,23 +147,23 @@ func (c *client) Unsubscribe(reqPath string) {
 func (c *client) Publish(topic string, payload map[string]any, responseTopic string) (json.RawMessage, error) {
 	var response json.RawMessage
 	var err error
+	done := make(chan struct{}, 1)
 
-	if responseTopic == "" {
-		return nil, errors.New("response topic should not be empty")
-	}
+	if responseTopic != "" {
+		tokenSub := c.client.Subscribe(responseTopic, 2, func(c paho.Client, m paho.Message) {
+			response = m.Payload()
+			done <- struct{}{}
+		})
 
-	done := make(chan struct{})
-	tokenSub := c.client.Subscribe(responseTopic, 2, func(c paho.Client, m paho.Message) {
-		response = m.Payload()
+		if !tokenSub.WaitTimeout(time.Second) && tokenSub.Error() != nil {
+			err = errors.Join(err, tokenSub.Error())
+			return response, err
+		}
+
+		defer c.client.Unsubscribe(responseTopic)
+	} else {
 		done <- struct{}{}
-	})
-
-	if !tokenSub.WaitTimeout(time.Second) && tokenSub.Error() != nil {
-		err = errors.Join(err, tokenSub.Error())
-		return response, err
 	}
-
-	defer c.client.Unsubscribe(responseTopic)
 
 	data, errMarshal := json.Marshal(&payload)
 	if errMarshal != nil {
