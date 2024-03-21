@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.0-beta.4] - 2024-03-21
+
+- Add support for MQTT Wildcards
+
 ## [1.0.0-beta.3] - 2023-08-17
 
 - Fix for #44
