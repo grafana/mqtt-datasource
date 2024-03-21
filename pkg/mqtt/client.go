@@ -71,12 +71,13 @@ func (c *client) IsConnected() bool {
 	return c.client.IsConnectionOpen()
 }
 
-func (c *client) HandleMessage(_ paho.Client, msg paho.Message) {
+func (c *client) HandleMessage(topic string, payload []byte) {
 	message := Message{
 		Timestamp: time.Now(),
-		Value:     msg.Payload(),
+		Value:     payload,
 	}
-	c.topics.AddMessage(msg.Topic(), message)
+
+	c.topics.AddMessage(topic, message)
 }
 
 func (c *client) GetTopic(reqPath string) (*Topic, bool) {
@@ -104,9 +105,16 @@ func (c *client) Subscribe(reqPath string) *Topic {
 		return t
 	}
 
-	log.DefaultLogger.Debug("Subscribing to MQTT topic", "topic", t.Path)
-	if token := c.client.Subscribe(t.Path, 0, c.HandleMessage); token.Wait() && token.Error() != nil {
-		log.DefaultLogger.Error("Error subscribing to MQTT topic", "topic", t.Path, "error", token.Error())
+	log.DefaultLogger.Debug("Subscribing to MQTT topic", "topic", topicPath)
+
+	topic := resolveTopic(t.Path)
+
+	if token := c.client.Subscribe(topic, 0, func(_ paho.Client, m paho.Message) {
+		// by wrapping HandleMessage we can directly get the correct topicPath for the incoming topic
+		// and don't need to regex it against + and #.
+		c.HandleMessage(topicPath, []byte(m.Payload()))
+	}); token.Wait() && token.Error() != nil {
+		log.DefaultLogger.Error("Error subscribing to MQTT topic", "topic", topicPath, "error", token.Error())
 	}
 	c.topics.Store(t)
 	return t
@@ -126,7 +134,9 @@ func (c *client) Unsubscribe(reqPath string) {
 	}
 
 	log.DefaultLogger.Debug("Unsubscribing from MQTT topic", "topic", t.Path)
-	if token := c.client.Unsubscribe(t.Path); token.Wait() && token.Error() != nil {
+
+	topic := resolveTopic(t.Path)
+	if token := c.client.Unsubscribe(topic); token.Wait() && token.Error() != nil {
 		log.DefaultLogger.Error("Error unsubscribing from MQTT topic", "topic", t.Path, "error", token.Error())
 	}
 }
