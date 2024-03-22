@@ -16,10 +16,12 @@ type Message struct {
 
 // Topic represents a MQTT topic.
 type Topic struct {
-	Path     string `json:"topic"`
-	Interval time.Duration
-	Messages []Message
-	framer   *framer
+	Path         string         `json:"topic"`
+	Payload      map[string]any `json:"payload,omitempty"`
+	ResponsePath string         `json:"response,omitempty"`
+	Interval     time.Duration
+	Messages     []Message
+	framer       *framer
 }
 
 // Key returns the key for the topic.

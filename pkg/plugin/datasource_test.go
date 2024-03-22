@@ -2,6 +2,7 @@ package plugin_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -60,5 +61,8 @@ func (c *fakeMQTTClient) IsSubscribed(_ string) bool {
 }
 
 func (c *fakeMQTTClient) Subscribe(_ string) *mqtt.Topic { return nil }
-func (c *fakeMQTTClient) Unsubscribe(_ string)           {}
-func (c *fakeMQTTClient) Dispose()                       {}
+func (c *fakeMQTTClient) Publish(string, map[string]any, string) (json.RawMessage, error) {
+	return json.RawMessage{}, nil
+}
+func (c *fakeMQTTClient) Unsubscribe(_ string) {}
+func (c *fakeMQTTClient) Dispose()             {}
