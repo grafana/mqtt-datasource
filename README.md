@@ -52,6 +52,15 @@ Details: [Ubuntu](https://github.com/grafana/mqtt-datasource/issues/15#issuecomm
 This plugin currently supports MQTT v3.1.x.
 
 __Note: Since this plugin uses the Grafana Live Streaming API, make sure to use Grafana v8.0+__
+### Docker Build and Run
+
+`docker buildx build --platform=linux/amd64 -t grafana-mqtt-datasource .`
+
+`docker run -it -p 3000:3000 -e GF_DEFAULT_APP_MODE=development --name grafana-mqtt  grafana-mqtt-datasource`
+
+It is also possible to copy the plugin outside of the running grafana container above with:
+`docker cp grafana-mqtt:/var/lib/grafana/plugins/mqtt-datasource/ ./mqtt-plugin`
+
 ### Installation Steps
 
 1. Clone the plugin to your Grafana plugins directory.
