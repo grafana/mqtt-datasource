@@ -1,6 +1,6 @@
 {
   "name": "grafana-mqtt-datasource",
-  "version": "1.0.0-beta.4",
+  "version": "1.1.0-beta.1",
   "description": "MQTT Datasource Plugin",
   "scripts": {
     "build": "rm -rf dist && grafana-toolkit plugin:build && mage build:backend",
@@ -15,6 +15,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/data": "9.1.0",
+    "@grafana/experimental": "1.7.11",
     "@grafana/runtime": "9.1.0",
     "@grafana/toolkit": "9.1.0",
     "@grafana/ui": "9.1.0",

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0-beta.1] - 2024-06-06
+
+- Add support for TLS Client Authentication
+- Add TLS Skip Verify option
+- Add Support for specifying a custom CA Certificate
+
 ## [1.0.0-beta.4] - 2024-03-21
 
 - Add support for MQTT Wildcards
