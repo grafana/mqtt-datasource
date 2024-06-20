@@ -16,6 +16,11 @@
     "yarn.lock"
   ],
   "words": [
+    "seccomp",
+    "PTRACE",
+    "DATAPROXY",
+    "TLSCA",
+    "typecheck",
     "datasource",
     "datasources",
     "testid",
