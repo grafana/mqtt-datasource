@@ -1,6 +1,8 @@
 package mqtt
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"math/rand"
 	"path"
@@ -20,9 +22,13 @@ type Client interface {
 }
 
 type Options struct {
-	URI      string `json:"uri"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	URI           string `json:"uri"`
+	Username      string `json:"username"`
+	Password      string `json:"password"`
+	TLSCACert     string `json:"tlsCACert"`
+	TLSClientCert string `json:"tlsClientCert"`
+	TLSClientKey  string `json:"tlsClientKey"`
+	TLSSkipVerify bool   `json:"tlsSkipVerify"`
 }
 
 type client struct {
@@ -44,6 +50,26 @@ func NewClient(o Options) (Client, error) {
 		opts.SetPassword(o.Password)
 	}
 
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: o.TLSSkipVerify,
+	}
+
+	if o.TLSClientCert != "" || o.TLSClientKey != "" {
+		cert, err := tls.X509KeyPair([]byte(o.TLSClientCert), []byte(o.TLSClientKey))
+		if err != nil {
+			return nil, fmt.Errorf("failed to setup TLSClientCert: %w", err)
+		}
+
+		tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
+	}
+
+	if o.TLSCACert != "" {
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM([]byte(o.TLSCACert))
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	opts.SetTLSConfig(tlsConfig)
 	opts.SetPingTimeout(60 * time.Second)
 	opts.SetKeepAlive(60 * time.Second)
 	opts.SetAutoReconnect(true)

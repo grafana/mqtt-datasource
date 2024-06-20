@@ -66,5 +66,17 @@ func getDatasourceSettings(s backend.DataSourceInstanceSettings) (*mqtt.Options,
 		settings.Password = password
 	}
 
+	if tlsClientCert, exists := s.DecryptedSecureJSONData["tlsClientCert"]; exists {
+		settings.TLSClientCert = tlsClientCert
+	}
+
+	if tlsClientKey, exists := s.DecryptedSecureJSONData["tlsClientKey"]; exists {
+		settings.TLSClientKey = tlsClientKey
+	}
+
+	if tlsCACert, exists := s.DecryptedSecureJSONData["tlsCACert"]; exists {
+		settings.TLSCACert = tlsCACert
+	}
+
 	return settings, nil
 }

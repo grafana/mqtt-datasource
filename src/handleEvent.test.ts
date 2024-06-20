@@ -13,8 +13,8 @@ describe('handlerFactory', () => {
     const handler = handlerFactory({ a: { b: 'c' } }, cb);
     handler('a.b')(changeEvent);
     expect(cb.mock.calls[0][0]).toMatchInlineSnapshot(`
-      Object {
-        "a": Object {
+      {
+        "a": {
           "b": "test",
         },
       }
@@ -26,8 +26,8 @@ describe('handlerFactory', () => {
     const handler = handlerFactory({ a: { b: 'c' } }, cb);
     handler('a.b', (v) => v.toUpperCase())(changeEvent);
     expect(cb.mock.calls[0][0]).toMatchInlineSnapshot(`
-      Object {
-        "a": Object {
+      {
+        "a": {
           "b": "TEST",
         },
       }
