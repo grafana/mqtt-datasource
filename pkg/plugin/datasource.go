@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"context"
 	"encoding/json"
 	"path"
 
@@ -20,7 +21,7 @@ var (
 )
 
 // NewMQTTDatasource creates a new datasource instance.
-func NewMQTTInstance(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewMQTTInstance(_ context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	settings, err := getDatasourceSettings(s)
 	if err != nil {
 		return nil, err

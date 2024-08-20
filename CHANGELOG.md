@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.0-beta.2] - 2024-08-21
+
+- Upgrade dependencies
+
 ## [1.1.0-beta.1] - 2024-06-06
 
 - Add support for TLS Client Authentication
