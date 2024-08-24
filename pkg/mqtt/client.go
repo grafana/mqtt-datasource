@@ -131,16 +131,20 @@ func (c *client) Subscribe(reqPath string) *Topic {
 		return t
 	}
 
-	log.DefaultLogger.Debug("Subscribing to MQTT topic", "topic", topicPath)
+	topic, err := decodeTopic(t.Path)
+	if err != nil {
+		log.DefaultLogger.Error("Error decoding MQTT topic name", "encodedTopic", t.Path, "error", err)
+		return nil
+	}
 
-	topic := resolveTopic(t.Path)
+	log.DefaultLogger.Debug("Subscribing to MQTT topic", "topic", topic)
 
 	if token := c.client.Subscribe(topic, 0, func(_ paho.Client, m paho.Message) {
 		// by wrapping HandleMessage we can directly get the correct topicPath for the incoming topic
 		// and don't need to regex it against + and #.
 		c.HandleMessage(topicPath, []byte(m.Payload()))
 	}); token.Wait() && token.Error() != nil {
-		log.DefaultLogger.Error("Error subscribing to MQTT topic", "topic", topicPath, "error", token.Error())
+		log.DefaultLogger.Error("Error subscribing to MQTT topic", "topic", topic, "error", token.Error())
 	}
 	c.topics.Store(t)
 	return t
@@ -161,7 +165,12 @@ func (c *client) Unsubscribe(reqPath string) {
 
 	log.DefaultLogger.Debug("Unsubscribing from MQTT topic", "topic", t.Path)
 
-	topic := resolveTopic(t.Path)
+	topic, err := decodeTopic(t.Path)
+	if err != nil {
+		log.DefaultLogger.Error("Error decoding MQTT topic name", "encodedTopic", t.Path, "error", err)
+		return
+	}
+
 	if token := c.client.Unsubscribe(topic); token.Wait() && token.Error() != nil {
 		log.DefaultLogger.Error("Error unsubscribing from MQTT topic", "topic", t.Path, "error", token.Error())
 	}
