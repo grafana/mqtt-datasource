@@ -17,10 +17,11 @@ The MQTT data source has the following requirements:
 
 #### Basic fields
 
-| Field | Description                                        |
-| ----- | -------------------------------------------------- |
-| Name  | A name for this particular MQTT data source |
-| URI   | The scheme, host, and port of the MQTT Broker. Supported schemes: TCP (tcp://), TLS (tls://), and WebSocket (ws://)             |
+| Field       | Description                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- |
+| Name        | A name for this particular MQTT data source                                                                         |
+| URI         | The scheme, host, and port of the MQTT Broker. Supported schemes: TCP (tcp://), TLS (tls://), and WebSocket (ws://) |
+| Client ID   | (Optional) The client ID to use when connecting to the MQTT broker                                                  |
 
 #### Authentication fields
 
