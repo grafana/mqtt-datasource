@@ -4,6 +4,10 @@
 
 The MQTT data source plugin allows you to visualize streaming MQTT data from within Grafana.
 
+## Disclaimer
+
+This plugin does not provide a storage for your events. It means, that if you want to query your historical data - this plugin is not for you. This datasource provides you an access to MQTT connetcion, which could be used to get Retained topics, but NOT intended to work with historical data. If you want to work with historical data please take a look for some storage engine like Loki to store events that you recieve from MQTT.
+
 ## Requirements
 
 The MQTT data source has the following requirements:
