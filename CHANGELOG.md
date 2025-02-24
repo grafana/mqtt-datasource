@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.0-beta.3] - 2025-02-25
+
+- Upgrade dependencies
+
 ## [1.1.0-beta.2] - 2024-08-21
 
 - Upgrade dependencies
