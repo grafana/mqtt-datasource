@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"encoding/base64"
 	"sync"
 	"testing"
 	"time"
@@ -164,4 +165,49 @@ func TestTopicMap_HasSubscription(t *testing.T) {
 
 		require.False(t, tm.HasSubscription("testing"))
 	})
+}
+
+func TestDecodeTopic(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expTopic string
+		expError bool
+	}{
+		{
+			name:     "Valid encoded string",
+			input:    base64.RawURLEncoding.EncodeToString([]byte("$test/topic/#")),
+			expTopic: "$test/topic/#",
+			expError: false,
+		},
+		{
+			name:     "Invalid encoded string",
+			input:    "invalid_@_base64",
+			expError: true,
+		},
+		{
+			name:     "Empty string",
+			input:    "",
+			expError: false,
+		},
+		{
+			name:     "Valid encoded string with padding",
+			input:    base64.URLEncoding.EncodeToString([]byte("test/topic")),
+			expTopic: "",
+			expError: true, // base64.RawURLEncoding does not accept padding
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			topic, err := decodeTopic(tt.input)
+
+			if tt.expError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expTopic, topic)
+			}
+		})
+	}
 }
