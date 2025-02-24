@@ -16,6 +16,7 @@
     "yarn.lock"
   ],
   "words": [
+    "dompurify",
     "seccomp",
     "PTRACE",
     "DATAPROXY",
