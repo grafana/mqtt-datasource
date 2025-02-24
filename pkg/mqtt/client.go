@@ -25,6 +25,7 @@ type Options struct {
 	URI           string `json:"uri"`
 	Username      string `json:"username"`
 	Password      string `json:"password"`
+	ClientID      string `json:"clientID"`
 	TLSCACert     string `json:"tlsCACert"`
 	TLSClientCert string `json:"tlsClientCert"`
 	TLSClientKey  string `json:"tlsClientKey"`
@@ -40,7 +41,12 @@ func NewClient(o Options) (Client, error) {
 	opts := paho.NewClientOptions()
 
 	opts.AddBroker(o.URI)
-	opts.SetClientID(fmt.Sprintf("grafana_%d", rand.Int()))
+
+	clientID := o.ClientID
+	if clientID == "" {
+		clientID = fmt.Sprintf("grafana_%d", rand.Int())
+	}
+	opts.SetClientID(clientID)
 
 	if o.Username != "" {
 		opts.SetUsername(o.Username)
@@ -81,7 +87,7 @@ func NewClient(o Options) (Client, error) {
 		log.DefaultLogger.Debug("MQTT Reconnecting")
 	})
 
-	log.DefaultLogger.Info("MQTT Connecting")
+	log.DefaultLogger.Info("MQTT Connecting", "clientID", clientID)
 
 	pahoClient := paho.NewClient(opts)
 	if token := pahoClient.Connect(); token.Wait() && token.Error() != nil {

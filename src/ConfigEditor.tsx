@@ -1,4 +1,4 @@
-import React, { SyntheticEvent} from 'react';
+import React, { SyntheticEvent } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
@@ -7,15 +7,10 @@ import {
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { ConfigSection, DataSourceDescription} from '@grafana/experimental';
-import {
-  Field,
-  Input,
-  SecretInput,
-  Switch,
-} from '@grafana/ui';
+import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
+import { Field, Input, SecretInput, Switch } from '@grafana/ui';
 import { Divider } from './Divider';
-import {TLSSecretsConfig} from './TLSConfig';
+import { TLSSecretsConfig } from './TLSConfig';
 import { MqttDataSourceOptions, MqttSecureJsonData } from './types';
 
 export const ConfigEditor = (props: DataSourcePluginOptionsEditorProps<MqttDataSourceOptions, MqttSecureJsonData>) => {
@@ -51,12 +46,21 @@ export const ConfigEditor = (props: DataSourcePluginOptionsEditorProps<MqttDataS
             name="URI"
             type="text"
             value={jsonData.uri || ''}
-            onChange={onUpdateDatasourceJsonDataOption(props,'uri')}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'uri')}
             placeholder="TCP (tcp://), TLS (tls://), or WebSocket (ws://)"
           />
         </Field>
-
       </ConfigSection>
+
+      <Field label="Client ID" description="If not set, a random client ID is used.">
+        <Input
+          width={WIDTH_LONG}
+          name="Client ID"
+          type="text"
+          value={jsonData.clientID || ''}
+          onChange={onUpdateDatasourceJsonDataOption(props, 'clientID')}
+        />
+      </Field>
 
       <Divider />
 
