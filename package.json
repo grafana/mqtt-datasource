@@ -7,13 +7,15 @@
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
     "lint": "eslint --cache --ignore-path ./.gitignore --ext .js,.jsx,.ts,.tsx .",
     "lint:fix": "yarn run lint --fix",
-    "server": "docker-compose up --build",
     "sign": "npx --yes @grafana/sign-plugin@latest",
     "spellcheck": "cspell -c cspell.config.json \"**/*.{ts,tsx,js,go,md,mdx,yml,yaml,json,scss,css}\"",
     "start": "yarn dev",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --passWithNoTests --maxWorkers 4",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "broker:pki": "./scripts/gen_pki.sh",
+    "broker:tls": "node scripts/test_broker.js --tls",
+    "broker": "node scripts/test_broker.js"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
