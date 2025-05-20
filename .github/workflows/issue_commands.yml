@@ -1,7 +1,12 @@
 name: Run commands when issues are labeled
+
+permissions:
+  contents: read
+
 on:
   issues:
     types: [labeled]
+
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -9,6 +14,7 @@ jobs:
       - name: Checkout Actions
         uses: actions/checkout@v2
         with:
+          persist-credentials: false
           repository: "grafana/grafana-github-actions"
           path: ./actions
           ref: main
