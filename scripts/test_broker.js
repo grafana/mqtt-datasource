@@ -27,7 +27,9 @@ const toMillis = {
 const publishers = {};
 const createPublisher = ({ topic, qos }) => {
   let i = 0;
-  const [duration, value] = topic.split('/');
+
+  const parts = topic.split('/');
+  const [duration, value] = [parts[parts.length - 2], parts[parts.length - 1]];
   const fn = toMillis[duration];
 
   if (!fn || !value || value < 1) {
@@ -38,6 +40,7 @@ const createPublisher = ({ topic, qos }) => {
   const interval = fn(value);
 
   if (!publishers[topic]) {
+    console.log('creating publisher for', topic, 'with interval', interval, 'ms');
     publishers[topic] = setInterval(() => {
       let payload = Math.random();
 
