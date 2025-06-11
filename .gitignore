@@ -36,3 +36,4 @@ e2e-results/
 /playwright/.auth/
 
 .eslintcache
+install-state.gz
