@@ -2,12 +2,12 @@ import React, { SyntheticEvent } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
+  onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginJsonDataOption,
-  onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
+import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { Field, Input, SecretInput, Switch } from '@grafana/ui';
 import { Divider } from './Divider';
 import { TLSSecretsConfig } from './TLSConfig';
