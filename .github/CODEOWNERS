@@ -4,3 +4,7 @@
 # The '*' pattern is global owners.
 
 * @grafana/oss-big-tent
+
+/src @itsmylife @zoltanbedi
+/pkg @itsmylife @zoltanbedi
+/tests @itsmylife @zoltanbedi
