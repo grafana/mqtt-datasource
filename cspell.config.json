@@ -33,6 +33,7 @@
     "instancemgmt",
     "Millis",
     "paho",
-    "jsoniter"
+    "jsoniter",
+    "subresource"
   ]
 }
