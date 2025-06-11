@@ -1,6 +1,6 @@
 module github.com/grafana/mqtt-datasource
 
-go 1.24.1
+go 1.24.4
 
 toolchain go1.24.3
 
