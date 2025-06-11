@@ -3,7 +3,6 @@ services:
     user: root
     container_name: 'grafana-mqtt-datasource'
 
-    platform: 'linux/amd64'
     build:
       context: ./.config
       args:
