@@ -19,7 +19,7 @@
     "broker": "node scripts/test_broker.js",
     "server": "docker compose up --build"
   },
-  "author": "Grafana Labs",
+  "author": "Grafana Labs <team@grafana.com> (https://grafana.com)",
   "license": "Apache-2.0",
   "devDependencies": {
     "@babel/core": "^7.21.4",
@@ -87,8 +87,5 @@
     "react-dom": "18.2.0",
     "tslib": "2.5.3"
   },
-  "resolutions": {
-    "dompurify": "3.2.6"
-  },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "yarn@4.9.1"
 }
