@@ -13,7 +13,8 @@
     "**/dashboards/*.json",
     "src/static/**",
     "vendor/**",
-    "yarn.lock"
+    "yarn.lock",
+    ".eslintcache"
   ],
   "words": [
     "dompurify",
