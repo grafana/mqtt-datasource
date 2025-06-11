@@ -2,8 +2,6 @@ module github.com/grafana/mqtt-datasource
 
 go 1.24.4
 
-toolchain go1.24.3
-
 require (
 	github.com/eclipse/paho.mqtt.golang v1.5.0
 	github.com/grafana/grafana-plugin-sdk-go v0.277.1
