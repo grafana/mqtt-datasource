@@ -21,10 +21,10 @@ The MQTT data source has the following requirements:
 
 #### Basic fields
 
-| Field | Description                                        |
-| ----- | -------------------------------------------------- |
-| Name  | A name for this particular MQTT data source |
-| URI   | The scheme, host, and port of the MQTT Broker. Supported schemes: TCP (tcp://), TLS (tls://), and WebSocket (ws://)             |
+| Field | Description                                                                                                         |
+| ----- | ------------------------------------------------------------------------------------------------------------------- |
+| Name  | A name for this particular MQTT data source                                                                         |
+| URI   | The scheme, host, and port of the MQTT Broker. Supported schemes: TCP (tcp://), TLS (tls://), and WebSocket (ws://) |
 
 #### Authentication fields
 
@@ -45,17 +45,21 @@ for more information about valid topic names and filters.
 - The plugin currently does not support all of the MQTT CONNECT packet options.
 - This plugin automatically supports topics publishing numbers, strings, booleans, and JSON formatted values. Nested object values can be extracted using the `Extract Fields` transformation.
 - This plugin automatically attaches timestamps to the messages when they are received. Timestamps included in the message body can be parsed using the `Convert field type` transformation.
+
 ## Install the plugin
 
 ### Installation Pre-requisites
+
 Refer to: [Building a Streaming Datasource Backend Plugin](https://grafana.com/tutorials/build-a-streaming-data-source-plugin/)
 
 Details: [Ubuntu](https://github.com/grafana/mqtt-datasource/issues/15#issuecomment-894477802) [Windows](https://github.com/grafana/mqtt-datasource/issues/15#issuecomment-894534196)
+
 ### Meet compatibility requirements
 
 This plugin currently supports MQTT v3.1.x.
 
-__Note: Since this plugin uses the Grafana Live Streaming API, make sure to use Grafana v8.0+__
+**Note: Since this plugin uses the Grafana Live Streaming API, make sure to use Grafana v8.0+**
+
 ### Installation Steps
 
 1. Clone the plugin to your Grafana plugins directory.

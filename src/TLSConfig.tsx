@@ -7,8 +7,7 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { Field, Icon, Label, SecretTextArea, Tooltip} from '@grafana/ui';
-import { Stack } from '@grafana/experimental';
+import { Field, Icon, Label, SecretTextArea, Stack, Tooltip } from '@grafana/ui';
 
 export interface Props<T extends DataSourceJsonData, S> {
   editorProps: DataSourcePluginOptionsEditorProps<T, S>;
@@ -31,7 +30,10 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
                 <span>TLS CA Certificate</span>
                 <Tooltip
                   content={
-                    <span>If a Certificate Authority certificate is required to verify the server's certificate, provide it here.</span>
+                    <span>
+                      If a Certificate Authority certificate is required to verify the server&#39;s certificate, provide
+                      it here.
+                    </span>
                   }
                 >
                   <Icon name="info-circle" size="sm" />
@@ -60,9 +62,7 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
                 <span>TLS Client Certificate</span>
                 <Tooltip
                   content={
-                    <span>
-                      To authenticate with an TLS client certificate, provide the client certificate here.
-                    </span>
+                    <span>To authenticate with an TLS client certificate, provide the client certificate here.</span>
                   }
                 >
                   <Icon name="info-circle" size="sm" />

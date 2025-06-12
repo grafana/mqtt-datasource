@@ -13,11 +13,7 @@
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
-    "keywords": [
-      "mqtt",
-      "iot",
-      "streaming"
-    ],
+    "keywords": ["mqtt", "iot", "streaming"],
     "logos": {
       "small": "img/mqtt.svg",
       "large": "img/mqtt.svg"
