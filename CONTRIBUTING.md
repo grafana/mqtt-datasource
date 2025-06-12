@@ -26,16 +26,19 @@
 ## Development Workflow
 
 Start watching the frontend and backend code for changes:
+
 ```
 yarn dev
 ```
 
 and in another terminal:
+
 ```
 mage watch
 ```
 
 Start test broker:
+
 ```
 yarn broker
 ```
@@ -43,10 +46,13 @@ yarn broker
 This will start a test MQTT broker on `tcp://localhost:1883`.
 
 Start the test broker with TLS:
+
 ```
 yarn broker:tls
 ```
+
 This will start a test MQTT broker on `tls://localhost:8883` with TLS enabled. The TLS certificates are located in the `testdata` folder. If they need to be regenerated, run:
+
 ```
 yarn broker:pki
 ```
