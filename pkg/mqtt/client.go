@@ -73,6 +73,7 @@ func NewClient(o Options) (Client, error) {
 	opts.SetPingTimeout(60 * time.Second)
 	opts.SetKeepAlive(60 * time.Second)
 	opts.SetAutoReconnect(true)
+	opts.SetCleanSession(false)
 	opts.SetMaxReconnectInterval(10 * time.Second)
 	opts.SetConnectionLostHandler(func(c paho.Client, err error) {
 		log.DefaultLogger.Error("MQTT Connection lost", "error", err)
