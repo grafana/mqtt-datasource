@@ -52,6 +52,16 @@ export const ConfigEditor = (props: DataSourcePluginOptionsEditorProps<MqttDataS
         </Field>
       </ConfigSection>
 
+      <Field label="Client ID" description="If not set, a random client ID is used.">
+        <Input
+          width={WIDTH_LONG}
+          name="Client ID"
+          type="text"
+          value={jsonData.clientID || ''}
+          onChange={onUpdateDatasourceJsonDataOption(props, 'clientID')}
+        />
+      </Field>
+
       <Divider />
 
       <ConfigSection title="Authentication">
