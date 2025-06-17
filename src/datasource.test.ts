@@ -20,7 +20,7 @@ describe('DataSource', () => {
     {
       description: 'should apply base64 URL-safe encoding correctly',
       query: { topic: 'test/topic+/and:more' },
-      expectedResult: 'dGVzdC90b3BpYysvYW5kOm1vcmU',
+      expectedResult: 'dGVzdC90b3BpYysvYW5kOm1vcmU', // cspell:disable-line
     },
   ];
 
