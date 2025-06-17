@@ -4,6 +4,10 @@
 
 The MQTT data source plugin allows you to visualize streaming MQTT data from within Grafana.
 
+## Disclaimer
+
+This plugin does not provide a storage for your events. It means, that if you want to query your historical data - this plugin is not for you. This datasource provides you an access to MQTT connection, which could be used to get Retained topics, but NOT intended to work with historical data. If you want to work with historical data please take a look for some storage engine like [Loki](https://github.com/grafana/loki) to store events that you receive from MQTT.
+
 ## Requirements
 
 The MQTT data source has the following requirements:
@@ -42,17 +46,21 @@ for more information about valid topic names and filters.
 - The plugin currently does not support all of the MQTT CONNECT packet options.
 - This plugin automatically supports topics publishing numbers, strings, booleans, and JSON formatted values. Nested object values can be extracted using the `Extract Fields` transformation.
 - This plugin automatically attaches timestamps to the messages when they are received. Timestamps included in the message body can be parsed using the `Convert field type` transformation.
+
 ## Install the plugin
 
 ### Installation Pre-requisites
+
 Refer to: [Building a Streaming Datasource Backend Plugin](https://grafana.com/tutorials/build-a-streaming-data-source-plugin/)
 
 Details: [Ubuntu](https://github.com/grafana/mqtt-datasource/issues/15#issuecomment-894477802) [Windows](https://github.com/grafana/mqtt-datasource/issues/15#issuecomment-894534196)
+
 ### Meet compatibility requirements
 
 This plugin currently supports MQTT v3.1.x.
 
-__Note: Since this plugin uses the Grafana Live Streaming API, make sure to use Grafana v8.0+__
+**Note: Since this plugin uses the Grafana Live Streaming API, make sure to use Grafana v8.0+**
+
 ### Installation Steps
 
 1. Clone the plugin to your Grafana plugins directory.

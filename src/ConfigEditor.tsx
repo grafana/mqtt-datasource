@@ -2,12 +2,12 @@ import React, { SyntheticEvent } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
+  onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginJsonDataOption,
-  onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
+import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { Field, Input, SecretInput, Switch } from '@grafana/ui';
 import { Divider } from './Divider';
 import { TLSSecretsConfig } from './TLSConfig';
@@ -101,7 +101,6 @@ export const ConfigEditor = (props: DataSourcePluginOptionsEditorProps<MqttDataS
         <Field label="With CA Cert" description="Needed for verifying servers with self-signed TLS Certs.">
           <Switch onChange={onSwitchChanged('tlsAuthWithCACert')} value={jsonData.tlsAuthWithCACert || false} />
         </Field>
-
       </ConfigSection>
 
       {jsonData.tlsAuth || jsonData.tlsAuthWithCACert ? (
