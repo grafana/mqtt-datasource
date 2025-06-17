@@ -9,6 +9,7 @@ export interface MqttQuery extends DataQuery {
 export interface MqttDataSourceOptions extends DataSourceJsonData {
   uri: string;
   username?: string;
+  clientID?: string;
   tlsAuth: boolean;
   tlsAuthWithCACert: boolean;
   tlsSkipVerify: boolean;
