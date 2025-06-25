@@ -99,7 +99,7 @@ func newFramer() *framer {
 func (df *framer) toFrame(messages []Message) (*data.Frame, error) {
 	// clear the data in the fields
 	for _, field := range df.fields {
-		for i := 0; i < field.Len(); i++ {
+		for i := field.Len() - 1; i >= 0; i-- {
 			field.Delete(i)
 		}
 	}
