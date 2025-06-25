@@ -1,11 +1,12 @@
 package mqtt
 
 import (
+	"encoding/base64"
 	"path"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -99,9 +100,21 @@ func (tm *TopicMap) Delete(key string) {
 	tm.Map.Delete(key)
 }
 
-// replace all __PLUS__ with + and one __HASH__ with #
-// Question: Why does grafana not allow + and # in query?
-func resolveTopic(topic string) string {
-	resolvedTopic := strings.ReplaceAll(topic, "__PLUS__", "+")
-	return strings.Replace(resolvedTopic, "__HASH__", "#", -1)
+// decodeTopic decodes an MQTT topic name from base64 URL encoding.
+//
+// There are some restrictions to what characters are allowed to use in a Grafana Live channel:
+//
+//	https://github.com/grafana/grafana-plugin-sdk-go/blob/7470982de35f3b0bb5d17631b4163463153cc204/live/channel.go#L33
+//
+// To comply with these restrictions, the topic is encoded using URL-safe base64
+// encoding. (RFC 4648; 5. Base 64 Encoding with URL and Filename Safe Alphabet)
+func decodeTopic(topic string) (string, error) {
+	log.DefaultLogger.Debug("Decoding MQTT topic name", "encodedTopic", topic)
+	decoded, err := base64.RawURLEncoding.DecodeString(topic)
+
+	if err != nil {
+		return "", err
+	}
+
+	return string(decoded), nil
 }
