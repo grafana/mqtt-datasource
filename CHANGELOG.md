@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.0] - 2025-07-28
+
+- Fix session reuse for subscriptions after reconnect
+- Add client ID setting for MQTT connections
+- Use URL-safe Base64 encoding for topic names
+- Fix clear field data functionality
+- Upgrade dependencies (grafana-plugin-sdk-go, form-data, @babel/runtime)
+- Introduce changesets for better release management
+- Update repository links and workflows
+- Stable release (removed beta status)
+
 ## [1.1.0-beta.3] - 2025-02-25
 
 - Upgrade dependencies
