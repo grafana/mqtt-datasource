@@ -3,12 +3,14 @@ package plugin
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/mqtt-datasource/pkg/mqtt"
 )
 
@@ -54,7 +56,26 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 	}
 }
 
-func (ds *MQTTDatasource) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	if !strings.HasPrefix(req.Path, "tail/") {
+		return &backend.SubscribeStreamResponse{
+			Status: backend.SubscribeStreamStatusNotFound,
+		}, fmt.Errorf("expected tail in channel path")
+	}
+	pluginCfg := backend.PluginConfigFromContext(ctx)
+	orgId, err := strconv.ParseInt(strings.Split(req.Path, "/")[3], 10, 64)
+	if err != nil {
+		return &backend.SubscribeStreamResponse{
+			Status: backend.SubscribeStreamStatusNotFound,
+		}, fmt.Errorf("unable to determine orgId from request")
+	}
+
+	if orgId != pluginCfg.OrgID {
+		return &backend.SubscribeStreamResponse{
+			Status: backend.SubscribeStreamStatusPermissionDenied,
+		}, fmt.Errorf("invalid orgId supplied in request")
+	}
+
 	return &backend.SubscribeStreamResponse{
 		Status: backend.SubscribeStreamStatusOK,
 	}, nil
