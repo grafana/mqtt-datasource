@@ -1,10 +1,59 @@
-import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import {
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+  ScopedVars,
+} from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { MqttDataSourceOptions, MqttQuery } from './types';
+import { Observable, from, switchMap } from 'rxjs';
+import { getLiveStreamKey } from './streaming';
 
 export class DataSource extends DataSourceWithBackend<MqttQuery, MqttDataSourceOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<MqttDataSourceOptions>) {
     super(instanceSettings);
+  }
+
+  query(request: DataQueryRequest<MqttQuery>): Observable<DataQueryResponse> {
+    // Add streamingKey to each target using RxJS operators
+    return from(
+      Promise.all(
+        request.targets.map(async (target) => ({
+          ...target,
+          streamingKey: await getLiveStreamKey(this.uid, target.topic),
+        }))
+      )
+    ).pipe(
+      switchMap((updatedTargets) => {
+        const updatedRequest = {
+          ...request,
+          targets: updatedTargets,
+        };
+        return super.query(updatedRequest);
+      })
+    );
+
+    // const ds = this;
+    //
+    // const observables = request.targets.map((query, index) => {
+    //   return defer(() => getLiveStreamKey(query)).pipe(
+    //     mergeMap((key) => {
+    //       return getGrafanaLiveSrv()
+    //         .getDataStream({
+    //           addr: {
+    //             scope: LiveChannelScope.DataSource,
+    //             namespace: ds.uid,
+    //             path: `tail/${key}`,
+    //             data: {
+    //               ...query,
+    //             },
+    //           },
+    //         })
+    //     })
+    //   );
+    // });
+    //
+    // return merge(...observables);
   }
 
   applyTemplateVariables(query: MqttQuery, scopedVars: ScopedVars, filters?: any[]): MqttQuery {

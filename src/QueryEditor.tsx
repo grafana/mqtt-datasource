@@ -3,13 +3,11 @@ import { Input, InlineFieldRow, InlineField } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from './datasource';
 import { MqttDataSourceOptions, MqttQuery } from './types';
-import { handlerFactory } from 'handleEvent';
 
 type Props = QueryEditorProps<DataSource, MqttQuery, MqttDataSourceOptions>;
 
 export const QueryEditor = (props: Props) => {
   const { query, onChange, onRunQuery } = props;
-  const handleEvent = handlerFactory(query, onChange);
 
   return (
     <>
@@ -21,7 +19,7 @@ export const QueryEditor = (props: Props) => {
             placeholder='e.g. "home/bedroom/temperature"'
             value={query.topic}
             onBlur={onRunQuery}
-            onChange={handleEvent('topic')}
+            onChange={(e) => onChange({...query, topic: e.currentTarget.value })}
           />
         </InlineField>
       </InlineFieldRow>

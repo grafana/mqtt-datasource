@@ -35,6 +35,7 @@
     "Millis",
     "paho",
     "jsoniter",
-    "subresource"
+    "subresource",
+    "streamingkey"
   ]
 }
