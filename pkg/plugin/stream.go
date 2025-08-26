@@ -63,9 +63,9 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 
 func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	// Extract orgId from the streaming key embedded in the channel path
-	// Channel: ds/{uid}/{interval}/{topic}/{datasourceUid}/{hash}/{orgId}
+	// Channel: {interval}/{topic}/{datasourceUid}/{hash}/{orgId}
 	pathParts := strings.Split(req.Path, "/")
-	if len(pathParts) < 6 {
+	if len(pathParts) < 5 {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
 		}, fmt.Errorf("invalid channel path format")
