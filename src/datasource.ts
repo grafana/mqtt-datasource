@@ -32,28 +32,6 @@ export class DataSource extends DataSourceWithBackend<MqttQuery, MqttDataSourceO
         return super.query(updatedRequest);
       })
     );
-
-    // const ds = this;
-    //
-    // const observables = request.targets.map((query, index) => {
-    //   return defer(() => getLiveStreamKey(query)).pipe(
-    //     mergeMap((key) => {
-    //       return getGrafanaLiveSrv()
-    //         .getDataStream({
-    //           addr: {
-    //             scope: LiveChannelScope.DataSource,
-    //             namespace: ds.uid,
-    //             path: `tail/${key}`,
-    //             data: {
-    //               ...query,
-    //             },
-    //           },
-    //         })
-    //     })
-    //   );
-    // });
-    //
-    // return merge(...observables);
   }
 
   applyTemplateVariables(query: MqttQuery, scopedVars: ScopedVars, filters?: any[]): MqttQuery {
