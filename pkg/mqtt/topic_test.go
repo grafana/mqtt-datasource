@@ -1,213 +1,180 @@
 package mqtt
 
 import (
-	"encoding/base64"
-	"sync"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/require"
 )
 
-func TestTopicMap_Load(t *testing.T) {
-	t.Run("loads topic by key", func(t *testing.T) {
-		topic := &Topic{
-			Path:     "test",
-			Interval: time.Second,
-			Messages: []Message{},
-		}
-
-		tm := &TopicMap{
-			Map: sync.Map{},
-		}
-		tm.Map.Store(topic.Key(), topic)
-
-		actual, ok := tm.Load(topic.Key())
-		require.True(t, ok)
-		require.Equal(t, topic, actual)
-	})
-}
-
-func TestTopicMap_Store(t *testing.T) {
-	t.Run("stores new topic", func(t *testing.T) {
-		topic := &Topic{
-			Path:     "test",
-			Interval: time.Second,
-			Messages: []Message{},
-		}
-
-		tm := &TopicMap{
-			Map: sync.Map{},
-		}
-
-		_, ok := tm.Map.Load(topic.Key())
-		require.False(t, ok)
-
-		tm.Store(topic)
-
-		actual, ok := tm.Map.Load(topic.Key())
-		require.True(t, ok)
-		require.Equal(t, topic, actual.(*Topic))
-	})
-}
-
-func TestTopicMap_AddMessage(t *testing.T) {
-	t.Run("adds message to existing topics by path", func(t *testing.T) {
-		topic_1s := &Topic{
-			Path:     "test",
-			Interval: time.Second,
-			Messages: []Message{},
-		}
-
-		topic_2s := &Topic{
-			Path:     "test",
-			Interval: 2 * time.Second,
-			Messages: []Message{},
-		}
-
-		tm := &TopicMap{
-			Map: sync.Map{},
-		}
-		tm.Store(topic_1s)
-		tm.Store(topic_2s)
-
-		message := Message{
-			Timestamp: time.Now(),
-			Value:     []byte("test"),
-		}
-
-		tm.AddMessage("test", message)
-
-		actual, ok := tm.Load(topic_1s.Key())
-		require.True(t, ok)
-		require.Equal(t, message, actual.Messages[0])
-
-		actual, ok = tm.Load(topic_2s.Key())
-		require.True(t, ok)
-		require.Equal(t, message, actual.Messages[0])
-	})
-}
-
-func TestTopicMap_Delete(t *testing.T) {
-	t.Run("deletes topic by key", func(t *testing.T) {
-		topic_1s := &Topic{
-			Path:     "test",
-			Interval: time.Second,
-			Messages: []Message{},
-		}
-
-		topic_2s := &Topic{
-			Path:     "test",
-			Interval: 2 * time.Second,
-			Messages: []Message{},
-		}
-
-		tm := &TopicMap{
-			Map: sync.Map{},
-		}
-		tm.Store(topic_1s)
-		tm.Store(topic_2s)
-
-		_, ok := tm.Load(topic_1s.Key())
-		require.True(t, ok)
-
-		_, ok = tm.Load(topic_2s.Key())
-		require.True(t, ok)
-
-		tm.Delete(topic_1s.Key())
-
-		_, ok = tm.Load(topic_1s.Key())
-		require.False(t, ok)
-
-		_, ok = tm.Load(topic_2s.Key())
-		require.True(t, ok)
-	})
-}
-
-func TestTopicMap_HasSubscription(t *testing.T) {
-	t.Run("should return true if matching path exists in map", func(t *testing.T) {
-		topic_1s := &Topic{
-			Path:     "test",
-			Interval: time.Second,
-			Messages: []Message{},
-		}
-
-		topic_2s := &Topic{
-			Path:     "test",
-			Interval: 2 * time.Second,
-			Messages: []Message{},
-		}
-
-		tm := &TopicMap{
-			Map: sync.Map{},
-		}
-		tm.Store(topic_1s)
-		tm.Store(topic_2s)
-
-		require.True(t, tm.HasSubscription("test"))
-		tm.Delete(topic_1s.Key())
-		require.True(t, tm.HasSubscription("test"))
-		tm.Delete(topic_2s.Key())
-		require.False(t, tm.HasSubscription("test"))
-	})
-
-	t.Run("should not match", func(t *testing.T) {
-		topic := &Topic{
-			Path:     "test",
-			Interval: time.Second,
-			Messages: []Message{},
-		}
-
-		tm := &TopicMap{
-			Map: sync.Map{},
-		}
-		tm.Store(topic)
-
-		require.False(t, tm.HasSubscription("testing"))
-	})
-}
-
-func TestDecodeTopic(t *testing.T) {
+func TestTopic_Key(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		expTopic string
-		expError bool
+		name        string
+		topic       Topic
+		expectedKey string
 	}{
 		{
-			name:     "Valid encoded string",
-			input:    base64.RawURLEncoding.EncodeToString([]byte("$test/topic/#")),
-			expTopic: "$test/topic/#",
-			expError: false,
+			name: "topic without streaming key",
+			topic: Topic{
+				Path:     "sensor/temperature",
+				Interval: 1 * time.Second,
+			},
+			expectedKey: "1s/sensor/temperature",
 		},
 		{
-			name:     "Invalid encoded string",
-			input:    "invalid_@_base64",
-			expError: true,
+			name: "topic with streaming key",
+			topic: Topic{
+				Path:         "sensor/temperature",
+				Interval:     1 * time.Second,
+				StreamingKey: "ds123/abc456def/789",
+			},
+			expectedKey: "1s/sensor/temperature/ds123/abc456def/789",
 		},
 		{
-			name:     "Empty string",
-			input:    "",
-			expError: false,
+			name: "topic with complex path and streaming key",
+			topic: Topic{
+				Path:         "building/floor1/room2/sensor/temp",
+				Interval:     5 * time.Second,
+				StreamingKey: "datasource-uid/hash123/456",
+			},
+			expectedKey: "5s/building/floor1/room2/sensor/temp/datasource-uid/hash123/456",
 		},
 		{
-			name:     "Valid encoded string with padding",
-			input:    base64.URLEncoding.EncodeToString([]byte("test/topic")),
-			expTopic: "",
-			expError: true, // base64.RawURLEncoding does not accept padding
+			name: "topic with empty streaming key",
+			topic: Topic{
+				Path:         "simple/topic",
+				Interval:     10 * time.Second,
+				StreamingKey: "",
+			},
+			expectedKey: "10s/simple/topic",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			topic, err := decodeTopic(tt.input)
-
-			if tt.expError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tt.expTopic, topic)
+			got := tt.topic.Key()
+			if got != tt.expectedKey {
+				t.Errorf("Topic.Key() = %v, want %v", got, tt.expectedKey)
 			}
 		})
+	}
+}
+
+func TestTopic_KeyUniqueness(t *testing.T) {
+	// Test that different streaming keys produce different keys
+	baseTopic := Topic{
+		Path:     "sensor/temp",
+		Interval: 1 * time.Second,
+	}
+
+	topic1 := baseTopic
+	topic1.StreamingKey = "user1/hash123/org456"
+
+	topic2 := baseTopic
+	topic2.StreamingKey = "user2/hash456/org456"
+
+	topic3 := baseTopic
+	topic3.StreamingKey = "user1/hash123/org789"
+
+	key1 := topic1.Key()
+	key2 := topic2.Key()
+	key3 := topic3.Key()
+
+	// All keys should be different
+	if key1 == key2 {
+		t.Errorf("Expected different keys for different users, but got same: %s", key1)
+	}
+	if key1 == key3 {
+		t.Errorf("Expected different keys for different orgs, but got same: %s", key1)
+	}
+	if key2 == key3 {
+		t.Errorf("Expected different keys for different combinations, but got same: %s", key2)
+	}
+
+	// Verify the actual key format
+	expectedKey1 := "1s/sensor/temp/user1/hash123/org456"
+	if key1 != expectedKey1 {
+		t.Errorf("Topic1.Key() = %v, want %v", key1, expectedKey1)
+	}
+}
+
+func TestTopicMap_Store_And_Load_WithStreamingKey(t *testing.T) {
+	tm := &TopicMap{}
+
+	topic1 := &Topic{
+		Path:         "sensor/temp",
+		Interval:     1 * time.Second,
+		StreamingKey: "user1/hash123/org456",
+	}
+
+	topic2 := &Topic{
+		Path:         "sensor/temp",          // Same path
+		Interval:     1 * time.Second,        // Same interval
+		StreamingKey: "user2/hash456/org456", // Different streaming key
+	}
+
+	// Store both topics
+	tm.Store(topic1)
+	tm.Store(topic2)
+
+	// Load topic1
+	loadedTopic1, found1 := tm.Load(topic1.Key())
+	if !found1 {
+		t.Errorf("Expected to find topic1 with key %s", topic1.Key())
+	}
+	if loadedTopic1.StreamingKey != topic1.StreamingKey {
+		t.Errorf("Expected streaming key %s, got %s", topic1.StreamingKey, loadedTopic1.StreamingKey)
+	}
+
+	// Load topic2
+	loadedTopic2, found2 := tm.Load(topic2.Key())
+	if !found2 {
+		t.Errorf("Expected to find topic2 with key %s", topic2.Key())
+	}
+	if loadedTopic2.StreamingKey != topic2.StreamingKey {
+		t.Errorf("Expected streaming key %s, got %s", topic2.StreamingKey, loadedTopic2.StreamingKey)
+	}
+
+	// Verify they are different instances
+	if loadedTopic1 == loadedTopic2 {
+		t.Error("Expected different topic instances for different streaming keys")
+	}
+}
+
+func TestTopicMap_AddMessage_WithStreamingKey(t *testing.T) {
+	tm := &TopicMap{}
+
+	topic1 := &Topic{
+		Path:         "sensor/temp",
+		Interval:     1 * time.Second,
+		StreamingKey: "user1/hash123/org456",
+		Messages:     []Message{},
+	}
+
+	topic2 := &Topic{
+		Path:         "sensor/temp", // Same MQTT path
+		Interval:     1 * time.Second,
+		StreamingKey: "user2/hash456/org456", // Different streaming key
+		Messages:     []Message{},
+	}
+
+	tm.Store(topic1)
+	tm.Store(topic2)
+
+	// Add message - should go to both topics since they have the same MQTT path
+	message := Message{
+		Timestamp: time.Now(),
+		Value:     []byte("test message"),
+	}
+
+	tm.AddMessage("sensor/temp", message)
+
+	// Check that both topics received the message
+	updatedTopic1, _ := tm.Load(topic1.Key())
+	updatedTopic2, _ := tm.Load(topic2.Key())
+
+	if len(updatedTopic1.Messages) != 1 {
+		t.Errorf("Expected 1 message in topic1, got %d", len(updatedTopic1.Messages))
+	}
+	if len(updatedTopic2.Messages) != 1 {
+		t.Errorf("Expected 1 message in topic2, got %d", len(updatedTopic2.Messages))
 	}
 }

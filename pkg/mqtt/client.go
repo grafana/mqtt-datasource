@@ -118,6 +118,11 @@ func (c *client) GetTopic(reqPath string) (*Topic, bool) {
 }
 
 func (c *client) Subscribe(reqPath string) *Topic {
+	// Check if there's already a topic with this exact key (reqPath)
+	if existingTopic, ok := c.topics.Load(reqPath); ok {
+		return existingTopic
+	}
+
 	chunks := strings.Split(reqPath, "/")
 	if len(chunks) < 2 {
 		log.DefaultLogger.Error("Invalid path", "path", reqPath)
@@ -129,13 +134,15 @@ func (c *client) Subscribe(reqPath string) *Topic {
 		return nil
 	}
 
+	// For MQTT subscription, we only need the actual topic path (without streaming key)
+	// The streaming key is used for topic uniqueness in storage, but MQTT only cares about the topic path
 	topicPath := path.Join(chunks[1:]...)
+
+	// Create topic with the reqPath as the key for storage
+	// The actual topic components will be parsed when needed
 	t := &Topic{
 		Path:     topicPath,
 		Interval: interval,
-	}
-	if t, ok := c.topics.Load(topicPath); ok {
-		return t
 	}
 
 	topic, err := decodeTopic(t.Path)
@@ -153,7 +160,8 @@ func (c *client) Subscribe(reqPath string) *Topic {
 	}); token.Wait() && token.Error() != nil {
 		log.DefaultLogger.Error("Error subscribing to MQTT topic", "topic", topic, "error", token.Error())
 	}
-	c.topics.Store(t)
+	// Store the topic using reqPath as the key (which includes streaming key)
+	c.topics.Map.Store(reqPath, t)
 	return t
 }
 

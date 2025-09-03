@@ -3,6 +3,7 @@ package mqtt
 import (
 	"encoding/base64"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,17 +18,18 @@ type Message struct {
 
 // Topic represents a MQTT topic.
 type Topic struct {
-	Path     string `json:"topic"`
-	Interval time.Duration
-	Messages []Message
-	framer   *framer
+	Path         string `json:"topic"`
+	StreamingKey string `json:"streamingKey,omitempty"`
+	Interval     time.Duration
+	Messages     []Message
+	framer       *framer
 }
 
 // Key returns the key for the topic.
-// The key is a combination of the interval string and the path.
-// For example, if the path is "my/topic" and the interval is 1s, the key will be "1s/my/topic".
+// The key is a combination of the interval string, the path, and the streaming key.
+// For example, if the path is "my/topic" and the interval is 1s, the key will be "1s/my/topic/streamingkey".
 func (t *Topic) Key() string {
-	return path.Join(t.Interval.String(), t.Path)
+	return path.Join(t.Interval.String(), t.Path, t.StreamingKey)
 }
 
 // ToDataFrame converts the topic to a data frame.
@@ -108,7 +110,9 @@ func (tm *TopicMap) Delete(key string) {
 //
 // To comply with these restrictions, the topic is encoded using URL-safe base64
 // encoding. (RFC 4648; 5. Base 64 Encoding with URL and Filename Safe Alphabet)
-func decodeTopic(topic string) (string, error) {
+func decodeTopic(topicPath string) (string, error) {
+	chunks := strings.Split(topicPath, "/")
+	topic := chunks[0]
 	log.DefaultLogger.Debug("Decoding MQTT topic name", "encodedTopic", topic)
 	decoded, err := base64.RawURLEncoding.DecodeString(topic)
 
