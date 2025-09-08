@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var update = true
+var update = false
 
 func Test_framer(t *testing.T) {
 
@@ -61,6 +61,21 @@ func Test_framer(t *testing.T) {
 	t.Run("null", func(t *testing.T) {
 		runTest(t, "null", nil)
 	})
+
+	// Test raw string values (without JSON encoding) - this reproduces the user issue
+	t.Run("raw string values", func(t *testing.T) {
+		runRawTest(t, "raw-string", []byte("on"), []byte("off"), []byte("admin_off"))
+	})
+
+	// Test raw numeric values
+	t.Run("raw numeric values", func(t *testing.T) {
+		runRawTest(t, "raw-number", []byte("123"), []byte("456.789"))
+	})
+
+	// Test mixed raw values
+	t.Run("mixed raw values", func(t *testing.T) {
+		runRawTest(t, "raw-mixed", []byte("25"), []byte("on"), []byte("123.45"))
+	})
 }
 
 func runTest(t *testing.T, name string, values ...any) {
@@ -70,6 +85,20 @@ func runTest(t *testing.T, name string, values ...any) {
 	messages := []Message{}
 	for i, v := range values {
 		messages = append(messages, Message{Timestamp: timestamp.Add(time.Duration(i) * time.Minute), Value: toJSON(v)})
+	}
+	frame, err := f.toFrame(messages)
+	require.NoError(t, err)
+	require.NotNil(t, frame)
+	experimental.CheckGoldenJSONFrame(t, "testdata", name, frame, update)
+}
+
+func runRawTest(t *testing.T, name string, rawValues ...[]byte) {
+	t.Helper()
+	f := newFramer()
+	timestamp := time.Unix(0, 0)
+	messages := []Message{}
+	for i, v := range rawValues {
+		messages = append(messages, Message{Timestamp: timestamp.Add(time.Duration(i) * time.Minute), Value: v})
 	}
 	frame, err := f.toFrame(messages)
 	require.NoError(t, err)

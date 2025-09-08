@@ -108,8 +108,10 @@ func (df *framer) toFrame(messages []Message) (*data.Frame, error) {
 		df.iterator = jsoniter.ParseBytes(jsoniter.ConfigDefault, message.Value)
 		err := df.next()
 		if err != nil {
-			log.DefaultLogger.Error("error parsing message", "error", err)
-			continue
+			// If JSON parsing fails, treat the raw bytes as a string value
+			log.DefaultLogger.Debug("JSON parsing failed, treating as raw string", "error", err, "value", string(message.Value))
+			rawValue := string(message.Value)
+			df.addValue(data.FieldTypeNullableString, &rawValue)
 		}
 		df.fields[0].Append(message.Timestamp)
 		df.extendFields(df.fields[0].Len() - 1)
