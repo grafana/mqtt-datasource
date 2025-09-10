@@ -114,9 +114,10 @@ func TestMQTTDatasource_SubscribeStream_PathParsing(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create context with matching org
 			orgID := int64(456) // Default org for testing
-			if tt.expectedOrg == "789" {
+			switch tt.expectedOrg {
+			case "789":
 				orgID = 789
-			} else if tt.expectedOrg == "123" {
+			case "123":
 				orgID = 123
 			}
 
