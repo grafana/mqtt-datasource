@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0] - 2025-09-10
+
+- Add support for raw string values
+- Add streaming key to the requests
+- Use go 1.25 for building the plugin
+- Implement error source and use context logger
+
 ## [1.1.0] - 2025-07-28
 
 - Fix session reuse for subscriptions after reconnect
