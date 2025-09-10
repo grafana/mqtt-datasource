@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"context"
 	"encoding/json"
 	"path"
 
@@ -20,7 +21,7 @@ var (
 )
 
 // NewMQTTDatasource creates a new datasource instance.
-func NewMQTTInstance(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewMQTTInstance(_ context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	settings, err := getDatasourceSettings(s)
 	if err != nil {
 		return nil, err
@@ -64,6 +65,18 @@ func getDatasourceSettings(s backend.DataSourceInstanceSettings) (*mqtt.Options,
 
 	if password, exists := s.DecryptedSecureJSONData["password"]; exists {
 		settings.Password = password
+	}
+
+	if tlsClientCert, exists := s.DecryptedSecureJSONData["tlsClientCert"]; exists {
+		settings.TLSClientCert = tlsClientCert
+	}
+
+	if tlsClientKey, exists := s.DecryptedSecureJSONData["tlsClientKey"]; exists {
+		settings.TLSClientKey = tlsClientKey
+	}
+
+	if tlsCACert, exists := s.DecryptedSecureJSONData["tlsCACert"]; exists {
+		settings.TLSCACert = tlsCACert
 	}
 
 	return settings, nil

@@ -13,9 +13,16 @@
     "**/dashboards/*.json",
     "src/static/**",
     "vendor/**",
-    "yarn.lock"
+    "yarn.lock",
+    ".eslintcache"
   ],
   "words": [
+    "dompurify",
+    "seccomp",
+    "PTRACE",
+    "DATAPROXY",
+    "TLSCA",
+    "typecheck",
     "datasource",
     "datasources",
     "testid",
@@ -27,6 +34,8 @@
     "instancemgmt",
     "Millis",
     "paho",
-    "jsoniter"
+    "jsoniter",
+    "subresource",
+    "streamingkey"
   ]
 }

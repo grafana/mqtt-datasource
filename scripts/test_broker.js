@@ -1,8 +1,21 @@
 const aedes = require('aedes')();
-const server = require('net').createServer(aedes.handle);
+const fs = require('fs');
+const path = require('path');
 
-const PORT = 1883;
-const publishers = {};
+let server = require('net').createServer(aedes.handle);
+let PORT = 1883;
+
+if (process.argv[2] === 'tls') {
+  const options = {
+    key: fs.readFileSync(path.join(__dirname, '../testdata/server-key.pem')),
+    cert: fs.readFileSync(path.join(__dirname, '../testdata/server-cert.pem')),
+    ca: fs.readFileSync(path.join(__dirname, '../testdata/ca-cert.pem')),
+    requestCert: true,
+    rejectUnauthorized: true,
+  };
+  PORT = 8883;
+  server = require('tls').createServer(options, aedes.handle);
+}
 
 const toMillis = {
   millisecond: (ms) => ms,
@@ -11,9 +24,12 @@ const toMillis = {
   hour: (hour) => hour * 60 * 60 * 1000,
 };
 
+const publishers = {};
 const createPublisher = ({ topic, qos }) => {
   let i = 0;
-  const [duration, value] = topic.split('/');
+
+  const parts = topic.split('/');
+  const [duration, value] = [parts[parts.length - 2], parts[parts.length - 1]];
   const fn = toMillis[duration];
 
   if (!fn || !value || value < 1) {
@@ -24,12 +40,13 @@ const createPublisher = ({ topic, qos }) => {
   const interval = fn(value);
 
   if (!publishers[topic]) {
+    console.log('creating publisher for', topic, 'with interval', interval, 'ms');
     publishers[topic] = setInterval(() => {
       let payload = Math.random();
 
       // use json object to test intervals less than 1 second
       if (interval % 1000 === 0) {
-        payload = JSON.stringify({ a: payload,  b: { c: {d: [payload] }} });
+        payload = JSON.stringify({ a: payload, b: { c: { d: [payload] } } });
       }
 
       aedes.publish({

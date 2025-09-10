@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
   "name": "MQTT",
   "id": "grafana-mqtt-datasource",
@@ -13,11 +13,7 @@
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
-    "keywords": [
-      "mqtt",
-      "iot",
-      "streaming"
-    ],
+    "keywords": ["mqtt", "iot", "streaming"],
     "logos": {
       "small": "img/mqtt.svg",
       "large": "img/mqtt.svg"
@@ -29,7 +25,7 @@
       },
       {
         "name": "License",
-        "url": "https://github.com/grafana/mqtt-backend/blob/master/LICENSE"
+        "url": "https://github.com/grafana/mqtt-datasource/blob/main/LICENSE"
       }
     ],
     "screenshots": [],
@@ -37,7 +33,7 @@
     "updated": "%TODAY%"
   },
   "dependencies": {
-    "grafanaDependency": ">=9.1.0",
+    "grafanaDependency": ">=11.0.0",
     "plugins": []
   }
 }
