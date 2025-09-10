@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/mqtt-datasource/pkg/mqtt"
 	"github.com/grafana/mqtt-datasource/pkg/plugin"
 	"github.com/stretchr/testify/require"
@@ -13,8 +14,7 @@ import (
 func TestCheckHealthHandler(t *testing.T) {
 	t.Run("HealthStatusOK when can connect", func(t *testing.T) {
 		ds := plugin.NewMQTTDatasource(&fakeMQTTClient{
-			connected:  true,
-			subscribed: false,
+			connected: true,
 		}, "xyz")
 
 		res, _ := ds.CheckHealth(
@@ -28,8 +28,7 @@ func TestCheckHealthHandler(t *testing.T) {
 
 	t.Run("HealthStatusError when disconnected", func(t *testing.T) {
 		ds := plugin.NewMQTTDatasource(&fakeMQTTClient{
-			connected:  false,
-			subscribed: false,
+			connected: false,
 		}, "xyz")
 
 		res, _ := ds.CheckHealth(
@@ -43,8 +42,7 @@ func TestCheckHealthHandler(t *testing.T) {
 }
 
 type fakeMQTTClient struct {
-	connected  bool
-	subscribed bool
+	connected bool
 }
 
 func (c *fakeMQTTClient) GetTopic(_ string) (*mqtt.Topic, bool) {
@@ -55,10 +53,6 @@ func (c *fakeMQTTClient) IsConnected() bool {
 	return c.connected
 }
 
-func (c *fakeMQTTClient) IsSubscribed(_ string) bool {
-	return c.subscribed
-}
-
-func (c *fakeMQTTClient) Subscribe(_ string) *mqtt.Topic { return nil }
-func (c *fakeMQTTClient) Unsubscribe(_ string)           {}
-func (c *fakeMQTTClient) Dispose()                       {}
+func (c *fakeMQTTClient) Subscribe(_ string, _ log.Logger) *mqtt.Topic { return nil }
+func (c *fakeMQTTClient) Unsubscribe(_ string, _ log.Logger)           {}
+func (c *fakeMQTTClient) Dispose()                                     {}
