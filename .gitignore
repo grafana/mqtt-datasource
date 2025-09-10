@@ -28,3 +28,12 @@ e2e-results/
 
 # Editor
 .idea
+
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+.eslintcache
+install-state.gz
