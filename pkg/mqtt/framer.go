@@ -17,7 +17,7 @@ type framer struct {
 	fieldMap map[string]int
 }
 
-func (df *framer) next() error {
+func (df *framer) next(logger log.Logger) error {
 	switch df.iterator.WhatIsNext() {
 	case jsoniter.StringValue:
 		v := df.iterator.ReadString()
@@ -29,7 +29,7 @@ func (df *framer) next() error {
 		v := df.iterator.ReadBool()
 		df.addValue(data.FieldTypeNullableBool, &v)
 	case jsoniter.NilValue:
-		df.addNil()
+		df.addNil(logger)
 		df.iterator.ReadNil()
 	case jsoniter.ArrayValue:
 		df.addValue(data.FieldTypeJSON, json.RawMessage(df.iterator.SkipAndReturnBytes()))
@@ -42,7 +42,7 @@ func (df *framer) next() error {
 		for fname := df.iterator.ReadObject(); fname != ""; fname = df.iterator.ReadObject() {
 			if size == 0 {
 				df.path = append(df.path, fname)
-				if err := df.next(); err != nil {
+				if err := df.next(logger); err != nil {
 					return err
 				}
 			}
@@ -61,12 +61,12 @@ func (df *framer) key() string {
 	return strings.Join(df.path, "")
 }
 
-func (df *framer) addNil() {
+func (df *framer) addNil(logger log.Logger) {
 	if idx, ok := df.fieldMap[df.key()]; ok {
 		df.fields[idx].Set(0, nil)
 		return
 	}
-	log.DefaultLogger.Debug("nil value for unknown field", "key", df.key())
+	logger.Debug("nil value for unknown field", "key", df.key())
 }
 
 func (df *framer) addValue(fieldType data.FieldType, v interface{}) {
@@ -96,7 +96,7 @@ func newFramer() *framer {
 	return df
 }
 
-func (df *framer) toFrame(messages []Message) (*data.Frame, error) {
+func (df *framer) toFrame(messages []Message, logger log.Logger) (*data.Frame, error) {
 	// clear the data in the fields
 	for _, field := range df.fields {
 		for i := field.Len() - 1; i >= 0; i-- {
@@ -106,10 +106,10 @@ func (df *framer) toFrame(messages []Message) (*data.Frame, error) {
 
 	for _, message := range messages {
 		df.iterator = jsoniter.ParseBytes(jsoniter.ConfigDefault, message.Value)
-		err := df.next()
+		err := df.next(logger)
 		if err != nil {
 			// If JSON parsing fails, treat the raw bytes as a string value
-			log.DefaultLogger.Debug("JSON parsing failed, treating as raw string", "error", err, "value", string(message.Value))
+			logger.Debug("JSON parsing failed, treating as raw string", "error", err, "value", string(message.Value))
 			rawValue := string(message.Value)
 			df.addValue(data.FieldTypeNullableString, &rawValue)
 		}
