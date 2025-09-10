@@ -166,7 +166,7 @@ func TestClient_Subscribe_Deduplication(t *testing.T) {
 
 	// Verify only one topic is stored
 	count := 0
-	c.topics.Map.Range(func(key, value interface{}) bool {
+	c.topics.Range(func(key, value any) bool {
 		count++
 		return true
 	})
@@ -199,7 +199,7 @@ func TestClient_Subscribe_MultipleStreamingKeys(t *testing.T) {
 
 	// Verify all three topics are stored separately
 	count := 0
-	c.topics.Map.Range(func(key, value interface{}) bool {
+	c.topics.Range(func(key, value any) bool {
 		count++
 		return true
 	})
