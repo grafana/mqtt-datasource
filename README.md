@@ -1,5 +1,3 @@
-[![Build Status](https://drone.grafana.net/api/badges/grafana/mqtt-datasource/status.svg?ref=refs/heads/main)](https://drone.grafana.net/grafana/mqtt-datasource)
-
 # MQTT data source for Grafana
 
 The MQTT data source plugin allows you to visualize streaming MQTT data from within Grafana.
