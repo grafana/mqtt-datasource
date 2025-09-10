@@ -25,14 +25,15 @@ type Client interface {
 }
 
 type Options struct {
-	URI           string `json:"uri"`
-	Username      string `json:"username"`
-	Password      string `json:"password"`
-	ClientID      string `json:"clientID"`
-	TLSCACert     string `json:"tlsCACert"`
-	TLSClientCert string `json:"tlsClientCert"`
-	TLSClientKey  string `json:"tlsClientKey"`
-	TLSSkipVerify bool   `json:"tlsSkipVerify"`
+	URI              string `json:"uri"`
+	Username         string `json:"username"`
+	Password         string `json:"password"`
+	ClientID         string `json:"clientID"`
+	TLSCACert        string `json:"tlsCACert"`
+	TLSClientCert    string `json:"tlsClientCert"`
+	TLSClientKey     string `json:"tlsClientKey"`
+	TLSSkipVerify    bool   `json:"tlsSkipVerify"`
+	EnablePublishing bool   `json:"enablePublishing"`
 }
 
 type client struct {

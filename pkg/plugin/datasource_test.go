@@ -16,7 +16,7 @@ func TestCheckHealthHandler(t *testing.T) {
 		ds := plugin.NewMQTTDatasource(&fakeMQTTClient{
 			connected:  true,
 			subscribed: false,
-		}, "xyz")
+		}, "xyz", false)
 
 		res, _ := ds.CheckHealth(
 			context.Background(),
@@ -31,7 +31,7 @@ func TestCheckHealthHandler(t *testing.T) {
 		ds := plugin.NewMQTTDatasource(&fakeMQTTClient{
 			connected:  false,
 			subscribed: false,
-		}, "xyz")
+		}, "xyz", false)
 
 		res, _ := ds.CheckHealth(
 			context.Background(),

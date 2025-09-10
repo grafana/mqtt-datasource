@@ -32,19 +32,21 @@ func NewMQTTInstance(_ context.Context, s backend.DataSourceInstanceSettings) (i
 		return nil, err
 	}
 
-	return NewMQTTDatasource(client, s.UID), nil
+	return NewMQTTDatasource(client, s.UID, settings.EnablePublishing), nil
 }
 
 type MQTTDatasource struct {
-	Client        mqtt.Client
-	channelPrefix string
+	Client           mqtt.Client
+	channelPrefix    string
+	enablePublishing bool
 }
 
 // NewMQTTDatasource creates a new datasource instance.
-func NewMQTTDatasource(client mqtt.Client, uid string) *MQTTDatasource {
+func NewMQTTDatasource(client mqtt.Client, uid string, enablePublishing bool) *MQTTDatasource {
 	return &MQTTDatasource{
-		Client:        client,
-		channelPrefix: path.Join("ds", uid),
+		Client:           client,
+		channelPrefix:    path.Join("ds", uid),
+		enablePublishing: enablePublishing,
 	}
 }
 
