@@ -3,7 +3,6 @@ package plugin
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"path"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -30,13 +29,11 @@ func (ds *MQTTDatasource) query(query backend.DataQuery) backend.DataResponse {
 	)
 
 	if err := json.Unmarshal(query.JSON, &t); err != nil {
-		response.Error = err
-		return response
+		return backend.ErrorResponseWithErrorSource(backend.DownstreamErrorf("failed to unmarshal query: %w", err))
 	}
 
 	if t.Path == "" {
-		response.Error = fmt.Errorf("topic path is required")
-		return response
+		return backend.ErrorResponseWithErrorSource(backend.DownstreamErrorf("topic path is required"))
 	}
 
 	t.Interval = query.Interval
