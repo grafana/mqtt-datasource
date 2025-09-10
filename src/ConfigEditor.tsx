@@ -119,6 +119,17 @@ export const ConfigEditor = (props: DataSourcePluginOptionsEditorProps<MqttDataS
           </ConfigSection>
         </>
       ) : null}
+
+      <Divider />
+
+      <ConfigSection title="Experimental">
+        <Field
+          label="Enable Publishing"
+          description="Enables publishing of MQTT messages by sending a payload object inside the query object."
+        >
+          <Switch onChange={onSwitchChanged('enablePublishing')} value={jsonData.enablePublishing || false} />
+        </Field>
+      </ConfigSection>
     </>
   );
 };

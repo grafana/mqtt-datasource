@@ -40,7 +40,7 @@ func (ds *MQTTDatasource) query(query backend.DataQuery) backend.DataResponse {
 	}
 
 	// Subscribe
-	if len(t.Payload) == 0 {
+	if len(t.Payload) == 0 || !ds.enablePublishing {
 		t.Interval = query.Interval
 
 		frame := data.NewFrame("")
