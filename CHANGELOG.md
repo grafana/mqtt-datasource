@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.0] - 2025-09-10
+
+- Add support for raw string values
+- Add streaming key to the requests
+
 ## [1.1.0] - 2025-07-28
 
 - Fix session reuse for subscriptions after reconnect
