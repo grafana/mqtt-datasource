@@ -21,13 +21,13 @@ var (
 )
 
 // NewMQTTDatasource creates a new datasource instance.
-func NewMQTTInstance(_ context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewMQTTInstance(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	settings, err := getDatasourceSettings(s)
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := mqtt.NewClient(*settings)
+	client, err := mqtt.NewClient(ctx, *settings)
 	if err != nil {
 		return nil, err
 	}

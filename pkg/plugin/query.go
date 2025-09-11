@@ -3,7 +3,6 @@ package plugin
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"path"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -12,7 +11,7 @@ import (
 	"github.com/grafana/mqtt-datasource/pkg/mqtt"
 )
 
-func (ds *MQTTDatasource) QueryData(_ context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (ds *MQTTDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -30,13 +29,11 @@ func (ds *MQTTDatasource) query(query backend.DataQuery) backend.DataResponse {
 	)
 
 	if err := json.Unmarshal(query.JSON, &t); err != nil {
-		response.Error = err
-		return response
+		return backend.ErrorResponseWithErrorSource(backend.DownstreamErrorf("failed to unmarshal query: %w", err))
 	}
 
 	if t.Path == "" {
-		response.Error = fmt.Errorf("topic path is required")
-		return response
+		return backend.ErrorResponseWithErrorSource(backend.DownstreamErrorf("topic path is required"))
 	}
 
 	// Subscribe
@@ -54,9 +51,11 @@ func (ds *MQTTDatasource) query(query backend.DataQuery) backend.DataResponse {
 
 	// Publish
 	resp, err := ds.Client.Publish(t.Path, t.Payload, t.ResponsePath)
+	if err != nil {
+		return backend.ErrorResponseWithErrorSource(backend.DownstreamErrorf("failed to publish: %w", err))
+	}
 
 	field := data.NewField("Body", data.Labels{}, []json.RawMessage{resp})
 	response.Frames = append(response.Frames, data.NewFrame("Response", field))
-	response.Error = err
 	return response
 }
