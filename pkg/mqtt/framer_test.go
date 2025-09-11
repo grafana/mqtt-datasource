@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
 )
@@ -86,7 +87,7 @@ func runTest(t *testing.T, name string, values ...any) {
 	for i, v := range values {
 		messages = append(messages, Message{Timestamp: timestamp.Add(time.Duration(i) * time.Minute), Value: toJSON(v)})
 	}
-	frame, err := f.toFrame(messages)
+	frame, err := f.toFrame(messages, log.DefaultLogger)
 	require.NoError(t, err)
 	require.NotNil(t, frame)
 	experimental.CheckGoldenJSONFrame(t, "testdata", name, frame, update)
@@ -100,7 +101,7 @@ func runRawTest(t *testing.T, name string, rawValues ...[]byte) {
 	for i, v := range rawValues {
 		messages = append(messages, Message{Timestamp: timestamp.Add(time.Duration(i) * time.Minute), Value: v})
 	}
-	frame, err := f.toFrame(messages)
+	frame, err := f.toFrame(messages, log.DefaultLogger)
 	require.NoError(t, err)
 	require.NotNil(t, frame)
 	experimental.CheckGoldenJSONFrame(t, "testdata", name, frame, update)

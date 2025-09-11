@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -12,15 +13,16 @@ import (
 	"time"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
 type Client interface {
 	GetTopic(string) (*Topic, bool)
 	IsConnected() bool
-	Subscribe(string) *Topic
 	Publish(string, map[string]any, string) (json.RawMessage, error)
-	Unsubscribe(string)
+	Subscribe(string, log.Logger) *Topic
+	Unsubscribe(string, log.Logger)
 	Dispose()
 }
 
@@ -41,7 +43,8 @@ type client struct {
 	topics TopicMap
 }
 
-func NewClient(o Options) (Client, error) {
+func NewClient(ctx context.Context, o Options) (Client, error) {
+	logger := log.DefaultLogger.FromContext(ctx)
 	opts := paho.NewClientOptions()
 
 	opts.AddBroker(o.URI)
@@ -67,7 +70,7 @@ func NewClient(o Options) (Client, error) {
 	if o.TLSClientCert != "" || o.TLSClientKey != "" {
 		cert, err := tls.X509KeyPair([]byte(o.TLSClientCert), []byte(o.TLSClientKey))
 		if err != nil {
-			return nil, fmt.Errorf("failed to setup TLSClientCert: %w", err)
+			return nil, backend.DownstreamErrorf("failed to setup TLSClientCert: %w", err)
 		}
 
 		tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
@@ -86,17 +89,17 @@ func NewClient(o Options) (Client, error) {
 	opts.SetCleanSession(false)
 	opts.SetMaxReconnectInterval(10 * time.Second)
 	opts.SetConnectionLostHandler(func(c paho.Client, err error) {
-		log.DefaultLogger.Error("MQTT Connection lost", "error", err)
+		logger.Warn("MQTT Connection lost", "error", err)
 	})
 	opts.SetReconnectingHandler(func(c paho.Client, options *paho.ClientOptions) {
-		log.DefaultLogger.Debug("MQTT Reconnecting")
+		logger.Debug("MQTT Reconnecting")
 	})
 
-	log.DefaultLogger.Info("MQTT Connecting", "clientID", clientID)
+	logger.Info("MQTT Connecting", "clientID", clientID)
 
 	pahoClient := paho.NewClient(opts)
 	if token := pahoClient.Connect(); token.Wait() && token.Error() != nil {
-		return nil, fmt.Errorf("error connecting to MQTT broker: %s", token.Error())
+		return nil, backend.DownstreamErrorf("error connecting to MQTT broker: %s", token.Error())
 	}
 
 	return &client{
@@ -121,7 +124,7 @@ func (c *client) GetTopic(reqPath string) (*Topic, bool) {
 	return c.topics.Load(reqPath)
 }
 
-func (c *client) Subscribe(reqPath string) *Topic {
+func (c *client) Subscribe(reqPath string, logger log.Logger) *Topic {
 	// Check if there's already a topic with this exact key (reqPath)
 	if existingTopic, ok := c.topics.Load(reqPath); ok {
 		return existingTopic
@@ -129,12 +132,12 @@ func (c *client) Subscribe(reqPath string) *Topic {
 
 	chunks := strings.Split(reqPath, "/")
 	if len(chunks) < 2 {
-		log.DefaultLogger.Error("Invalid path", "path", reqPath)
+		logger.Error("Invalid path", "path", reqPath)
 		return nil
 	}
 	interval, err := time.ParseDuration(chunks[0])
 	if err != nil {
-		log.DefaultLogger.Error("Invalid interval", "path", reqPath, "interval", chunks[0])
+		logger.Error("Invalid interval", "path", reqPath, "interval", chunks[0])
 		return nil
 	}
 
@@ -149,27 +152,27 @@ func (c *client) Subscribe(reqPath string) *Topic {
 		Interval: interval,
 	}
 
-	topic, err := decodeTopic(t.Path)
+	topic, err := decodeTopic(t.Path, logger)
 	if err != nil {
-		log.DefaultLogger.Error("Error decoding MQTT topic name", "encodedTopic", t.Path, "error", err)
+		logger.Error("Error decoding MQTT topic name", "encodedTopic", t.Path, "error", backend.DownstreamError(err))
 		return nil
 	}
 
-	log.DefaultLogger.Debug("Subscribing to MQTT topic", "topic", topic)
+	logger.Debug("Subscribing to MQTT topic", "topic", topic)
 
 	if token := c.client.Subscribe(topic, 0, func(_ paho.Client, m paho.Message) {
 		// by wrapping HandleMessage we can directly get the correct topicPath for the incoming topic
 		// and don't need to regex it against + and #.
 		c.HandleMessage(topicPath, []byte(m.Payload()))
 	}); token.Wait() && token.Error() != nil {
-		log.DefaultLogger.Error("Error subscribing to MQTT topic", "topic", topic, "error", token.Error())
+		logger.Error("Error subscribing to MQTT topic", "topic", topic, "error", backend.DownstreamError(token.Error()))
 	}
 	// Store the topic using reqPath as the key (which includes streaming key)
 	c.topics.Map.Store(reqPath, t)
 	return t
 }
 
-func (c *client) Unsubscribe(reqPath string) {
+func (c *client) Unsubscribe(reqPath string, logger log.Logger) {
 	t, ok := c.GetTopic(reqPath)
 	if !ok {
 		return
@@ -182,16 +185,16 @@ func (c *client) Unsubscribe(reqPath string) {
 		return
 	}
 
-	log.DefaultLogger.Debug("Unsubscribing from MQTT topic", "topic", t.Path)
+	logger.Debug("Unsubscribing from MQTT topic", "topic", t.Path)
 
-	topic, err := decodeTopic(t.Path)
+	topic, err := decodeTopic(t.Path, logger)
 	if err != nil {
-		log.DefaultLogger.Error("Error decoding MQTT topic name", "encodedTopic", t.Path, "error", err)
+		logger.Error("Error decoding MQTT topic name", "encodedTopic", t.Path, "error", backend.DownstreamError(err))
 		return
 	}
 
 	if token := c.client.Unsubscribe(topic); token.Wait() && token.Error() != nil {
-		log.DefaultLogger.Error("Error unsubscribing from MQTT topic", "topic", t.Path, "error", token.Error())
+		logger.Error("Error unsubscribing from MQTT topic", "topic", t.Path, "error", backend.DownstreamError(token.Error()))
 	}
 }
 

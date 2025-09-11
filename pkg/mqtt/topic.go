@@ -35,11 +35,11 @@ func (t *Topic) Key() string {
 }
 
 // ToDataFrame converts the topic to a data frame.
-func (t *Topic) ToDataFrame() (*data.Frame, error) {
+func (t *Topic) ToDataFrame(logger log.Logger) (*data.Frame, error) {
 	if t.framer == nil {
 		t.framer = newFramer()
 	}
-	return t.framer.toFrame(t.Messages)
+	return t.framer.toFrame(t.Messages, logger)
 }
 
 // TopicMap is a thread-safe map of topics
@@ -60,7 +60,7 @@ func (tm *TopicMap) Load(key string) (*Topic, bool) {
 
 // AddMessage adds a message to the topic for the given path.
 func (tm *TopicMap) AddMessage(path string, message Message) {
-	tm.Map.Range(func(key, t any) bool {
+	tm.Range(func(key, t any) bool {
 		topic, ok := t.(*Topic)
 		if !ok {
 			return false
@@ -77,7 +77,7 @@ func (tm *TopicMap) AddMessage(path string, message Message) {
 func (tm *TopicMap) HasSubscription(path string) bool {
 	found := false
 
-	tm.Map.Range(func(key, t any) bool {
+	tm.Range(func(key, t any) bool {
 		topic, ok := t.(*Topic)
 		if !ok {
 			return true // this shouldn't happen, but continue iterating
@@ -112,10 +112,10 @@ func (tm *TopicMap) Delete(key string) {
 //
 // To comply with these restrictions, the topic is encoded using URL-safe base64
 // encoding. (RFC 4648; 5. Base 64 Encoding with URL and Filename Safe Alphabet)
-func decodeTopic(topicPath string) (string, error) {
+func decodeTopic(topicPath string, logger log.Logger) (string, error) {
 	chunks := strings.Split(topicPath, "/")
 	topic := chunks[0]
-	log.DefaultLogger.Debug("Decoding MQTT topic name", "encodedTopic", topic)
+	logger.Debug("Decoding MQTT topic name", "encodedTopic", topic)
 	decoded, err := base64.RawURLEncoding.DecodeString(topic)
 
 	if err != nil {
