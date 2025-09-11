@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"path"
@@ -18,20 +20,22 @@ import (
 type Client interface {
 	GetTopic(string) (*Topic, bool)
 	IsConnected() bool
+	Publish(string, map[string]any, string) (json.RawMessage, error)
 	Subscribe(string, log.Logger) *Topic
 	Unsubscribe(string, log.Logger)
 	Dispose()
 }
 
 type Options struct {
-	URI           string `json:"uri"`
-	Username      string `json:"username"`
-	Password      string `json:"password"`
-	ClientID      string `json:"clientID"`
-	TLSCACert     string `json:"tlsCACert"`
-	TLSClientCert string `json:"tlsClientCert"`
-	TLSClientKey  string `json:"tlsClientKey"`
-	TLSSkipVerify bool   `json:"tlsSkipVerify"`
+	URI              string `json:"uri"`
+	Username         string `json:"username"`
+	Password         string `json:"password"`
+	ClientID         string `json:"clientID"`
+	TLSCACert        string `json:"tlsCACert"`
+	TLSClientCert    string `json:"tlsClientCert"`
+	TLSClientKey     string `json:"tlsClientKey"`
+	TLSSkipVerify    bool   `json:"tlsSkipVerify"`
+	EnablePublishing bool   `json:"enablePublishing"`
 }
 
 type client struct {
@@ -192,6 +196,54 @@ func (c *client) Unsubscribe(reqPath string, logger log.Logger) {
 	if token := c.client.Unsubscribe(topic); token.Wait() && token.Error() != nil {
 		logger.Error("Error unsubscribing from MQTT topic", "topic", t.Path, "error", backend.DownstreamError(token.Error()))
 	}
+}
+
+func (c *client) Publish(topic string, payload map[string]any, responseTopic string) (json.RawMessage, error) {
+	var response json.RawMessage
+	var err error
+	done := make(chan struct{}, 1)
+
+	if responseTopic != "" {
+		tokenSub := c.client.Subscribe(responseTopic, 2, func(c paho.Client, m paho.Message) {
+			response = m.Payload()
+			done <- struct{}{}
+		})
+
+		if !tokenSub.WaitTimeout(time.Second) && tokenSub.Error() != nil {
+			err = errors.Join(err, tokenSub.Error())
+			return response, err
+		}
+
+		defer c.client.Unsubscribe(responseTopic)
+	} else {
+		done <- struct{}{}
+	}
+
+	data, errMarshal := json.Marshal(&payload)
+	if errMarshal != nil {
+		err = errors.Join(err, errMarshal)
+		return response, err
+	}
+
+	token := c.client.Publish(topic, 2, false, data)
+
+	if token.Error() != nil {
+		err = errors.Join(err, token.Error())
+		return response, err
+	}
+
+	if !token.WaitTimeout(time.Second) {
+		err = errors.Join(err, errors.New("publish timeout"))
+		return response, err
+	}
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		err = errors.Join(err, errors.New("subscribe timeout"))
+	}
+
+	return response, err
 }
 
 func (c *client) Dispose() {
