@@ -34,7 +34,7 @@
     "@swc/jest": "^0.2.26",
     "@testing-library/jest-dom": "6.1.4",
     "@testing-library/react": "14.0.0",
-    "@types/jest": "^29.5.0",
+    "@types/jest": "^29.5.12",
     "@types/lodash": "^4.14.194",
     "@types/node": "^20.8.7",
     "@types/react-router-dom": "^5.2.0",
