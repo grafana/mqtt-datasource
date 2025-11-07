@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
 // Mock client that implements our Client interface directly
@@ -22,19 +24,19 @@ func (m *mockClient) IsConnected() bool {
 	return m.connected
 }
 
-func (m *mockClient) Subscribe(reqPath string) *Topic {
+func (m *mockClient) Subscribe(reqPath string, logger log.Logger) (*Topic, error) {
 	// Check if already exists
 	if existingTopic, ok := m.topics.Load(reqPath); ok {
-		return existingTopic
+		return existingTopic, nil
 	}
 
 	chunks := strings.Split(reqPath, "/")
 	if len(chunks) < 2 {
-		return nil
+		return nil, nil
 	}
 	interval, err := time.ParseDuration(chunks[0])
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	topicPath := path.Join(chunks[1:]...)
@@ -53,11 +55,12 @@ func (m *mockClient) Subscribe(reqPath string) *Topic {
 
 	// Store with reqPath as key
 	m.topics.Map.Store(reqPath, t)
-	return t
+	return t, nil
 }
 
-func (m *mockClient) Unsubscribe(reqPath string) {
+func (m *mockClient) Unsubscribe(reqPath string, logger log.Logger) error {
 	m.topics.Delete(reqPath)
+	return nil
 }
 
 func (m *mockClient) Dispose() {
@@ -117,7 +120,10 @@ func TestClient_Subscribe_WithStreamingKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			topic := c.Subscribe(tt.reqPath)
+			topic, err := c.Subscribe(tt.reqPath, log.DefaultLogger)
+			if err != nil && tt.expectTopic {
+				t.Fatalf("Subscribe failed: %v", err)
+			}
 
 			if tt.expectTopic {
 				if topic == nil {
@@ -149,13 +155,19 @@ func TestClient_Subscribe_Deduplication(t *testing.T) {
 	reqPath := "1s/dGVzdC90b3BpYw/user1/hash123/org456"
 
 	// Subscribe first time
-	topic1 := c.Subscribe(reqPath)
+	topic1, err := c.Subscribe(reqPath, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
 	if topic1 == nil {
 		t.Fatal("Expected topic to be created")
 	}
 
 	// Subscribe second time - should return same topic
-	topic2 := c.Subscribe(reqPath)
+	topic2, err := c.Subscribe(reqPath, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
 	if topic2 == nil {
 		t.Fatal("Expected topic to be returned")
 	}
@@ -184,9 +196,18 @@ func TestClient_Subscribe_MultipleStreamingKeys(t *testing.T) {
 	reqPath2 := "1s/dGVzdC90b3BpYw/user2/hash456/org456"
 	reqPath3 := "1s/dGVzdC90b3BpYw/user1/hash123/org789"
 
-	topic1 := c.Subscribe(reqPath1)
-	topic2 := c.Subscribe(reqPath2)
-	topic3 := c.Subscribe(reqPath3)
+	topic1, err := c.Subscribe(reqPath1, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
+	topic2, err := c.Subscribe(reqPath2, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
+	topic3, err := c.Subscribe(reqPath3, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
 
 	if topic1 == nil || topic2 == nil || topic3 == nil {
 		t.Fatal("Expected all topics to be created")
@@ -234,7 +255,10 @@ func TestClient_GetTopic(t *testing.T) {
 	}
 
 	// Create topic
-	topic := c.Subscribe(reqPath)
+	topic, err := c.Subscribe(reqPath, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
 	if topic == nil {
 		t.Fatal("Expected topic to be created")
 	}
@@ -257,8 +281,14 @@ func TestClient_MessageHandling_WithStreamingKeys(t *testing.T) {
 	reqPath1 := "1s/dGVzdC90b3BpYw/user1/hash123/org456"
 	reqPath2 := "1s/dGVzdC90b3BpYw/user2/hash456/org456"
 
-	topic1 := c.Subscribe(reqPath1)
-	topic2 := c.Subscribe(reqPath2)
+	topic1, err := c.Subscribe(reqPath1, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
+	topic2, err := c.Subscribe(reqPath2, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
 
 	if topic1 == nil || topic2 == nil {
 		t.Fatal("Expected both topics to be created")
