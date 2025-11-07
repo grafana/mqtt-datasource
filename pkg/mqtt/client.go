@@ -128,12 +128,10 @@ func (c *client) Subscribe(reqPath string, logger log.Logger) (*Topic, error) {
 
 	chunks := strings.Split(reqPath, "/")
 	if len(chunks) < 2 {
-		logger.Error("Invalid path", "path", reqPath)
 		return nil, backend.DownstreamErrorf("invalid path: %s", reqPath)
 	}
 	interval, err := time.ParseDuration(chunks[0])
 	if err != nil {
-		logger.Error("Invalid interval", "path", reqPath, "interval", chunks[0])
 		return nil, backend.DownstreamErrorf("invalid interval %s: %s", chunks[0], err)
 	}
 
@@ -150,7 +148,6 @@ func (c *client) Subscribe(reqPath string, logger log.Logger) (*Topic, error) {
 
 	topic, err := decodeTopic(t.Path, logger)
 	if err != nil {
-		logger.Error("Error decoding MQTT topic name", "encodedTopic", t.Path, "error", backend.DownstreamError(err))
 		return nil, backend.DownstreamErrorf("error decoding MQTT topic name %s: %s", t.Path, err)
 	}
 
@@ -161,7 +158,6 @@ func (c *client) Subscribe(reqPath string, logger log.Logger) (*Topic, error) {
 		// and don't need to regex it against + and #.
 		c.HandleMessage(topicPath, []byte(m.Payload()))
 	}); token.Wait() && token.Error() != nil {
-		logger.Error("Error subscribing to MQTT topic", "topic", topic, "error", backend.DownstreamError(token.Error()))
 		return nil, backend.DownstreamErrorf("error subscribing to MQTT topic %s: %s", topic, token.Error())
 	}
 	// Store the topic using reqPath as the key (which includes streaming key)
@@ -186,12 +182,10 @@ func (c *client) Unsubscribe(reqPath string, logger log.Logger) error {
 
 	topic, err := decodeTopic(t.Path, logger)
 	if err != nil {
-		logger.Error("Error decoding MQTT topic name", "encodedTopic", t.Path, "error", backend.DownstreamError(err))
 		return backend.DownstreamErrorf("error decoding MQTT topic name %s: %s", t.Path, err)
 	}
 
 	if token := c.client.Unsubscribe(topic); token.Wait() && token.Error() != nil {
-		logger.Error("Error unsubscribing from MQTT topic", "topic", t.Path, "error", backend.DownstreamError(token.Error()))
 		return backend.DownstreamErrorf("error unsubscribing from MQTT topic %s: %s", t.Path, token.Error())
 	}
 
