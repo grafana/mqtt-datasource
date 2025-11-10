@@ -30,8 +30,15 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 		return backend.DownstreamErrorf("invalid interval: %s", chunks[0])
 	}
 
-	ds.Client.Subscribe(topicKey, logger)
-	defer ds.Client.Unsubscribe(topicKey, logger)
+	_, err = ds.Client.Subscribe(topicKey, logger)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if unsubErr := ds.Client.Unsubscribe(topicKey, logger); unsubErr != nil {
+			logger.Error("Failed to unsubscribe from MQTT topic", "topicKey", topicKey, "error", unsubErr)
+		}
+	}()
 
 	ticker := time.NewTicker(interval)
 

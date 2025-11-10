@@ -36,6 +36,7 @@
     "paho",
     "jsoniter",
     "subresource",
-    "streamingkey"
+    "streamingkey",
+    "unsub"
   ]
 }

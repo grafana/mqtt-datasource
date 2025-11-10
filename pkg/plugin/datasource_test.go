@@ -53,6 +53,6 @@ func (c *fakeMQTTClient) IsConnected() bool {
 	return c.connected
 }
 
-func (c *fakeMQTTClient) Subscribe(_ string, _ log.Logger) *mqtt.Topic { return nil }
-func (c *fakeMQTTClient) Unsubscribe(_ string, _ log.Logger)           {}
-func (c *fakeMQTTClient) Dispose()                                     {}
+func (c *fakeMQTTClient) Subscribe(_ string, _ log.Logger) (*mqtt.Topic, error) { return nil, nil }
+func (c *fakeMQTTClient) Unsubscribe(_ string, _ log.Logger) error              { return nil }
+func (c *fakeMQTTClient) Dispose()                                              {}
