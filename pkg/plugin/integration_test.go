@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/mqtt-datasource/pkg/mqtt"
 )
 
@@ -118,9 +119,18 @@ func TestStreamingKeyIntegration_ClientSubscription(t *testing.T) {
 	topicKey3 := "1s/dGVzdC90b3BpYw/user1/hash123/org789"
 
 	// Subscribe to all three
-	topic1 := client.Subscribe(topicKey1)
-	topic2 := client.Subscribe(topicKey2)
-	topic3 := client.Subscribe(topicKey3)
+	topic1, err := client.Subscribe(topicKey1, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
+	topic2, err := client.Subscribe(topicKey2, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
+	topic3, err := client.Subscribe(topicKey3, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
 
 	// Verify all topics were created
 	if topic1 == nil || topic2 == nil || topic3 == nil {
@@ -163,8 +173,14 @@ func TestStreamingKeyIntegration_MessageIsolation(t *testing.T) {
 	topicKey1 := "1s/dGVzdC90b3BpYw/user1/hash123/org456"
 	topicKey2 := "1s/dGVzdC90b3BpYw/user2/hash456/org456"
 
-	topic1 := client.Subscribe(topicKey1)
-	topic2 := client.Subscribe(topicKey2)
+	topic1, err := client.Subscribe(topicKey1, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
+	topic2, err := client.Subscribe(topicKey2, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
 
 	if topic1 == nil || topic2 == nil {
 		t.Fatal("Expected both topics to be created")
@@ -219,10 +235,10 @@ func (m *mockMQTTClient) IsConnected() bool {
 	return true
 }
 
-func (m *mockMQTTClient) Subscribe(reqPath string) *mqtt.Topic {
+func (m *mockMQTTClient) Subscribe(reqPath string, logger log.Logger) (*mqtt.Topic, error) {
 	// Check if already exists
 	if topic, exists := m.topics[reqPath]; exists {
-		return topic
+		return topic, nil
 	}
 
 	// Parse the reqPath (simplified version)
@@ -239,11 +255,12 @@ func (m *mockMQTTClient) Subscribe(reqPath string) *mqtt.Topic {
 	// Simulate MQTT subscription (would normally decode the topic)
 	m.subscriptions["test/topic"] = true
 
-	return topic
+	return topic, nil
 }
 
-func (m *mockMQTTClient) Unsubscribe(reqPath string) {
+func (m *mockMQTTClient) Unsubscribe(reqPath string, logger log.Logger) error {
 	delete(m.topics, reqPath)
+	return nil
 }
 
 func (m *mockMQTTClient) Dispose() {
