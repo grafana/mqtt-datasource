@@ -14,14 +14,19 @@ jest.mock('@grafana/runtime', () => ({
 
 // Mock crypto.subtle for consistent testing
 const mockDigest = jest.fn();
-Object.defineProperty(global, 'crypto', {
-  value: {
-    subtle: {
-      digest: mockDigest,
+
+function setupDigestMock() {
+  Object.defineProperty(global, 'crypto', {
+    value: {
+      subtle: {
+        digest: mockDigest,
+      },
     },
-  },
-  writable: true,
-});
+    writable: true,
+  });
+}
+
+setupDigestMock();
 
 describe('getLiveStreamKey', () => {
   beforeEach(() => {
@@ -190,5 +195,30 @@ describe('getLiveStreamKey', () => {
 
     // Should pad single digit hex values with leading zeros
     expect(key).toBe('mqtt-datasource-uid/0102030a0b0c0d0e/1');
+  });
+
+  describe('removing definition of crypto.subtle', ()  => {
+    beforeAll(() => {
+      Object.defineProperty(global, 'crypto', {
+        value: {
+          subtle: undefined,
+        },
+        writable: true,
+      });
+    });
+
+    afterAll(() => {
+      setupDigestMock();
+    });
+
+    it('should work with crypto.subtle undefined', async () => {
+      const datasourceUid = 'mqtt-datasource-uid';
+      const topic = 'sensor/temperature';
+
+      const key = await getLiveStreamKey(datasourceUid, topic);
+
+      // 8885fa14e6baa4b6 are the first 8 bytes of the hash of '{"topic":"sensor/temperature"}'
+      expect(key).toBe('mqtt-datasource-uid/8885fa14e6baa4b6/1');
+    });
   });
 });
