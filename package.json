@@ -38,7 +38,7 @@
     "@types/lodash": "^4.14.194",
     "@types/node": "^20.8.7",
     "@types/react-router-dom": "^5.2.0",
-    "@types/testing-library__jest-dom": "5.14.8",
+    "@types/testing-library__jest-dom": "5.14.9",
     "@typescript-eslint/eslint-plugin": "^6.18.0",
     "@typescript-eslint/parser": "^6.18.0",
     "aedes": "^0.51.3",
