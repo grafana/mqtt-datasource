@@ -3,7 +3,7 @@ module github.com/grafana/mqtt-datasource
 go 1.25
 
 require (
-	github.com/eclipse/paho.mqtt.golang v1.5.0
+	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/grafana/grafana-plugin-sdk-go v0.284.0
 	github.com/json-iterator/go v1.1.12
 	github.com/stretchr/testify v1.11.1
