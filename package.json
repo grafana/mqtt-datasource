@@ -89,5 +89,5 @@
     "react-dom": "18.3.1",
     "tslib": "2.8.1"
   },
-  "packageManager": "yarn@4.9.1"
+  "packageManager": "yarn@4.12.0"
 }
