@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1
+
+### Patch Changes
+
+🐛 Update versions of various dependencies
+
 ## [1.2.0] - 2025-09-10
 
 - Add support for raw string values
