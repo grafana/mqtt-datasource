@@ -129,6 +129,14 @@ export const ConfigEditor = (props: DataSourcePluginOptionsEditorProps<MqttDataS
         >
           <Switch onChange={onSwitchChanged('enablePublishing')} value={jsonData.enablePublishing || false} />
         </Field>
+        {jsonData.enablePublishing ? (
+          <Field label="Publishing Timeout" description="Timeout for publishing a message (e.g., '1s', '500ms').">
+            <Input
+              onChange={onUpdateDatasourceJsonDataOption(props, 'publishingTimeout')}
+              value={jsonData.publishingTimeout || '1s'}
+            />
+          </Field>
+        ) : null}
       </ConfigSection>
     </>
   );

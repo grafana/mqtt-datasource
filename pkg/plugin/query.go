@@ -50,7 +50,7 @@ func (ds *MQTTDatasource) query(query backend.DataQuery) backend.DataResponse {
 	}
 
 	// Publish
-	resp, err := ds.Client.Publish(t.Path, t.Payload, t.ResponsePath)
+	resp, err := ds.Client.Publish(t.Path, t.Payload, t.ResponsePath, ds.publishingTimeout)
 	if err != nil {
 		return backend.ErrorResponseWithErrorSource(backend.DownstreamErrorf("failed to publish: %w", err))
 	}
