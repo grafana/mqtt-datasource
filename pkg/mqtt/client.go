@@ -20,22 +20,23 @@ import (
 type Client interface {
 	GetTopic(string) (*Topic, bool)
 	IsConnected() bool
-	Publish(string, map[string]any, string) (json.RawMessage, error)
+	Publish(string, map[string]any, string, time.Duration) (json.RawMessage, error)
 	Subscribe(string, log.Logger) (*Topic, error)
 	Unsubscribe(string, log.Logger) error
 	Dispose()
 }
 
 type Options struct {
-	URI              string `json:"uri"`
-	Username         string `json:"username"`
-	Password         string `json:"password"`
-	ClientID         string `json:"clientID"`
-	TLSCACert        string `json:"tlsCACert"`
-	TLSClientCert    string `json:"tlsClientCert"`
-	TLSClientKey     string `json:"tlsClientKey"`
-	TLSSkipVerify    bool   `json:"tlsSkipVerify"`
-	EnablePublishing bool   `json:"enablePublishing"`
+	URI               string `json:"uri"`
+	Username          string `json:"username"`
+	Password          string `json:"password"`
+	ClientID          string `json:"clientID"`
+	TLSCACert         string `json:"tlsCACert"`
+	TLSClientCert     string `json:"tlsClientCert"`
+	TLSClientKey      string `json:"tlsClientKey"`
+	TLSSkipVerify     bool   `json:"tlsSkipVerify"`
+	EnablePublishing  bool   `json:"enablePublishing"`
+	PublishingTimeout string `json:"publishingTimeout"`
 }
 
 type client struct {
@@ -196,7 +197,7 @@ func (c *client) Unsubscribe(reqPath string, logger log.Logger) error {
 	return nil
 }
 
-func (c *client) Publish(topic string, payload map[string]any, responseTopic string) (json.RawMessage, error) {
+func (c *client) Publish(topic string, payload map[string]any, responseTopic string, timeout time.Duration) (json.RawMessage, error) {
 	var response json.RawMessage
 	var err error
 	done := make(chan struct{}, 1)
@@ -207,7 +208,7 @@ func (c *client) Publish(topic string, payload map[string]any, responseTopic str
 			done <- struct{}{}
 		})
 
-		if !tokenSub.WaitTimeout(time.Second) && tokenSub.Error() != nil {
+		if !tokenSub.WaitTimeout(timeout) && tokenSub.Error() != nil {
 			err = errors.Join(err, tokenSub.Error())
 			return response, err
 		}
@@ -230,14 +231,14 @@ func (c *client) Publish(topic string, payload map[string]any, responseTopic str
 		return response, err
 	}
 
-	if !token.WaitTimeout(time.Second) {
+	if !token.WaitTimeout(timeout) {
 		err = errors.Join(err, errors.New("publish timeout"))
 		return response, err
 	}
 
 	select {
 	case <-done:
-	case <-time.After(time.Second):
+	case <-time.After(timeout):
 		err = errors.Join(err, errors.New("subscribe timeout"))
 	}
 

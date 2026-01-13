@@ -3,7 +3,9 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"path"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -32,21 +34,28 @@ func NewMQTTInstance(ctx context.Context, s backend.DataSourceInstanceSettings) 
 		return nil, err
 	}
 
-	return NewMQTTDatasource(client, s.UID, settings.EnablePublishing), nil
+	timeout, err := time.ParseDuration(settings.PublishingTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse publishingTimeout with: %v", err)
+	}
+
+	return NewMQTTDatasource(client, s.UID, settings.EnablePublishing, timeout), nil
 }
 
 type MQTTDatasource struct {
-	Client           mqtt.Client
-	channelPrefix    string
-	enablePublishing bool
+	Client            mqtt.Client
+	channelPrefix     string
+	enablePublishing  bool
+	publishingTimeout time.Duration
 }
 
 // NewMQTTDatasource creates a new datasource instance.
-func NewMQTTDatasource(client mqtt.Client, uid string, enablePublishing bool) *MQTTDatasource {
+func NewMQTTDatasource(client mqtt.Client, uid string, enablePublishing bool, publishingTimeout time.Duration) *MQTTDatasource {
 	return &MQTTDatasource{
-		Client:           client,
-		channelPrefix:    path.Join("ds", uid),
-		enablePublishing: enablePublishing,
+		Client:            client,
+		channelPrefix:     path.Join("ds", uid),
+		enablePublishing:  enablePublishing,
+		publishingTimeout: publishingTimeout,
 	}
 }
 
