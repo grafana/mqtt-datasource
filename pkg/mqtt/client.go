@@ -21,8 +21,8 @@ type Client interface {
 	GetTopic(string) (*Topic, bool)
 	IsConnected() bool
 	Publish(string, map[string]any, string) (json.RawMessage, error)
-	Subscribe(string, log.Logger) *Topic
-	Unsubscribe(string, log.Logger)
+	Subscribe(string, log.Logger) (*Topic, error)
+	Unsubscribe(string, log.Logger) error
 	Dispose()
 }
 
@@ -124,21 +124,19 @@ func (c *client) GetTopic(reqPath string) (*Topic, bool) {
 	return c.topics.Load(reqPath)
 }
 
-func (c *client) Subscribe(reqPath string, logger log.Logger) *Topic {
+func (c *client) Subscribe(reqPath string, logger log.Logger) (*Topic, error) {
 	// Check if there's already a topic with this exact key (reqPath)
 	if existingTopic, ok := c.topics.Load(reqPath); ok {
-		return existingTopic
+		return existingTopic, nil
 	}
 
 	chunks := strings.Split(reqPath, "/")
 	if len(chunks) < 2 {
-		logger.Error("Invalid path", "path", reqPath)
-		return nil
+		return nil, backend.DownstreamErrorf("invalid path: %s", reqPath)
 	}
 	interval, err := time.ParseDuration(chunks[0])
 	if err != nil {
-		logger.Error("Invalid interval", "path", reqPath, "interval", chunks[0])
-		return nil
+		return nil, backend.DownstreamErrorf("invalid interval %s: %s", chunks[0], err)
 	}
 
 	// For MQTT subscription, we only need the actual topic path (without streaming key)
@@ -154,8 +152,7 @@ func (c *client) Subscribe(reqPath string, logger log.Logger) *Topic {
 
 	topic, err := decodeTopic(t.Path, logger)
 	if err != nil {
-		logger.Error("Error decoding MQTT topic name", "encodedTopic", t.Path, "error", backend.DownstreamError(err))
-		return nil
+		return nil, backend.DownstreamErrorf("error decoding MQTT topic name %s: %s", t.Path, err)
 	}
 
 	logger.Debug("Subscribing to MQTT topic", "topic", topic)
@@ -165,37 +162,38 @@ func (c *client) Subscribe(reqPath string, logger log.Logger) *Topic {
 		// and don't need to regex it against + and #.
 		c.HandleMessage(topicPath, []byte(m.Payload()))
 	}); token.Wait() && token.Error() != nil {
-		logger.Error("Error subscribing to MQTT topic", "topic", topic, "error", backend.DownstreamError(token.Error()))
+		return nil, backend.DownstreamErrorf("error subscribing to MQTT topic %s: %s", topic, token.Error())
 	}
 	// Store the topic using reqPath as the key (which includes streaming key)
 	c.topics.Map.Store(reqPath, t)
-	return t
+	return t, nil
 }
 
-func (c *client) Unsubscribe(reqPath string, logger log.Logger) {
+func (c *client) Unsubscribe(reqPath string, logger log.Logger) error {
 	t, ok := c.GetTopic(reqPath)
 	if !ok {
-		return
+		return nil // No error if topic doesn't exist
 	}
 	c.topics.Delete(t.Key())
 
 	if exists := c.topics.HasSubscription(t.Path); exists {
 		// There are still other subscriptions to this path,
 		// so we shouldn't unsubscribe yet.
-		return
+		return nil
 	}
 
 	logger.Debug("Unsubscribing from MQTT topic", "topic", t.Path)
 
 	topic, err := decodeTopic(t.Path, logger)
 	if err != nil {
-		logger.Error("Error decoding MQTT topic name", "encodedTopic", t.Path, "error", backend.DownstreamError(err))
-		return
+		return backend.DownstreamErrorf("error decoding MQTT topic name %s: %s", t.Path, err)
 	}
 
 	if token := c.client.Unsubscribe(topic); token.Wait() && token.Error() != nil {
-		logger.Error("Error unsubscribing from MQTT topic", "topic", t.Path, "error", backend.DownstreamError(token.Error()))
+		return backend.DownstreamErrorf("error unsubscribing from MQTT topic %s: %s", t.Path, token.Error())
 	}
+
+	return nil
 }
 
 func (c *client) Publish(topic string, payload map[string]any, responseTopic string) (json.RawMessage, error) {
