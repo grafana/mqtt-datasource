@@ -41,6 +41,7 @@
     "@types/node": "25.0.10",
     "@types/react": "18.3.27",
     "@types/react-dom": "18.3.7",
+    "@types/semver": "7.7.1",
     "@typescript-eslint/eslint-plugin": "8.53.1",
     "@typescript-eslint/parser": "8.53.1",
     "aedes": "0.51.3",
