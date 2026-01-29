@@ -14,6 +14,7 @@ export interface MqttDataSourceOptions extends DataSourceJsonData {
   tlsAuth: boolean;
   tlsAuthWithCACert: boolean;
   tlsSkipVerify: boolean;
+  enableSecureSocksProxy?: boolean;
 }
 
 export interface MqttSecureJsonData {
