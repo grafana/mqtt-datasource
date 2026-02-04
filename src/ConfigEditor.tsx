@@ -2,30 +2,20 @@ import React, { SyntheticEvent } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
-  FeatureToggles,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { Field, InlineField, Input, SecretInput, Switch } from '@grafana/ui';
+import { Field, Input, SecretInput, SecureSocksProxySettings, Switch } from '@grafana/ui';
 import { Divider } from './Divider';
 import { TLSSecretsConfig } from './TLSConfig';
 import { MqttDataSourceOptions, MqttSecureJsonData } from './types';
 import { config } from '@grafana/runtime';
-import { gte } from 'semver';
-import { css } from '@emotion/css';
-
-const styles = {
-  toggle: css`
-    margin-top: 7px;
-    margin-left: 5px;
-  `,
-};
 
 export const ConfigEditor = (props: DataSourcePluginOptionsEditorProps<MqttDataSourceOptions, MqttSecureJsonData>) => {
-  const { options } = props;
+  const { options, onOptionsChange } = props;
   const jsonData = options.jsonData;
 
   const onResetPassword = () => {
@@ -131,33 +121,9 @@ export const ConfigEditor = (props: DataSourcePluginOptionsEditorProps<MqttDataS
         </>
       ) : null}
 
-      {config.featureToggles['secureSocksDSProxyEnabled' as keyof FeatureToggles] &&
-        gte(config.buildInfo.version, '10.0.0') && (
-          <>
-            <InlineField
-              label="Secure Socks Proxy"
-              tooltip={
-                <>
-                  Enable proxying the data source connection through the secure socks proxy to a different network. See{' '}
-                  <a
-                    href="https://grafana.com/docs/grafana/next/setup-grafana/configure-grafana/proxy/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Configure a data source connection proxy.
-                  </a>
-                </>
-              }
-            >
-              <div className={styles.toggle}>
-                <Switch
-                  value={options.jsonData.enableSecureSocksProxy}
-                  onChange={onUpdateDatasourceSecureJsonDataOption(props, 'enableSecureSocksProxy')}
-                />
-              </div>
-            </InlineField>
-          </>
-        )}
+      {config.secureSocksDSProxyEnabled && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
     </>
   );
 };
