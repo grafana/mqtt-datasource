@@ -24,7 +24,6 @@ type proxyDialer interface {
 func configureProxyIfEnabled(ctx context.Context, opts *paho.ClientOptions, settings backend.DataSourceInstanceSettings, logger log.Logger) error {
 	proxyClient, err := settings.ProxyClient(ctx)
 	if err != nil {
-		logger.Error("MQTT proxy client creation failed", "error", err)
 		return backend.DownstreamErrorf("MQTT proxy client creation failed: %s", err)
 	}
 
@@ -36,7 +35,6 @@ func configureProxyIfEnabled(ctx context.Context, opts *paho.ClientOptions, sett
 	logger.Info("MQTT using secure socks proxy")
 	proxyDialer, err := proxyClient.NewSecureSocksProxyContextDialer()
 	if err != nil {
-		logger.Error("MQTT secure socks proxy dialer creation failed", "error", err)
 		return backend.DownstreamErrorf("MQTT secure socks proxy dialer creation failed: %s", err)
 	}
 
