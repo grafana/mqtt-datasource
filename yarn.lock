@@ -1806,14 +1806,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:0.12.1":
-  version: 0.12.1
-  resolution: "@grafana/plugin-ui@npm:0.12.1"
+"@grafana/plugin-ui@npm:0.13.0":
+  version: 0.13.0
+  resolution: "@grafana/plugin-ui@npm:0.13.0"
   dependencies:
     "@emotion/css": "npm:^11.11.2"
     "@hello-pangea/dnd": "npm:^17.0.0"
     "@react-awesome-query-builder/ui": "npm:^6.6.4"
     "@types/prismjs": "npm:^1.26.4"
+    chance: "npm:^1.1.7"
     lodash: "npm:^4.17.21"
     prismjs: "npm:^1.30.0"
     react-calendar: "npm:^4.8.0"
@@ -1827,10 +1828,13 @@ __metadata:
     "@grafana/e2e-selectors": ">=10.4.0"
     "@grafana/runtime": ">=10.4.0"
     "@grafana/ui": ">=10.4.0"
+    "@testing-library/jest-dom": ">=5.16.5"
+    "@testing-library/react": ">=15.0.2"
+    "@testing-library/user-event": ">=14.5.2"
     react: ^18.2.0
     react-dom: ^18.2.0
     rxjs: ^7.8.1
-  checksum: 10c0/4d88c6cb7c883521d1bd7eba815674038951e77643ea3050f1355a16ce507ce593e2c267073e842f1d6974a486151420054adf1a813e44fa75284972aa94e243
+  checksum: 10c0/7aaf5787cde1f6d6670fdb453e651a2cc9d782114c12f17b580b91eddf78111ee5edfe6f9b69fda86cdfa4d10617730666fe7edbd7c0b9ba3172e6f58cb10281
   languageName: node
   linkType: hard
 
@@ -5291,6 +5295,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chance@npm:^1.1.7":
+  version: 1.1.13
+  resolution: "chance@npm:1.1.13"
+  checksum: 10c0/0e1523b0ef75061df5771c052e8bf8d5fb7d92e56a58e98e170e4be5f2166cceac2f70dd209e49e0605ea2e376ba99fb5e391987e8610c7037cd2fce19c35e3e
+  languageName: node
+  linkType: hard
+
 "char-regex@npm:^1.0.2":
   version: 1.0.2
   resolution: "char-regex@npm:1.0.2"
@@ -7749,7 +7760,7 @@ __metadata:
     "@grafana/eslint-config": "npm:9.0.0"
     "@grafana/i18n": "npm:12.3.1"
     "@grafana/plugin-e2e": "npm:3.1.4"
-    "@grafana/plugin-ui": "npm:0.12.1"
+    "@grafana/plugin-ui": "npm:0.13.0"
     "@grafana/runtime": "npm:12.3.1"
     "@grafana/schema": "npm:12.3.1"
     "@grafana/tsconfig": "npm:2.0.1"
