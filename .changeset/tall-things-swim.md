@@ -2,4 +2,4 @@
 'grafana-mqtt-datasource': minor
 ---
 
-Introduce extended webpack config to support older versions of Grafana with react-19
+Bump dependency versions to be prepared for react-19 upgrade and enable react-19 e2e testing
