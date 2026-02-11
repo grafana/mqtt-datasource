@@ -2,7 +2,9 @@ package plugin_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -15,7 +17,7 @@ func TestCheckHealthHandler(t *testing.T) {
 	t.Run("HealthStatusOK when can connect", func(t *testing.T) {
 		ds := plugin.NewMQTTDatasource(&fakeMQTTClient{
 			connected: true,
-		}, "xyz")
+		}, "xyz", false, 1000)
 
 		res, _ := ds.CheckHealth(
 			context.Background(),
@@ -29,7 +31,7 @@ func TestCheckHealthHandler(t *testing.T) {
 	t.Run("HealthStatusError when disconnected", func(t *testing.T) {
 		ds := plugin.NewMQTTDatasource(&fakeMQTTClient{
 			connected: false,
-		}, "xyz")
+		}, "xyz", false, 1000)
 
 		res, _ := ds.CheckHealth(
 			context.Background(),
@@ -53,6 +55,9 @@ func (c *fakeMQTTClient) IsConnected() bool {
 	return c.connected
 }
 
+func (c *fakeMQTTClient) Publish(_ string, _ map[string]any, _ string, _ time.Duration) (json.RawMessage, error) {
+	return nil, nil
+}
 func (c *fakeMQTTClient) Subscribe(_ string, _ log.Logger) (*mqtt.Topic, error) { return nil, nil }
 func (c *fakeMQTTClient) Unsubscribe(_ string, _ log.Logger) error              { return nil }
 func (c *fakeMQTTClient) Dispose()                                              {}
