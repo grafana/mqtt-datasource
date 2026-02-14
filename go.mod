@@ -4,7 +4,7 @@ go 1.25.6
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.5.1
-	github.com/grafana/grafana-plugin-sdk-go v0.287.0
+	github.com/grafana/grafana-plugin-sdk-go v0.288.0
 	github.com/json-iterator/go v1.1.12
 	github.com/stretchr/testify v1.11.1
 )
