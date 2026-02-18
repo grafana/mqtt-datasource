@@ -37,6 +37,8 @@
     "jsoniter",
     "subresource",
     "streamingkey",
-    "unsub"
+    "unsub",
+    "tcps",
+    "mqtts"
   ]
 }
