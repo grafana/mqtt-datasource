@@ -5,6 +5,7 @@
 🚀 Introduce PDC (Private data source connect)
 🚀 Bump dependency versions to be prepared for react-19 upgrade and enable react-19 e2e testing
 🐛 Update @grafana/plugin-ui
+🐛 Fix: Fallback SHA-1 function if browser's not available
 🐛 Update dependencies
 
 ## 1.2.1
