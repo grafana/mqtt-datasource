@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0
+
+🚀 Introduce PDC (Private data source connect)
+🚀 Bump dependency versions to be prepared for react-19 upgrade and enable react-19 e2e testing
+🐛 Update @grafana/plugin-ui
+🐛 Update dependencies
+
 ## 1.2.1
 
 🐛 Update versions of various dependencies
