@@ -8,13 +8,14 @@ import {
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { Field, Input, SecretInput, Switch } from '@grafana/ui';
+import { Field, Input, SecretInput, SecureSocksProxySettings, Switch } from '@grafana/ui';
 import { Divider } from './Divider';
 import { TLSSecretsConfig } from './TLSConfig';
 import { MqttDataSourceOptions, MqttSecureJsonData } from './types';
+import { config } from '@grafana/runtime';
 
 export const ConfigEditor = (props: DataSourcePluginOptionsEditorProps<MqttDataSourceOptions, MqttSecureJsonData>) => {
-  const { options } = props;
+  const { options, onOptionsChange } = props;
   const jsonData = options.jsonData;
 
   const onResetPassword = () => {
@@ -119,6 +120,10 @@ export const ConfigEditor = (props: DataSourcePluginOptionsEditorProps<MqttDataS
           </ConfigSection>
         </>
       ) : null}
+
+      {config.secureSocksDSProxyEnabled && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
     </>
   );
 };
