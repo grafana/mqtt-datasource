@@ -59,6 +59,7 @@ The following pages help you set up and use the MQTT data source:
 ## Known limitations
 
 - The plugin supports MQTT v3.1.x only. MQTT v5 isn't supported.
+- Supported connection schemes are `tcp://`, `tls://`, `ws://`, and `wss://`.
 - Not all MQTT CONNECT packet options are available for configuration.
 - All subscriptions use QoS 0 (at most once delivery).
 - There's no historical data support. Panels only display data received while they're open.
