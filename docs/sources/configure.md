@@ -75,15 +75,15 @@ When you enable **Use TLS Client Auth** or **With CA Cert**, configure the certi
 
 | Setting | Description |
 |---------|-------------|
-| **CA Cert** | The PEM-encoded CA certificate used to verify the broker's server certificate. Required when **With CA Cert** is enabled. |
-| **Client Cert** | The PEM-encoded client certificate for mTLS authentication. Required when **Use TLS Client Auth** is enabled. |
-| **Client Key** | The PEM-encoded private key for the client certificate. Required when **Use TLS Client Auth** is enabled. |
+| **TLS CA Certificate** | The PEM-encoded CA certificate used to verify the broker's server certificate. Required when **With CA Cert** is enabled. |
+| **TLS Client Certificate** | The PEM-encoded client certificate for mTLS authentication. Required when **Use TLS Client Auth** is enabled. |
+| **TLS Client Key** | The PEM-encoded private key for the client certificate. Required when **Use TLS Client Auth** is enabled. |
 
 ## Private data source connect
 
-If your MQTT broker is on a private network that isn't reachable from Grafana Cloud, you can use [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to route the connection through a secure SOCKS proxy.
+_Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. This is useful when your MQTT broker isn't reachable from Grafana Cloud directly. Click the drop-down to locate the URL for PDC.
 
-When PDC is enabled in your Grafana instance, a **Secure SOCKS Proxy** configuration section appears on the data source settings page.
+When PDC is enabled in your Grafana instance, a **Secure SOCKS Proxy** configuration section appears on the data source settings page. For more information, refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
 
 ## Verify the connection
 
