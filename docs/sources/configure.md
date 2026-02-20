@@ -117,3 +117,38 @@ datasources:
 ```
 
 Replace the `<PLACEHOLDER>` values with your broker-specific settings. Omit any `secureJsonData` fields that don't apply to your configuration.
+
+## Provision the data source with Terraform
+
+You can manage the MQTT data source as code using the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs). For more information, refer to the [Grafana Terraform provider documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/infrastructure-as-code/terraform/).
+
+```hcl
+resource "grafana_data_source" "mqtt" {
+  name = "MQTT"
+  type = "grafana-mqtt-datasource"
+
+  json_data_encoded = jsonencode({
+    uri              = "tcp://<BROKER_HOST>:<BROKER_PORT>"
+    username         = "<USERNAME>"
+    clientID         = "<CLIENT_ID>"
+    tlsAuth          = false
+    tlsAuthWithCACert = false
+    tlsSkipVerify    = false
+  })
+
+  secure_json_data_encoded = jsonencode({
+    password      = "<PASSWORD>"
+    tlsCACert     = "<CA_CERTIFICATE_PEM>"
+    tlsClientCert = "<CLIENT_CERTIFICATE_PEM>"
+    tlsClientKey  = "<CLIENT_KEY_PEM>"
+  })
+}
+```
+
+Replace the `<PLACEHOLDER>` values with your broker-specific settings. Omit any `secure_json_data_encoded` fields that don't apply to your configuration.
+
+## Next steps
+
+- [MQTT query editor](https://grafana.com/docs/plugins/grafana-mqtt-datasource/latest/query-editor/) -- Subscribe to topics and understand how data is formatted.
+- [Template variables](https://grafana.com/docs/plugins/grafana-mqtt-datasource/latest/template-variables/) -- Create dynamic dashboards with variable-driven topics.
+- [Troubleshoot MQTT data source issues](https://grafana.com/docs/plugins/grafana-mqtt-datasource/latest/troubleshooting/) -- Resolve common connection, authentication, and query problems.
