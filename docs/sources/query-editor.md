@@ -12,6 +12,7 @@ keywords:
 labels:
   products:
     - cloud
+    - enterprise
     - oss
 menuTitle: Query editor
 title: MQTT query editor

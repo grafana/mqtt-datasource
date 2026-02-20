@@ -12,6 +12,7 @@ keywords:
 labels:
   products:
     - cloud
+    - enterprise
     - oss
 menuTitle: Troubleshooting
 title: Troubleshoot MQTT data source issues

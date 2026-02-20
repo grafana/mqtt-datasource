@@ -11,6 +11,7 @@ keywords:
 labels:
   products:
     - cloud
+    - enterprise
     - oss
 menuTitle: MQTT
 title: MQTT data source

@@ -12,6 +12,7 @@ keywords:
 labels:
   products:
     - cloud
+    - enterprise
     - oss
 menuTitle: Configure
 title: Configure the MQTT data source

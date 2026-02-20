@@ -11,6 +11,7 @@ keywords:
 labels:
   products:
     - cloud
+    - enterprise
     - oss
 menuTitle: Template variables
 title: MQTT template variables
