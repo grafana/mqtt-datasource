@@ -34,8 +34,9 @@ The MQTT data source has the following requirements:
 
 ### Private data source connect (PDC)
 
-> [!NOTE] 
-> Private data source connect (PDC) is only available for Grafana Cloud users.
+{{< admonition type="note" >}}
+Private data source connect (PDC) is only available for Grafana Cloud users.
+{{< /admonition >}}
 
 Use PDC to connect to and query data within a secure network without opening that network to inbound traffic from Grafana Cloud. For more information on how PDC works, refer to [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/). For setup instructions, refer to [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/).
 
