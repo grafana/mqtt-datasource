@@ -213,12 +213,8 @@ func (c *client) Publish(topic string, payload map[string]any, responseTopic str
 			done <- struct{}{}
 		})
 
-		if !token.WaitTimeout(timeout) {
-			return response, errors.New("subscribe timeout")
-		}
-
-		if token.Error() != nil {
-			return response, token.Error()
+		if err := paho.WaitTokenTimeout(token, timeout); err != nil {
+			return response, err
 		}
 
 		defer c.client.Unsubscribe(responseTopic)
@@ -233,12 +229,8 @@ func (c *client) Publish(topic string, payload map[string]any, responseTopic str
 
 	token := c.client.Publish(topic, 2, false, data)
 
-	if !token.WaitTimeout(timeout) {
-		return response, errors.New("publish timeout")
-	}
-
-	if token.Error() != nil {
-		return response, token.Error()
+	if err := paho.WaitTokenTimeout(token, timeout); err != nil {
+		return response, err
 	}
 
 	select {

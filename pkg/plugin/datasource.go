@@ -35,6 +35,10 @@ func NewMQTTInstance(ctx context.Context, s backend.DataSourceInstanceSettings) 
 		return nil, err
 	}
 
+	if settings.PublishingTimeout == "" {
+		settings.PublishingTimeout = "1s"
+	}
+
 	timeout, err := time.ParseDuration(settings.PublishingTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse publishingTimeout with: %v", err)
