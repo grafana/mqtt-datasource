@@ -208,14 +208,17 @@ func (c *client) Publish(topic string, payload map[string]any, responseTopic str
 	done := make(chan struct{}, 1)
 
 	if responseTopic != "" {
-		tokenSub := c.client.Subscribe(responseTopic, 2, func(c paho.Client, m paho.Message) {
+		token := c.client.Subscribe(responseTopic, 2, func(c paho.Client, m paho.Message) {
 			response = m.Payload()
 			done <- struct{}{}
 		})
 
-		if !tokenSub.WaitTimeout(timeout) && tokenSub.Error() != nil {
-			err = errors.Join(err, tokenSub.Error())
-			return response, err
+		if !token.WaitTimeout(timeout) {
+			return response, errors.New("subscribe timeout")
+		}
+
+		if token.Error() != nil {
+			return response, token.Error()
 		}
 
 		defer c.client.Unsubscribe(responseTopic)
@@ -223,31 +226,28 @@ func (c *client) Publish(topic string, payload map[string]any, responseTopic str
 		done <- struct{}{}
 	}
 
-	data, errMarshal := json.Marshal(&payload)
-	if errMarshal != nil {
-		err = errors.Join(err, errMarshal)
+	data, err := json.Marshal(&payload)
+	if err != nil {
 		return response, err
 	}
 
 	token := c.client.Publish(topic, 2, false, data)
 
-	if token.Error() != nil {
-		err = errors.Join(err, token.Error())
-		return response, err
+	if !token.WaitTimeout(timeout) {
+		return response, errors.New("publish timeout")
 	}
 
-	if !token.WaitTimeout(timeout) {
-		err = errors.Join(err, errors.New("publish timeout"))
-		return response, err
+	if token.Error() != nil {
+		return response, token.Error()
 	}
 
 	select {
 	case <-done:
 	case <-time.After(timeout):
-		err = errors.Join(err, errors.New("subscribe timeout"))
+		return response, errors.New("response timeout")
 	}
 
-	return response, err
+	return response, nil
 }
 
 func (c *client) Dispose() {
