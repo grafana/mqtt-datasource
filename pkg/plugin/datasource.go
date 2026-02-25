@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+
 	"github.com/grafana/mqtt-datasource/pkg/mqtt"
 )
 
@@ -29,7 +30,7 @@ func NewMQTTInstance(ctx context.Context, s backend.DataSourceInstanceSettings) 
 		return nil, err
 	}
 
-	client, err := mqtt.NewClient(ctx, *settings)
+	client, err := mqtt.NewClient(ctx, *settings, s)
 	if err != nil {
 		return nil, err
 	}

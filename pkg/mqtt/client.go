@@ -44,7 +44,7 @@ type client struct {
 	topics TopicMap
 }
 
-func NewClient(ctx context.Context, o Options) (Client, error) {
+func NewClient(ctx context.Context, o Options, settings backend.DataSourceInstanceSettings) (Client, error) {
 	logger := log.DefaultLogger.FromContext(ctx)
 	opts := paho.NewClientOptions()
 
@@ -95,6 +95,11 @@ func NewClient(ctx context.Context, o Options) (Client, error) {
 	opts.SetReconnectingHandler(func(c paho.Client, options *paho.ClientOptions) {
 		logger.Debug("MQTT Reconnecting")
 	})
+
+	// Configure PDC (Private Datasource Connect) if enabled
+	if err := configureProxyIfEnabled(ctx, opts, settings, logger); err != nil {
+		return nil, err
+	}
 
 	logger.Info("MQTT Connecting", "clientID", clientID)
 
