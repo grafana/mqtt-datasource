@@ -84,3 +84,4 @@ NOTE: The `yarn build` command above might fail on a non-unix-like system, like 
 2. From the top-right corner, click the **Add data source** button.
 3. Search for `MQTT` in the search field, and hover over the MQTT search result.
 4. Click the **Select** button for MQTT.
+
