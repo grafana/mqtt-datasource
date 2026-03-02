@@ -22,6 +22,7 @@
   "author": "Grafana Labs <team@grafana.com> (https://grafana.com)",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@axe-core/playwright": "4.11.1",
     "@babel/core": "7.29.0",
     "@changesets/cli": "2.29.8",
     "@grafana/e2e-selectors": "12.4.0",
