@@ -17,7 +17,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot MQTT data source issues
 weight: 500
-last_reviewed: 2026-02-20
+review_date: 2026-02-20
 ---
 
 # Troubleshoot MQTT data source issues
@@ -74,7 +74,7 @@ These errors occur when credentials or TLS certificates are invalid.
 
 | Cause | Solution |
 |-------|----------|
-| Wrong username or password | Re-enter the credentials in the data source configuration. Passwords are stored securely and can't be viewed after saving -- click the reset button and enter the password again. |
+| Wrong username or password | Re-enter the credentials in the data source configuration. Passwords are stored securely and can't be viewed after saving. Click the reset button and enter the password again. |
 | Missing credentials | Some brokers reject anonymous connections. Add a **Username** and **Password** if required. |
 | Account disabled or expired | Verify the account is active in your MQTT broker's user management system. |
 

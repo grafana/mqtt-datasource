@@ -16,7 +16,7 @@ labels:
 menuTitle: MQTT
 title: MQTT data source
 weight: 100
-last_reviewed: 2026-02-20
+review_date: 2026-02-20
 ---
 
 # MQTT data source

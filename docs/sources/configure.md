@@ -17,7 +17,7 @@ labels:
 menuTitle: Configure
 title: Configure the MQTT data source
 weight: 200
-last_reviewed: 2026-02-20
+review_date: 2026-02-20
 ---
 
 # Configure the MQTT data source

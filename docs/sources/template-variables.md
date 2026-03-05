@@ -16,7 +16,7 @@ labels:
 menuTitle: Template variables
 title: MQTT template variables
 weight: 400
-last_reviewed: 2026-02-20
+review_date: 2026-02-20
 ---
 
 # MQTT template variables

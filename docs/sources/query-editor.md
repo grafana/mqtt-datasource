@@ -17,7 +17,7 @@ labels:
 menuTitle: Query editor
 title: MQTT query editor
 weight: 300
-last_reviewed: 2026-02-20
+review_date: 2026-02-20
 ---
 
 # MQTT query editor
