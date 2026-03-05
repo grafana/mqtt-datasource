@@ -13,6 +13,8 @@
     "**/dashboards/*.json",
     "src/static/**",
     "vendor/**",
+    "renovate.json",
+    "package.json",
     "yarn.lock",
     ".eslintcache"
   ],
