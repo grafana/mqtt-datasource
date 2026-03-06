@@ -39,6 +39,7 @@ func NewMQTTInstance(ctx context.Context, s backend.DataSourceInstanceSettings) 
 type MQTTDatasource struct {
 	Client        mqtt.Client
 	channelPrefix string
+	RefIds        map[string]string
 }
 
 // NewMQTTDatasource creates a new datasource instance.
@@ -46,6 +47,7 @@ func NewMQTTDatasource(client mqtt.Client, uid string) *MQTTDatasource {
 	return &MQTTDatasource{
 		Client:        client,
 		channelPrefix: path.Join("ds", uid),
+		RefIds:        make(map[string]string),
 	}
 }
 
