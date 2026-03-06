@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.1
+
+⚙️ Updated backend/go version to 1.26.0 from 1.25.6 which resolves CVE-2025-68121
+
+⚙️ Updated frontend & backend dependencies
+
 ## 1.3.0
 
 🚀 Introduce PDC (Private data source connect)
