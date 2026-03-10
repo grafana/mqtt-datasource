@@ -76,6 +76,6 @@ Plugins are automatically updated in Grafana Cloud.
 
 ## Related resources
 
-- [MQTT v3.1.1 specification](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html)
+- [MQTT v3.1.1 specification](https://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html)
 - [MQTT datasource plugin on GitHub](https://github.com/grafana/mqtt-datasource)
 - [Grafana community forum](https://community.grafana.com/)
