@@ -48,7 +48,7 @@ To subscribe to an MQTT topic:
 1. In the **Topic** field, enter the MQTT topic you want to subscribe to (for example, `home/bedroom/temperature`).
 1. The panel begins streaming data as soon as the topic is set.
 
-Each query subscribes to a single topic. To subscribe to multiple topics, add additional queries to the panel.
+Each query subscribes to a single topic filter. To receive messages from multiple topics with one query, use wildcards (for example, `home/#`). To subscribe to unrelated topics, add additional queries to the panel.
 
 ## Topic wildcards
 
