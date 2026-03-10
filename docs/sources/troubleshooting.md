@@ -39,7 +39,7 @@ These errors occur when Grafana can't connect to the MQTT broker.
 
 | Cause | Solution |
 |-------|----------|
-| Incorrect URI | Verify the URI includes the correct scheme (`tcp://`, `tls://`, or `ws://`), host, and port. For example, `tcp://localhost:1883`. |
+| Incorrect URI | Verify the URI includes the correct scheme (`tcp://`, `tls://`, `ws://`, or `wss://`), host, and port. For example, `tcp://localhost:1883`. The aliases `mqtt://`, `ssl://`, `tcps://`, and `mqtts://` are also accepted. |
 | Broker not running | Confirm the MQTT broker is running and accepting connections on the specified port. |
 | Firewall or network restrictions | Ensure the Grafana server can reach the broker's host and port. Check firewall rules and security groups. |
 | Wrong scheme for TLS | If the broker requires TLS, use `tls://` instead of `tcp://`. |
