@@ -49,7 +49,7 @@ Use the following settings to configure the connection to your MQTT broker.
 | Setting | Description |
 |---------|-------------|
 | **Name** | A display name for this data source instance. |
-| **URI** | The URI of your MQTT broker. Include the scheme and port. Supported schemes: `tcp://` (unencrypted, default port `1883`), `tls://` (TLS-encrypted, default port `8883`), `ws://` (WebSocket, default port `80`), and `wss://` (WebSocket Secure, default port `443`). For example, `tcp://localhost:1883` or `tls://broker.example.com:8883`. If you omit the port, the default for the scheme is used. |
+| **URI** | The URI of your MQTT broker. Include the scheme and port. Supported schemes: `tcp://` (unencrypted, default port `1883`), `tls://` (TLS-encrypted, default port `8883`), `ws://` (WebSocket, default port `80`), and `wss://` (WebSocket Secure, default port `443`). The aliases `mqtt://` (same as `tcp://`), `ssl://`, `tcps://`, and `mqtts://` (same as `tls://`) are also accepted. For example, `tcp://localhost:1883` or `tls://broker.example.com:8883`. If you omit the port, the default for the scheme is used. |
 | **Client ID** | An optional MQTT client identifier. If left empty, Grafana generates a random ID in the format `grafana_<number>`. |
 
 ## Authentication
