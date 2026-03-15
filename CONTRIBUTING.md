@@ -101,6 +101,15 @@ If you've added new functionality, please add appropriate tests.
 
 This section is for the specific case where you already have a Grafana installation running on your machine and want to load the locally-built plugin into it (e.g., you are testing the plugin against a specific Grafana version or configuration that you manage yourself). If that does not describe your situation, use `yarn server` instead.
 
+Clone the repository under Grafana's plugins directory `/var/lib/grafana/plugins`
+
+```
+workspace
+  |__ grafana
+  |__ plugins
+    |__ grafana_mqtt_datasource 
+```
+
 ### 1. Build the plugin
 
 ```
@@ -108,27 +117,14 @@ yarn build
 mage build
 ```
 
-### 2. Copy the built plugin to Grafana's plugins directory
-
-```
-cp -r . /var/lib/grafana/plugins/mqtt-datasource
-```
-
-Adjust the destination path if your Grafana installation uses a different plugins directory (check the `plugins` setting in your `grafana.ini`).
-
 ### 3. Allow the unsigned plugin in Grafana
 
 Local builds are not signed, so you must explicitly permit the plugin in `grafana.ini`:
 
 ```ini
-[paths]
-plugins = /var/lib/grafana/plugins
-
 [plugins]
 allow_loading_unsigned_plugins = grafana-mqtt-datasource
 ```
-
-On Linux the config file is typically at `/etc/grafana/grafana.ini`. On macOS (Homebrew) it is usually at `/usr/local/etc/grafana/grafana.ini`.
 
 ### 4. Restart Grafana and verify
 
