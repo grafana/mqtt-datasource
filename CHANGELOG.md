@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0
+
+### Minor Changes
+
+🚀 Experimental publishing support via different query
+
+### Patch Changes
+
 ## 1.3.1
 
 ⚙️ Updated backend/go version to 1.26.0 from 1.25.6 which resolves CVE-2025-68121
