@@ -49,7 +49,7 @@ func NewMQTTInstance(ctx context.Context, s backend.DataSourceInstanceSettings) 
 
 type MQTTDatasource struct {
 	Client            mqtt.Client
-	RefIds            map[string]string
+	RefIds            RefIDs
 	channelPrefix     string
 	enablePublishing  bool
 	publishingTimeout time.Duration
@@ -59,7 +59,6 @@ type MQTTDatasource struct {
 func NewMQTTDatasource(client mqtt.Client, uid string, enablePublishing bool, publishingTimeout time.Duration) *MQTTDatasource {
 	return &MQTTDatasource{
 		Client:            client,
-		RefIds:            make(map[string]string),
 		channelPrefix:     path.Join("ds", uid),
 		enablePublishing:  enablePublishing,
 		publishingTimeout: publishingTimeout,
