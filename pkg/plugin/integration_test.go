@@ -102,6 +102,17 @@ func TestStreamingKeyIntegration_TopicUniqueness(t *testing.T) {
 	if channel3 != expectedChannel3 {
 		t.Errorf("Expected channel3 %s, got %s", expectedChannel3, channel3)
 	}
+
+	// Verify RefIDs are set correctly
+	if id, _ := ds.RefIds.Get("1s/sensor/temperature/user1/hash123/org456"); id != "A" {
+		t.Errorf("Expected RefID 'A' for query 1, got '%s'", id)
+	}
+	if id, _ := ds.RefIds.Get("1s/sensor/temperature/user2/hash456/org456"); id != "B" {
+		t.Errorf("Expected RefID 'B' for query 2, got '%s'", id)
+	}
+	if id, _ := ds.RefIds.Get("1s/sensor/temperature/user1/hash123/org789"); id != "C" {
+		t.Errorf("Expected RefID 'C' for query 3, got '%s'", id)
+	}
 }
 
 func TestStreamingKeyIntegration_ClientSubscription(t *testing.T) {

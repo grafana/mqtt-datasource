@@ -14,7 +14,9 @@ import (
 )
 
 func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	refId := ds.RefIds[req.Path]
+	// if there is no refid, the refid will be empty string
+	// no need to check if exists because the default refId will be anyway an empty string
+	refId, _ := ds.RefIds.Get(req.Path)
 
 	// Extract the topic key from the channel path
 	// Channel path format: "ds/{uid}/{topicKey}" where topicKey includes streaming key
