@@ -41,6 +41,8 @@
     "streamingkey",
     "unsub",
     "tcps",
-    "mqtts"
+    "mqtts",
+    "mosquitto",
+    "jsonencode"
   ]
 }
