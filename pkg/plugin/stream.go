@@ -14,7 +14,7 @@ import (
 )
 
 func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	// if there is no refid, the refid will be empty string
+	// if there is no refID, the refID will be empty string
 	// no need to check if exists because the default refID will be anyway an empty string
 	refID, _ := ds.RefIds.Get(req.Path)
 
