@@ -115,6 +115,52 @@ func TestStreamingKeyIntegration_TopicUniqueness(t *testing.T) {
 	}
 }
 
+func TestQuery_Publishing(t *testing.T) {
+	// Create datasource instance
+	ds := &MQTTDatasource{
+		Client:           &mockMQTTClient{},
+		channelPrefix:    "ds/test-uid",
+		enablePublishing: true,
+	}
+
+	// Simulate a publish query
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"topic":    "test/command",
+		"payload":  map[string]any{"Key": "Value"},
+		"response": "test/response",
+	})
+
+	query := backend.DataQuery{
+		JSON:     queryJSON,
+		Interval: 1 * time.Second,
+		RefID:    "A",
+	}
+
+	resp := ds.query(query)
+
+	// Verify no errors
+	if resp.Error != nil {
+		t.Errorf("Query failed: %v", resp.Error)
+	}
+
+	// Verify no channel is created for publish queries
+	if resp.Frames[0].Meta != nil {
+		t.Errorf("Expected no meta for publish queries, but got: %v", resp.Frames[0].Meta)
+	}
+
+	// Verify response frame name
+	if resp.Frames[0].Name != "Response" {
+		t.Errorf("Expected frame name 'Response', got '%s'", resp.Frames[0].Name)
+	}
+
+	// Verify response content
+	expectedResponse := `{"response":"ok"}`
+	receivedResponse := string(resp.Frames[0].Fields[0].At(0).(json.RawMessage))
+	if expectedResponse != receivedResponse {
+		t.Errorf("Expected response '%s', got '%s'", expectedResponse, receivedResponse)
+	}
+}
+
 func TestStreamingKeyIntegration_ClientSubscription(t *testing.T) {
 	// Test that client subscription works correctly with streaming keys
 
@@ -272,6 +318,10 @@ func (m *mockMQTTClient) Subscribe(reqPath string, logger log.Logger) (*mqtt.Top
 func (m *mockMQTTClient) Unsubscribe(reqPath string, logger log.Logger) error {
 	delete(m.topics, reqPath)
 	return nil
+}
+
+func (m *mockMQTTClient) Publish(string, map[string]any, string, time.Duration) (json.RawMessage, error) {
+	return json.RawMessage(`{"response":"ok"}`), nil
 }
 
 func (m *mockMQTTClient) Dispose() {

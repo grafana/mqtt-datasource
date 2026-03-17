@@ -4,6 +4,7 @@ import (
 	"path"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -307,5 +308,65 @@ func TestClient_MessageHandling_WithStreamingKeys(t *testing.T) {
 	}
 	if len(updatedTopic2.Messages) != 0 {
 		t.Errorf("Expected 0 messages in topic2, got %d", len(updatedTopic2.Messages))
+	}
+}
+
+func TestClient_Publish(t *testing.T) {
+	tcases := []struct {
+		name             string
+		publishTimeout   bool
+		subscribeTimeout bool
+		responseTimeout  bool
+		expectError      string
+		expectResponse   bool
+	}{
+		{
+			name:             "subscribe timeout",
+			subscribeTimeout: true,
+			expectError:      "context canceled",
+		},
+		{
+			name:           "publish timeout",
+			publishTimeout: true,
+			expectError:    "context canceled",
+		},
+		{
+			name:            "response timeout",
+			responseTimeout: true,
+			expectError:     "response timeout",
+		},
+		{
+			name:           "successful publish and response",
+			expectResponse: true,
+			expectError:    "",
+		},
+	}
+
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				c := &client{client: &mockMQTTClient{
+					publishTimeout:   tc.publishTimeout,
+					subscribeTimeout: tc.subscribeTimeout,
+					responseTimeout:  tc.responseTimeout,
+				}}
+
+				response, err := c.Publish("test/command", map[string]any{"Key": "Value"}, "test/response", 1*time.Second)
+
+				if tc.expectError != "" && err == nil {
+					t.Fatal("Expected error but got nil")
+				}
+				if tc.expectError == "" && err != nil {
+					t.Fatalf("Expected no error but got: %v", err)
+				}
+				if tc.expectError != "" && err != nil && !strings.Contains(err.Error(), tc.expectError) {
+					t.Fatalf("Expected error '%v' but got: %v", tc.expectError, err)
+				}
+
+				if tc.expectResponse && string(response) != `{"response": "ok"}` {
+					t.Fatalf("Expected response '%s' but got: %s", `{"response": "ok"}`, string(response))
+				}
+			})
+		})
 	}
 }
