@@ -170,8 +170,10 @@ func (c *client) Subscribe(reqPath string, logger log.Logger) (*Topic, error) {
 	}); token.Wait() && token.Error() != nil {
 		return nil, backend.DownstreamErrorf("error subscribing to MQTT topic %s: %s", topic, token.Error())
 	}
-	// Store the topic using reqPath as the key (which includes streaming key)
-	c.topics.Map.Store(reqPath, t)
+
+	// Store the topic
+	c.topics.Store(t)
+
 	return t, nil
 }
 
