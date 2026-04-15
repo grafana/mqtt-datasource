@@ -14,6 +14,10 @@ import (
 )
 
 func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	// if there is no refID, the refID will be empty string
+	// no need to check if exists because the default refID will be anyway an empty string
+	refID, _ := ds.RefIds.Get(req.Path)
+
 	// Extract the topic key from the channel path
 	// Channel path format: "ds/{uid}/{topicKey}" where topicKey includes streaming key
 	// We need to remove the channelPrefix ("ds/{uid}") to get the topic key
@@ -60,6 +64,7 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 				break
 			}
 			topic.Messages = []mqtt.Message{}
+			frame.RefID = refID
 			if err := sender.SendFrame(frame, data.IncludeAll); err != nil {
 				logger.Error("failed to send data frame", "path", req.Path, "error", backend.DownstreamError(err))
 			}
