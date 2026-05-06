@@ -98,8 +98,8 @@
     "protobufjs": "7.5.5",
     "lodash": "4.18.0",
     "@grafana/ui/immutable": "5.1.5",
-    "anymatch/picomatch": "2.3.2",
-    "micromatch/picomatch": "2.3.2",
+    "anymatch/picomatch": "4.0.4",
+    "micromatch/picomatch": "4.0.4",
     "jest-util@npm:29.7.0/picomatch": "2.3.2",
     "dompurify": "3.3.2"
   },
