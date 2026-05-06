@@ -1,6 +1,6 @@
 {
   "name": "grafana-mqtt-datasource",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "MQTT Datasource Plugin",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
@@ -94,7 +94,14 @@
     "@remix-run/router": "^1.23.2",
     "@openfeature/core": "1.9.2",
     "minimatch": "10.2.5",
-    "serialize-javascript": "7.0.5"
+    "serialize-javascript": "7.0.5",
+    "protobufjs": "7.5.5",
+    "lodash": "4.18.0",
+    "@grafana/ui/immutable": "5.1.5",
+    "anymatch/picomatch": "2.3.2",
+    "micromatch/picomatch": "2.3.2",
+    "jest-util@npm:29.7.0/picomatch": "2.3.2",
+    "dompurify": "3.3.2"
   },
   "packageManager": "yarn@4.13.0"
 }
