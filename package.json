@@ -101,7 +101,7 @@
     "anymatch/picomatch": "2.3.2",
     "micromatch/picomatch": "2.3.2",
     "jest-util@npm:29.7.0/picomatch": "2.3.2",
-    "dompurify": "3.3.2"
+    "dompurify": "3.4.0"
   },
   "packageManager": "yarn@4.13.0"
 }
