@@ -112,13 +112,13 @@ func (c *client) IsConnected() bool {
 	return c.client.IsConnectionOpen()
 }
 
-func (c *client) HandleMessage(topic string, payload []byte) {
+func (c *client) HandleMessage(topic string, payload []byte, retained bool) {
 	message := Message{
 		Timestamp: time.Now(),
 		Value:     payload,
 	}
 
-	c.topics.AddMessage(topic, message)
+	c.topics.AddMessage(topic, message, retained)
 }
 
 func (c *client) GetTopic(reqPath string) (*Topic, bool) {
@@ -161,7 +161,7 @@ func (c *client) Subscribe(reqPath string, logger log.Logger) (*Topic, error) {
 	if token := c.client.Subscribe(topic, 0, func(_ paho.Client, m paho.Message) {
 		// by wrapping HandleMessage we can directly get the correct topicPath for the incoming topic
 		// and don't need to regex it against + and #.
-		c.HandleMessage(topicPath, []byte(m.Payload()))
+		c.HandleMessage(topicPath, []byte(m.Payload()), m.Retained())
 	}); token.Wait() && token.Error() != nil {
 		return nil, backend.DownstreamErrorf("error subscribing to MQTT topic %s: %s", topic, token.Error())
 	}

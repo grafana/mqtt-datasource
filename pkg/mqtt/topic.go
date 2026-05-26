@@ -23,6 +23,7 @@ type Topic struct {
 	Interval     time.Duration
 	Messages     []Message
 	framer       *framer
+	retained     bool
 }
 
 // Key returns the key for the topic.
@@ -38,6 +39,14 @@ func (t *Topic) ToDataFrame(logger log.Logger) (*data.Frame, error) {
 		t.framer = newFramer()
 	}
 	return t.framer.toFrame(t.Messages, logger)
+}
+
+func (t *Topic) CleanMessages() {
+	if t.retained {
+		t.Messages = t.Messages[len(t.Messages)-1:]
+		return
+	}
+	t.Messages = []Message{}
 }
 
 // TopicMap is a thread-safe map of topics
@@ -57,7 +66,7 @@ func (tm *TopicMap) Load(key string) (*Topic, bool) {
 }
 
 // AddMessage adds a message to the topic for the given path.
-func (tm *TopicMap) AddMessage(path string, message Message) {
+func (tm *TopicMap) AddMessage(path string, message Message, retained bool) {
 	tm.Range(func(key, t any) bool {
 		topic, ok := t.(*Topic)
 		if !ok {
@@ -67,6 +76,7 @@ func (tm *TopicMap) AddMessage(path string, message Message) {
 			topic.Messages = append(topic.Messages, message)
 			tm.Store(topic)
 		}
+		topic.retained = topic.retained || retained // if any message is retained, mark the topic as retained
 		return true
 	})
 }
