@@ -96,7 +96,7 @@
     "@openfeature/core": "1.9.2",
     "minimatch": "10.2.5",
     "serialize-javascript": "7.0.5",
-    "protobufjs": "7.5.5",
+    "protobufjs": "7.5.8",
     "lodash": "4.18.0",
     "@grafana/ui/immutable": "5.1.5",
     "anymatch/picomatch": "2.3.2",

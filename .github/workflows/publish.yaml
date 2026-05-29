@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: Branch to publish from. Can be used to deploy PRs to dev
+        description: Branch or tag to publish from. Can be used to deploy PRs to dev
         default: main
       environment:
         description: Environment to publish to
@@ -14,11 +14,14 @@ on:
         options:
           - 'dev'
           - 'ops'
+          - 'prod-canary'
           - 'prod'
       docs-only:
         description: Only publish docs, do not publish the plugin
         default: false
         type: boolean
+
+permissions: {}
 
 jobs:
   cd:
@@ -29,9 +32,19 @@ jobs:
       id-token: write
     name: CD
     uses: grafana/plugin-ci-workflows/.github/workflows/cd.yml@ci-cd-workflows/v8.0.1
+    permissions:
+      contents: write
+      pull-requests: read
+      id-token: write
+      attestations: write
     with:
       branch: ${{ github.event.inputs.branch }}
       environment: ${{ github.event.inputs.environment }}
       docs-only: ${{ fromJSON(github.event.inputs.docs-only) }}
-      run-playwright: true
+      # Scope for the plugin when publishing it to the catalog.
+      # Choose between:
+      # - 'universal': on-prem + cloud (default)
+      # - 'grafana_cloud': cloud only, hidden for on-prem users
+      scopes: grafana_cloud
       github-draft-release: false
+      release-reference-regex: (main)|(v\d+\.\d+\.\d+)
