@@ -69,12 +69,12 @@ func (m *mockClient) Dispose() {
 	m.subscriptions = make(map[string]bool)
 }
 
-func (m *mockClient) HandleMessage(topicPath string, payload []byte) {
+func (m *mockClient) HandleMessage(topicPath string, payload []byte, retained bool) {
 	message := Message{
 		Timestamp: time.Now(),
 		Value:     payload,
 	}
-	m.topics.AddMessage(topicPath, message)
+	m.topics.AddMessage(topicPath, message, retained)
 }
 
 func newMockClient() *mockClient {
@@ -296,7 +296,7 @@ func TestClient_MessageHandling_WithStreamingKeys(t *testing.T) {
 
 	// Simulate MQTT message arrival
 	mqttTopicPath := "dGVzdC90b3BpYw/user1/hash123/org456" // This is what HandleMessage receives
-	c.HandleMessage(mqttTopicPath, []byte("test message"))
+	c.HandleMessage(mqttTopicPath, []byte("test message"), false)
 
 	// Check that only the matching topic received the message
 	updatedTopic1, _ := c.GetTopic(reqPath1)

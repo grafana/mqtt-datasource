@@ -96,6 +96,34 @@ func TestTopic_KeyUniqueness(t *testing.T) {
 	}
 }
 
+func TestTopicCleanMessages(t *testing.T) {
+	topic := &Topic{
+		Messages: []Message{
+			{Value: []byte("message1")},
+			{Value: []byte("message2")},
+		},
+		retained: false,
+	}
+
+	// clean should remove all messages
+	topic.CleanMessages()
+	if len(topic.Messages) != 0 {
+		t.Errorf("Expected all messages to be cleaned, but got %d", len(topic.Messages))
+	}
+
+	// Test retained messages
+	topic.retained = true
+	topic.Messages = []Message{
+		{Value: []byte("message1")},
+		{Value: []byte("message2")},
+	}
+
+	topic.CleanMessages()
+	if len(topic.Messages) != 1 {
+		t.Errorf("Expected only the last message to be retained, but got %d", len(topic.Messages))
+	}
+}
+
 func TestTopicMap_Store_And_Load_WithStreamingKey(t *testing.T) {
 	tm := &TopicMap{}
 
@@ -165,7 +193,7 @@ func TestTopicMap_AddMessage_WithStreamingKey(t *testing.T) {
 		Value:     []byte("test message"),
 	}
 
-	tm.AddMessage("sensor/temp", message)
+	tm.AddMessage("sensor/temp", message, false)
 
 	// Check that both topics received the message
 	updatedTopic1, _ := tm.Load(topic1.Key())
