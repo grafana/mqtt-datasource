@@ -39,6 +39,7 @@ func NewMQTTInstance(ctx context.Context, s backend.DataSourceInstanceSettings) 
 type MQTTDatasource struct {
 	Client        mqtt.Client
 	channelPrefix string
+	RefIds        RefIDs
 }
 
 // NewMQTTDatasource creates a new datasource instance.
