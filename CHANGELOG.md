@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0
+
+### Minor Changes
+
+🚀 Experimental publishing support via different query
+
+### Patch Changes
+
 ## 1.3.2
 
 ⚙️ Updated frontend dependencies
