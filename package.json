@@ -8,7 +8,7 @@
     "e2e": "playwright test",
     "lint": "eslint --cache .",
     "lint:fix": "yarn run lint --fix && prettier --write --list-different .",
-    "sign": "npx --yes @grafana/sign-plugin@latest",
+    "sign": "sign-plugin",
     "spellcheck": "cspell -c cspell.config.json \"**/*.{ts,tsx,js,go,md,mdx,yml,yaml,json,scss,css}\"",
     "start": "yarn dev",
     "test": "jest --watch --onlyChanged",
@@ -28,6 +28,7 @@
     "@grafana/e2e-selectors": "12.4.2",
     "@grafana/eslint-config": "9.0.0",
     "@grafana/plugin-e2e": "3.4.13",
+    "@grafana/sign-plugin": "^3.2.2",
     "@grafana/tsconfig": "2.0.1",
     "@openfeature/web-sdk": "1.7.3",
     "@playwright/test": "1.59.1",
@@ -103,5 +104,8 @@
     "jest-util@npm:29.7.0/picomatch": "2.3.2",
     "dompurify": "3.3.2"
   },
-  "packageManager": "yarn@4.13.0"
+  "packageManager": "yarn@4.15.0",
+  "engines": {
+    "node": ">=24"
+  }
 }
