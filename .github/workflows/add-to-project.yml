@@ -11,9 +11,6 @@ permissions: {}
 
 jobs:
   add-to-project:
-    permissions:
-      contents: read
-      id-token: write
     name: Add issue to project
     runs-on: ubuntu-latest
     permissions:
