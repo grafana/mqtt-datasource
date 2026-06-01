@@ -1984,9 +1984,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-e2e@npm:3.8.0":
-  version: 3.8.0
-  resolution: "@grafana/plugin-e2e@npm:3.8.0"
+"@grafana/plugin-e2e@npm:3.9.0":
+  version: 3.9.0
+  resolution: "@grafana/plugin-e2e@npm:3.9.0"
   dependencies:
     "@grafana/e2e-selectors": "npm:13.1.0-25644485979"
     semver: "npm:^7.5.4"
@@ -1998,7 +1998,7 @@ __metadata:
   peerDependenciesMeta:
     "@axe-core/playwright":
       optional: true
-  checksum: 10c0/c34e3ac6ce6790cf1ad72ff0e73f8dd39af4322cfbc5f4b66e56e511282db411491f32f68f54af4dba95c5f7c4f554a3ac526a234721e14690df40cd45d1d169
+  checksum: 10c0/850429638e7898ef20404696857a151658c5668617adfb15de1fbf161efbd05a4f22f685c83ef2e3ef6b3298adbf8349d78bf5998f531804b1a02b2f57e5000b
   languageName: node
   linkType: hard
 
@@ -2086,23 +2086,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/sign-plugin@npm:3.2.2":
-  version: 3.2.2
-  resolution: "@grafana/sign-plugin@npm:3.2.2"
+"@grafana/sign-plugin@npm:3.3.0":
+  version: 3.3.0
+  resolution: "@grafana/sign-plugin@npm:3.3.0"
   dependencies:
     find-up: "npm:^8.0.0"
     minimist: "npm:^1.2.2"
     proxy-agent: "npm:8.0.1"
   bin:
     sign-plugin: dist/bin/run.js
-  checksum: 10c0/39e0ebcfc7563524746b368bbf1889cb6f649179981ca98013f615893f5d908d76b4789b5e8709547f54f12eae578f1669da90caf4e7e87bbea210678fe79526
+  checksum: 10c0/99326f2c2b3b84a03b85dc25cbec0e8c0a750865adb3dcc7fb260a67db885e117212a1d0501a3c90f074a764809d86120e85726a2878c1d6a24a671ef9beeaa6
   languageName: node
   linkType: hard
 
-"@grafana/tsconfig@npm:2.1.0":
-  version: 2.1.0
-  resolution: "@grafana/tsconfig@npm:2.1.0"
-  checksum: 10c0/7a0610cfcdcde464e97678a5eaa6f5a392fc87351a46277cd4794afc92583c5a051015428b52ea2eafadac3d66b72d019e8f2ae31e11b1a8abc786707c6f582d
+"@grafana/tsconfig@npm:2.2.0":
+  version: 2.2.0
+  resolution: "@grafana/tsconfig@npm:2.2.0"
+  checksum: 10c0/7e1adaa93888a9d82c2ed3a487eaa5901032cd206e61efe31be29590ad679c3dad15cb337c0adc7cac00f061bc12d7b5b42a7a5bca60a39e484ec02e1fa1cc70
   languageName: node
   linkType: hard
 
@@ -4387,13 +4387,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:18.3.28":
-  version: 18.3.28
-  resolution: "@types/react@npm:18.3.28"
+"@types/react@npm:18.3.29":
+  version: 18.3.29
+  resolution: "@types/react@npm:18.3.29"
   dependencies:
     "@types/prop-types": "npm:*"
     csstype: "npm:^3.2.2"
-  checksum: 10c0/683e19cd12b5c691215529af2e32b5ffbaccae3bf0ba93bfafa0e460e8dfee18423afed568be2b8eadf4b837c3749dd296a4f64e2d79f68fa66962c05f5af661
+  checksum: 10c0/b582f5c3a034229b2e287f5e39aebf3988d6ce79e7fd81c8257dc55bee0e321ddf708d6014a44c5ceae8debea1e15a93326b207a4fec6a0170200a03d105adfb
   languageName: node
   linkType: hard
 
@@ -8355,12 +8355,12 @@ __metadata:
     "@grafana/e2e-selectors": "npm:13.1.0-25893932881"
     "@grafana/eslint-config": "npm:9.0.0"
     "@grafana/i18n": "npm:13.1.0-25893932881"
-    "@grafana/plugin-e2e": "npm:3.8.0"
+    "@grafana/plugin-e2e": "npm:3.9.0"
     "@grafana/plugin-ui": "npm:0.13.1"
     "@grafana/runtime": "npm:13.1.0-25893932881"
     "@grafana/schema": "npm:13.1.0-25893932881"
-    "@grafana/sign-plugin": "npm:3.2.2"
-    "@grafana/tsconfig": "npm:2.1.0"
+    "@grafana/sign-plugin": "npm:3.3.0"
+    "@grafana/tsconfig": "npm:2.2.0"
     "@grafana/ui": "npm:13.1.0-25893932881"
     "@playwright/test": "npm:1.60.0"
     "@stylistic/eslint-plugin-ts": "npm:4.4.1"
@@ -8373,7 +8373,7 @@ __metadata:
     "@types/jest": "npm:30.0.0"
     "@types/lodash": "npm:4.17.24"
     "@types/node": "npm:25.9.1"
-    "@types/react": "npm:18.3.28"
+    "@types/react": "npm:18.3.29"
     "@types/react-dom": "npm:18.3.7"
     "@typescript-eslint/eslint-plugin": "npm:8.60.0"
     "@typescript-eslint/parser": "npm:8.60.0 "
