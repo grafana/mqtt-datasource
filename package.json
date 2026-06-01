@@ -26,9 +26,9 @@
     "@changesets/cli": "2.31.0",
     "@grafana/e2e-selectors": "13.1.0-25893932881",
     "@grafana/eslint-config": "9.0.0",
-    "@grafana/plugin-e2e": "3.8.0",
-    "@grafana/sign-plugin": "3.2.2",
-    "@grafana/tsconfig": "2.1.0",
+    "@grafana/plugin-e2e": "3.9.0",
+    "@grafana/sign-plugin": "3.3.0",
+    "@grafana/tsconfig": "2.2.0",
     "@playwright/test": "1.60.0",
     "@stylistic/eslint-plugin-ts": "4.4.1",
     "@swc/core": "1.15.40",
@@ -40,7 +40,7 @@
     "@types/jest": "30.0.0",
     "@types/lodash": "4.17.24",
     "@types/node": "25.9.1",
-    "@types/react": "18.3.28",
+    "@types/react": "18.3.29",
     "@types/react-dom": "18.3.7",
     "@typescript-eslint/eslint-plugin": "8.60.0",
     "@typescript-eslint/parser": "8.60.0 ",
@@ -89,7 +89,7 @@
     "react-dom": "18.3.1"
   },
   "engines": {
-    "node": ">=24"
+    "node": "v26.2.0"
   },
   "packageManager": "yarn@4.15.0"
 }
