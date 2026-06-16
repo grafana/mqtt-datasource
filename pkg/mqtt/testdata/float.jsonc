@@ -1,0 +1,52 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: mqtt
+//  Dimensions: 2 Fields by 1 Rows
+//  +-------------------------------+------------------+
+//  | Name: Time                    | Name: Value      |
+//  | Labels:                       | Labels:          |
+//  | Type: []time.Time             | Type: []*float64 |
+//  +-------------------------------+------------------+
+//  | 1970-01-01 02:00:00 +0200 EET | 123.456          |
+//  +-------------------------------+------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "mqtt",
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            0
+          ],
+          [
+            123.456
+          ]
+        ]
+      }
+    }
+  ]
+}

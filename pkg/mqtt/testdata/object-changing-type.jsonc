@@ -1,0 +1,71 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: mqtt
+//  Dimensions: 3 Fields by 3 Rows
+//  +-------------------------------+------------------+------------------+
+//  | Name: Time                    | Name: a          | Name: b          |
+//  | Labels:                       | Labels:          | Labels:          |
+//  | Type: []time.Time             | Type: []*float64 | Type: []*float64 |
+//  +-------------------------------+------------------+------------------+
+//  | 1970-01-01 02:00:00 +0200 EET | 1                | 2                |
+//  | 1970-01-01 02:01:00 +0200 EET | null             | null             |
+//  | 1970-01-01 02:02:00 +0200 EET | 3                | 4                |
+//  +-------------------------------+------------------+------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "mqtt",
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "a",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "b",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            0,
+            60000,
+            120000
+          ],
+          [
+            1,
+            null,
+            3
+          ],
+          [
+            2,
+            null,
+            4
+          ]
+        ]
+      }
+    }
+  ]
+}
