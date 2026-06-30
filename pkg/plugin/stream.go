@@ -12,13 +12,17 @@ import (
 )
 
 func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	// Extract the topic key from the channel path
+	// Channel path format: "ds/{uid}/{topicKey}" where topicKey includes streaming key
+	// We need to remove the channelPrefix ("ds/{uid}") to get the topic key
+	topicKey := strings.TrimPrefix(req.Path, ds.channelPrefix+"/")
 	logger := log.DefaultLogger.FromContext(ctx)
 
-	chunks := strings.Split(req.Path, "/")
+	chunks := strings.Split(topicKey, "/")
 
 	// Expected format: {interval}/{encodedTopic}/{dsUid}/{hash}/{orgId}/{refId}
 	if len(chunks) < 6 {
-		return backend.DownstreamErrorf("invalid topic key: %s", req.Path)
+		return backend.DownstreamErrorf("invalid topic key: %s", topicKey)
 	}
 
 	refID := chunks[len(chunks)-1]
@@ -28,13 +32,13 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 		return backend.DownstreamErrorf("invalid interval: %s", chunks[0])
 	}
 
-	_, err = ds.Client.Subscribe(req.Path, logger)
+	_, err = ds.Client.Subscribe(topicKey, logger)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		if unsubErr := ds.Client.Unsubscribe(req.Path, logger); unsubErr != nil {
-			logger.Error("Failed to unsubscribe from MQTT topic", "path", req.Path, "error", unsubErr)
+		if unsubErr := ds.Client.Unsubscribe(topicKey, logger); unsubErr != nil {
+			logger.Error("Failed to unsubscribe from MQTT topic", "path", topicKey, "error", unsubErr)
 		}
 	}()
 
@@ -43,24 +47,24 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Debug("stopped streaming (context canceled)", "path", req.Path)
+			logger.Debug("stopped streaming (context canceled)", "path", topicKey)
 			ticker.Stop()
 			return nil
 		case <-ticker.C:
-			topic, ok := ds.Client.GetTopic(req.Path)
+			topic, ok := ds.Client.GetTopic(topicKey)
 			if !ok {
-				logger.Debug("topic not found", "path", req.Path)
+				logger.Debug("topic not found", "path", topicKey)
 				break
 			}
 			frame, err := topic.ToDataFrame(logger)
 			if err != nil {
-				logger.Error("failed to convert topic to data frame", "path", req.Path, "error", backend.DownstreamError(err))
+				logger.Error("failed to convert topic to data frame", "path", topicKey, "error", backend.DownstreamError(err))
 				break
 			}
 			frame.Name = refID
 			topic.KeepLastMessage()
 			if err := sender.SendFrame(frame, data.IncludeAll); err != nil {
-				logger.Error("failed to send data frame", "path", req.Path, "error", backend.DownstreamError(err))
+				logger.Error("failed to send data frame", "path", topicKey, "error", backend.DownstreamError(err))
 			}
 
 		}
