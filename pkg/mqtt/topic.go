@@ -40,6 +40,12 @@ func (t *Topic) ToDataFrame(logger log.Logger) (*data.Frame, error) {
 	return t.framer.toFrame(t.Messages, logger)
 }
 
+// KeepLastMessage keeps only the last message in the topic's message list.
+// This is useful for retained topics.
+func (t *Topic) KeepLastMessage() {
+	t.Messages = t.Messages[len(t.Messages)-1:]
+}
+
 // TopicMap is a thread-safe map of topics
 type TopicMap struct {
 	sync.Map
