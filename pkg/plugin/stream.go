@@ -38,7 +38,7 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 	}
 	defer func() {
 		if unsubErr := ds.Client.Unsubscribe(topicKey, logger); unsubErr != nil {
-			logger.Error("Failed to unsubscribe from MQTT topic", "path", topicKey, "error", unsubErr)
+			logger.Error("Failed to unsubscribe from MQTT topic", "topicKey", topicKey, "error", unsubErr)
 		}
 	}()
 
@@ -47,24 +47,24 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Debug("stopped streaming (context canceled)", "path", topicKey)
+			logger.Debug("stopped streaming (context canceled)", "path", req.Path, "topicKey", topicKey)
 			ticker.Stop()
 			return nil
 		case <-ticker.C:
 			topic, ok := ds.Client.GetTopic(topicKey)
 			if !ok {
-				logger.Debug("topic not found", "path", topicKey)
+				logger.Debug("topic not found", "path", req.Path, "topicKey", topicKey)
 				break
 			}
 			frame, err := topic.ToDataFrame(logger)
 			if err != nil {
-				logger.Error("failed to convert topic to data frame", "path", topicKey, "error", backend.DownstreamError(err))
+				logger.Error("failed to convert topic to data frame", "path", req.Path, "error", backend.DownstreamError(err))
 				break
 			}
 			frame.Name = refID
 			topic.KeepLastMessage()
 			if err := sender.SendFrame(frame, data.IncludeAll); err != nil {
-				logger.Error("failed to send data frame", "path", topicKey, "error", backend.DownstreamError(err))
+				logger.Error("failed to send data frame", "path", req.Path, "error", backend.DownstreamError(err))
 			}
 
 		}

@@ -152,9 +152,9 @@ func (c *client) Subscribe(reqPath string, logger log.Logger) (*Topic, error) {
 		Interval:     interval,
 	}
 
-	topic, err := decodeTopic(mqttPath, logger)
+	topic, err := decodeTopic(t.Path, logger)
 	if err != nil {
-		return nil, backend.DownstreamErrorf("error decoding MQTT topic name %s: %s", mqttPath, err)
+		return nil, backend.DownstreamErrorf("error decoding MQTT topic name %s: %s", t.Path, err)
 	}
 
 	logger.Debug("Subscribing to MQTT topic", "topic", topic)
