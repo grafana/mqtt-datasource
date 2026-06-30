@@ -14,29 +14,29 @@ import (
 )
 
 func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	// Extract the topic key from the channel path
-	// Channel path format: "ds/{uid}/{topicKey}" where topicKey includes streaming key
-	// We need to remove the channelPrefix ("ds/{uid}") to get the topic key
-	topicKey := strings.TrimPrefix(req.Path, ds.channelPrefix+"/")
 	logger := log.DefaultLogger.FromContext(ctx)
 
-	chunks := strings.Split(topicKey, "/")
-	if len(chunks) < 2 {
-		return backend.DownstreamErrorf("invalid topic key: %s", topicKey)
+	chunks := strings.Split(req.Path, "/")
+
+	// Expected format: {interval}/{encodedTopic}/{dsUid}/{hash}/{orgId}/{refId}
+	if len(chunks) < 6 {
+		return backend.DownstreamErrorf("invalid topic key: %s", req.Path)
 	}
+
+	refID := chunks[len(chunks)-1]
 
 	interval, err := time.ParseDuration(chunks[0])
 	if err != nil {
 		return backend.DownstreamErrorf("invalid interval: %s", chunks[0])
 	}
 
-	_, err = ds.Client.Subscribe(topicKey, logger)
+	_, err = ds.Client.Subscribe(req.Path, logger)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		if unsubErr := ds.Client.Unsubscribe(topicKey, logger); unsubErr != nil {
-			logger.Error("Failed to unsubscribe from MQTT topic", "topicKey", topicKey, "error", unsubErr)
+		if unsubErr := ds.Client.Unsubscribe(req.Path, logger); unsubErr != nil {
+			logger.Error("Failed to unsubscribe from MQTT topic", "path", req.Path, "error", unsubErr)
 		}
 	}()
 
@@ -45,13 +45,13 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Debug("stopped streaming (context canceled)", "path", req.Path, "topicKey", topicKey)
+			logger.Debug("stopped streaming (context canceled)", "path", req.Path)
 			ticker.Stop()
 			return nil
 		case <-ticker.C:
-			topic, ok := ds.Client.GetTopic(topicKey)
+			topic, ok := ds.Client.GetTopic(req.Path)
 			if !ok {
-				logger.Debug("topic not found", "path", req.Path, "topicKey", topicKey)
+				logger.Debug("topic not found", "path", req.Path)
 				break
 			}
 			frame, err := topic.ToDataFrame(logger)
@@ -59,6 +59,7 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 				logger.Error("failed to convert topic to data frame", "path", req.Path, "error", backend.DownstreamError(err))
 				break
 			}
+			frame.Name = refID
 			topic.Messages = []mqtt.Message{}
 			if err := sender.SendFrame(frame, data.IncludeAll); err != nil {
 				logger.Error("failed to send data frame", "path", req.Path, "error", backend.DownstreamError(err))
@@ -70,15 +71,15 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 
 func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	// Extract orgId from the streaming key embedded in the channel path
-	// Channel: {interval}/{topic}/{datasourceUid}/{hash}/{orgId}
+	// Channel: {interval}/{topic}/{datasourceUid}/{hash}/{orgId}/{refId}
 	pathParts := strings.Split(req.Path, "/")
-	if len(pathParts) < 5 {
+	if len(pathParts) < 6 {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
 		}, backend.DownstreamErrorf("invalid channel path format")
 	}
 
-	orgId, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
+	orgId, err := strconv.ParseInt(pathParts[len(pathParts)-2], 10, 64)
 	if err != nil {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,

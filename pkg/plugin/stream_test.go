@@ -19,14 +19,14 @@ func TestMQTTDatasource_SubscribeStream_Security(t *testing.T) {
 	}{
 		{
 			name:           "valid org id matches",
-			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/456",
+			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/456/A",
 			userOrgID:      456,
 			expectedStatus: backend.SubscribeStreamStatusOK,
 			expectError:    false,
 		},
 		{
 			name:           "invalid org id mismatch",
-			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/456",
+			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/456/A",
 			userOrgID:      789,
 			expectedStatus: backend.SubscribeStreamStatusPermissionDenied,
 			expectError:    true,
@@ -40,14 +40,14 @@ func TestMQTTDatasource_SubscribeStream_Security(t *testing.T) {
 		},
 		{
 			name:           "invalid org id format",
-			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/invalid-org",
+			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/invalid-org/A",
 			userOrgID:      456,
 			expectedStatus: backend.SubscribeStreamStatusNotFound,
 			expectError:    true,
 		},
 		{
 			name:           "different user same org - should work",
-			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/different-hash/456",
+			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/different-hash/456/A",
 			userOrgID:      456,
 			expectedStatus: backend.SubscribeStreamStatusOK,
 			expectError:    false,
@@ -95,17 +95,17 @@ func TestMQTTDatasource_SubscribeStream_PathParsing(t *testing.T) {
 	}{
 		{
 			name:        "simple streaming key",
-			requestPath: "ds/uid123/1s/sensor/temp/datasource-uid/hash123/456",
+			requestPath: "ds/uid123/1s/sensor/temp/datasource-uid/hash123/456/A",
 			expectedOrg: "456",
 		},
 		{
 			name:        "complex topic path",
-			requestPath: "ds/uid123/5s/building/floor1/room2/sensor/temp/datasource-uid/hash456/789",
+			requestPath: "ds/uid123/5s/building/floor1/room2/sensor/temp/datasource-uid/hash456/789/B",
 			expectedOrg: "789",
 		},
 		{
 			name:        "streaming key with multiple segments",
-			requestPath: "ds/uid123/10s/simple/topic/my-datasource/complex-hash-value/123",
+			requestPath: "ds/uid123/10s/simple/topic/my-datasource/complex-hash-value/123/C",
 			expectedOrg: "123",
 		},
 	}
@@ -166,19 +166,19 @@ func TestMQTTDatasource_SubscribeStream_EdgeCases(t *testing.T) {
 		},
 		{
 			name:           "org id zero",
-			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/0",
+			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/0/A",
 			userOrgID:      0,
 			expectedStatus: backend.SubscribeStreamStatusOK,
 		},
 		{
 			name:           "negative org id",
-			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/-1",
+			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/-1/A",
 			userOrgID:      -1,
 			expectedStatus: backend.SubscribeStreamStatusOK,
 		},
 		{
 			name:           "very long path",
-			requestPath:    "ds/uid123/1s/very/long/topic/path/with/many/segments/datasource-uid/hash123/456",
+			requestPath:    "ds/uid123/1s/very/long/topic/path/with/many/segments/datasource-uid/hash123/456/A",
 			userOrgID:      456,
 			expectedStatus: backend.SubscribeStreamStatusOK,
 		},
@@ -214,7 +214,7 @@ func TestMQTTDatasource_SubscribeStream_MultiTenantSecurity(t *testing.T) {
 	// User from org 456 tries to access their own data - should work
 	pCtx456 := backend.PluginContext{OrgID: 456}
 	ctx456 := backend.WithPluginContext(context.Background(), pCtx456)
-	req456 := &backend.SubscribeStreamRequest{Path: basePath + "456"}
+	req456 := &backend.SubscribeStreamRequest{Path: basePath + "456/A"}
 
 	resp456, err456 := ds.SubscribeStream(ctx456, req456)
 	if err456 != nil {
@@ -225,7 +225,7 @@ func TestMQTTDatasource_SubscribeStream_MultiTenantSecurity(t *testing.T) {
 	}
 
 	// User from org 456 tries to access org 789's data - should fail
-	req789Data := &backend.SubscribeStreamRequest{Path: basePath + "789"}
+	req789Data := &backend.SubscribeStreamRequest{Path: basePath + "789/A"}
 
 	resp789, err789 := ds.SubscribeStream(ctx456, req789Data)
 	if err789 == nil {
