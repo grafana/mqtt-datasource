@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"math/rand"
-	"path"
 	"strings"
 	"time"
 
@@ -140,31 +139,42 @@ func (c *client) Subscribe(reqPath string, logger log.Logger) (*Topic, error) {
 		return nil, backend.DownstreamErrorf("invalid interval %s: %s", chunks[0], err)
 	}
 
-	// For MQTT subscription, we only need the actual topic path (without streaming key)
-	// The streaming key is used for topic uniqueness in storage, but MQTT only cares about the topic path
-	topicPath := path.Join(chunks[1:]...)
+	// The encoded MQTT topic is always the second segment; everything after is the streaming key.
+	// Keeping Path as only the encoded MQTT topic allows HasSubscription and AddMessage to
+	// correctly deduplicate MQTT subscriptions and fan-out messages across multiple panels
+	// that subscribe to the same topic with different streaming keys (e.g. different refIds).
+	mqttPath := chunks[1]
 
 	// Create topic with the reqPath as the key for storage
-	// The actual topic components will be parsed when needed
 	t := &Topic{
-		Path:     topicPath,
-		Interval: interval,
+		Path:         mqttPath,
+		StreamingKey: strings.Join(chunks[2:], "/"),
+		Interval:     interval,
 	}
 
-	topic, err := decodeTopic(t.Path, logger)
+	topic, err := decodeTopic(mqttPath, logger)
 	if err != nil {
-		return nil, backend.DownstreamErrorf("error decoding MQTT topic name %s: %s", t.Path, err)
+		return nil, backend.DownstreamErrorf("error decoding MQTT topic name %s: %s", mqttPath, err)
 	}
 
 	logger.Debug("Subscribing to MQTT topic", "topic", topic)
 
-	if token := c.client.Subscribe(topic, 0, func(_ paho.Client, m paho.Message) {
-		// by wrapping HandleMessage we can directly get the correct topicPath for the incoming topic
-		// and don't need to regex it against + and #.
-		c.HandleMessage(topicPath, []byte(m.Payload()))
-	}); token.Wait() && token.Error() != nil {
-		return nil, backend.DownstreamErrorf("error subscribing to MQTT topic %s: %s", topic, token.Error())
+	// Only register the MQTT subscription once per real MQTT topic.
+	// If another Topic entry with the same mqttPath already exists, the MQTT broker
+	// subscription (and its callback) is already active. Calling c.client.Subscribe
+	// again would replace the paho callback, silencing all existing streams.
+	if !c.topics.HasSubscription(mqttPath) {
+		if token := c.client.Subscribe(topic, 0, func(_ paho.Client, m paho.Message) {
+			// Use mqttPath (the encoded topic) as the fan-out key so AddMessage dispatches
+			// to every Topic entry that shares the same underlying MQTT topic.
+			c.HandleMessage(mqttPath, []byte(m.Payload()))
+		}); token.Wait() && token.Error() != nil {
+			return nil, backend.DownstreamErrorf("error subscribing to MQTT topic %s: %s", topic, token.Error())
+		}
+	} else {
+		logger.Debug("Already subscribed to MQTT topic, skipping broker subscription", "topic", topic)
 	}
+
 	// Store the topic using reqPath as the key (which includes streaming key)
 	c.topics.Map.Store(reqPath, t)
 	return t, nil
@@ -178,8 +188,7 @@ func (c *client) Unsubscribe(reqPath string, logger log.Logger) error {
 	c.topics.Delete(t.Key())
 
 	if exists := c.topics.HasSubscription(t.Path); exists {
-		// There are still other subscriptions to this path,
-		// so we shouldn't unsubscribe yet.
+		logger.Debug("Still have other subscriptions to MQTT topic, skipping broker unsubscribe", "topic", t.Path)
 		return nil
 	}
 

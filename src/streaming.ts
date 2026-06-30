@@ -5,8 +5,8 @@ import { config } from '@grafana/runtime';
  * be unique for each distinct query execution plan.  This key is not secure and is only picked to avoid
  * possible collisions
  */
-export async function getLiveStreamKey(datasourceUid: string, topic?: string): Promise<string> {
-  const str = JSON.stringify({ topic });
+export async function getLiveStreamKey(datasourceUid: string, topic?: string, refId?: string): Promise<string> {
+  const str = JSON.stringify({ topic, refId });
 
   const orgId = config.bootData.user.orgId;
   const msgUint8 = new TextEncoder().encode(str); // encode as (utf-8) Uint8Array
@@ -14,20 +14,20 @@ export async function getLiveStreamKey(datasourceUid: string, topic?: string): P
   if (crypto.subtle === undefined) {
     // Fall back to our own sha1 if we don't have crypto.subtle (e.g. not on localhost or over https)
     hashBuffer = sha1(msgUint8);
-  }
-  else {
+  } else {
     hashBuffer = await crypto.subtle.digest('SHA-1', msgUint8); // hash the message
   }
   const hashArray = Array.from(new Uint8Array(hashBuffer.slice(0, 8))); // first 8 bytes
-  return `${datasourceUid}/${hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')}/${orgId}`;
+  const base = `${datasourceUid}/${hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')}/${orgId}`;
+  return refId !== undefined ? `${base}/${refId}` : base;
 }
 
 function sha1(message: Uint8Array): ArrayBuffer {
   let h0 = 0x67452301;
-  let h1 = 0xEFCDAB89;
-  let h2 = 0x98BADCFE;
+  let h1 = 0xefcdab89;
+  let h2 = 0x98badcfe;
   let h3 = 0x10325476;
-  let h4 = 0xC3D2E1F0;
+  let h4 = 0xc3d2e1f0;
 
   const message_length = message.length * 8;
 
@@ -37,29 +37,30 @@ function sha1(message: Uint8Array): ArrayBuffer {
   buf.set(message);
   buf[message.length] = 0x80;
 
-
   // Bitwise operators truncate to 32 bits, we need to explicitly take the high bits
   const message_length_high = Math.floor(message_length / 0x100000000);
   buf[buf.length - 8] = (message_length_high & 0xff000000) >>> 24;
   buf[buf.length - 7] = (message_length_high & 0x00ff0000) >>> 16;
   buf[buf.length - 6] = (message_length_high & 0x0000ff00) >>> 8;
-  buf[buf.length - 5] = (message_length_high & 0x000000ff);
+  buf[buf.length - 5] = message_length_high & 0x000000ff;
 
   buf[buf.length - 4] = (message_length & 0xff000000) >>> 24;
   buf[buf.length - 3] = (message_length & 0x00ff0000) >>> 16;
   buf[buf.length - 2] = (message_length & 0x0000ff00) >>> 8;
-  buf[buf.length - 1] = (message_length & 0x000000ff);
+  buf[buf.length - 1] = message_length & 0x000000ff;
 
   for (let chunkIdx = 0; chunkIdx < buf.length; chunkIdx += 64) {
-    let words = []
+    let words = [];
     for (let wordIdx = 0; wordIdx < 80; wordIdx += 1) {
       if (wordIdx < 16) {
-        words[wordIdx] = buf[chunkIdx + (wordIdx * 4)]     << 24 |
-                         buf[chunkIdx + (wordIdx * 4) + 1] << 16 |
-                         buf[chunkIdx + (wordIdx * 4) + 2] << 8  |
-                         buf[chunkIdx + (wordIdx * 4) + 3];
+        words[wordIdx] =
+          (buf[chunkIdx + wordIdx * 4] << 24) |
+          (buf[chunkIdx + wordIdx * 4 + 1] << 16) |
+          (buf[chunkIdx + wordIdx * 4 + 2] << 8) |
+          buf[chunkIdx + wordIdx * 4 + 3];
       } else {
-        const withoutRotation: number = words[wordIdx - 3] ^ words[wordIdx - 8] ^ words[wordIdx - 14] ^ words[wordIdx - 16];
+        const withoutRotation: number =
+          words[wordIdx - 3] ^ words[wordIdx - 8] ^ words[wordIdx - 14] ^ words[wordIdx - 16];
         words[wordIdx] = (withoutRotation << 1) | (withoutRotation >>> 31);
       }
     }
@@ -74,17 +75,17 @@ function sha1(message: Uint8Array): ArrayBuffer {
       let f;
       let k;
       if (i < 20) {
-        f = (b & c) | ((~b) & d);
-        k = 0x5A827999;
+        f = (b & c) | (~b & d);
+        k = 0x5a827999;
       } else if (i < 40) {
         f = b ^ c ^ d;
-        k = 0x6ED9EBA1;
+        k = 0x6ed9eba1;
       } else if (i < 60) {
         f = (b & c) | (b & d) | (c & d);
-        k = 0x8F1BBCDC;
+        k = 0x8f1bbcdc;
       } else {
         f = b ^ c ^ d;
-        k = 0xCA62C1D6;
+        k = 0xca62c1d6;
       }
 
       const temp = ((a << 5) | (a >>> 27)) + f + e + k + words[i];
@@ -95,11 +96,11 @@ function sha1(message: Uint8Array): ArrayBuffer {
       a = temp;
     }
 
-    h0 += a
-    h1 += b
-    h2 += c
-    h3 += d
-    h4 += e
+    h0 += a;
+    h1 += b;
+    h2 += c;
+    h3 += d;
+    h4 += e;
   }
 
   const retBuffer = new ArrayBuffer(20);

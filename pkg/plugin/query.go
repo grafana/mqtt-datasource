@@ -16,6 +16,7 @@ func (ds *MQTTDatasource) QueryData(_ context.Context, req *backend.QueryDataReq
 
 	for _, q := range req.Queries {
 		res := ds.query(q)
+
 		response.Responses[q.RefID] = res
 	}
 
@@ -38,7 +39,7 @@ func (ds *MQTTDatasource) query(query backend.DataQuery) backend.DataResponse {
 
 	t.Interval = query.Interval
 
-	frame := data.NewFrame("")
+	frame := data.NewFrame(query.RefID)
 	frame.SetMeta(&data.FrameMeta{
 		Channel: path.Join(ds.channelPrefix, t.Key()),
 	})
