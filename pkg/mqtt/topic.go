@@ -16,7 +16,6 @@ type Message struct {
 	Timestamp time.Time
 	Value     []byte
 	Topic     string // actual MQTT topic (differs from subscription path for wildcards)
-	Retained  bool
 }
 
 // Topic represents a MQTT topic.
@@ -43,22 +42,18 @@ func (t *Topic) ToDataFrame(logger log.Logger) (*data.Frame, error) {
 	return t.framer.toFrame(t.Messages, logger)
 }
 
-// KeepLastRetainedMessage keeps only the last retained message per unique MQTT
-// topic in the topic's message list. Non-retained messages are discarded. For
-// wildcard subscriptions this preserves the latest retained message from every
-// distinct sub-topic.
-func (t *Topic) KeepLastRetainedMessage() {
+// KeepLastMessage keeps only the last message per unique MQTT topic in the
+// topic's message list. For wildcard subscriptions this preserves the latest
+// message from every distinct sub-topic.
+func (t *Topic) KeepLastMessage() {
 	if len(t.Messages) == 0 {
 		return
 	}
 
-	// Walk backwards and keep the first retained message seen for each unique MQTT topic.
+	// Walk backwards and keep the first message seen for each unique MQTT topic.
 	lastMsgSeen := make(map[string]struct{}, len(t.Messages))
 	lastMsg := make([]Message, 0, len(t.Messages))
 	for _, message := range slices.Backward(t.Messages) {
-		if !message.Retained {
-			continue
-		}
 		if _, seen := lastMsgSeen[message.Topic]; !seen {
 			lastMsgSeen[message.Topic] = struct{}{}
 			lastMsg = append(lastMsg, message)
