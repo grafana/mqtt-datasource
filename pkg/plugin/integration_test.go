@@ -268,10 +268,11 @@ func (m *mockMQTTClient) Dispose() {
 	m.subscriptions = make(map[string]bool)
 }
 
-func (m *mockMQTTClient) HandleMessage(topicPath string, payload []byte) {
+func (m *mockMQTTClient) HandleMessage(topicPath string, payload []byte, retained bool) {
 	message := mqtt.Message{
 		Timestamp: time.Now(),
 		Value:     payload,
+		Retained:  retained,
 	}
 
 	// Find topics that match this path and add message

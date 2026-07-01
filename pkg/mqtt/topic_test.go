@@ -178,3 +178,81 @@ func TestTopicMap_AddMessage_WithStreamingKey(t *testing.T) {
 		t.Errorf("Expected 1 message in topic2, got %d", len(updatedTopic2.Messages))
 	}
 }
+
+func TestTopic_KeepLastRetainedMessage_NonWildcard(t *testing.T) {
+	now := time.Now()
+	topic := &Topic{
+		Messages: []Message{
+			{Timestamp: now, Value: []byte("a"), Topic: "sensor/temp", Retained: true},
+			{Timestamp: now.Add(time.Second), Value: []byte("b"), Topic: "sensor/temp", Retained: false},
+			{Timestamp: now.Add(2 * time.Second), Value: []byte("c"), Topic: "sensor/temp", Retained: true},
+		},
+	}
+
+	topic.KeepLastRetainedMessage()
+
+	if len(topic.Messages) != 1 {
+		t.Fatalf("Expected 1 message, got %d", len(topic.Messages))
+	}
+	if string(topic.Messages[0].Value) != "c" {
+		t.Errorf("Expected last retained message value 'c', got '%s'", topic.Messages[0].Value)
+	}
+}
+
+func TestTopic_KeepLastRetainedMessage_Wildcard(t *testing.T) {
+	now := time.Now()
+	topic := &Topic{
+		Messages: []Message{
+			{Timestamp: now, Value: []byte("temp1"), Topic: "sensor/temp", Retained: true},
+			{Timestamp: now.Add(time.Second), Value: []byte("hum1"), Topic: "sensor/humidity", Retained: true},
+			{Timestamp: now.Add(2 * time.Second), Value: []byte("temp2"), Topic: "sensor/temp", Retained: false},
+			{Timestamp: now.Add(3 * time.Second), Value: []byte("hum2"), Topic: "sensor/humidity", Retained: true},
+			{Timestamp: now.Add(4 * time.Second), Value: []byte("pres1"), Topic: "sensor/pressure", Retained: true},
+		},
+	}
+
+	topic.KeepLastRetainedMessage()
+
+	if len(topic.Messages) != 3 {
+		t.Fatalf("Expected 3 messages (one per unique topic), got %d", len(topic.Messages))
+	}
+
+	byTopic := make(map[string]string)
+	for _, m := range topic.Messages {
+		byTopic[m.Topic] = string(m.Value)
+	}
+
+	if byTopic["sensor/temp"] != "temp1" {
+		t.Errorf("Expected last retained temp message 'temp1', got '%s'", byTopic["sensor/temp"])
+	}
+	if byTopic["sensor/humidity"] != "hum2" {
+		t.Errorf("Expected last retained humidity message 'hum2', got '%s'", byTopic["sensor/humidity"])
+	}
+	if byTopic["sensor/pressure"] != "pres1" {
+		t.Errorf("Expected last retained pressure message 'pres1', got '%s'", byTopic["sensor/pressure"])
+	}
+}
+
+func TestTopic_KeepLastRetainedMessage_NoRetained(t *testing.T) {
+	now := time.Now()
+	topic := &Topic{
+		Messages: []Message{
+			{Timestamp: now, Value: []byte("a"), Topic: "sensor/temp", Retained: false},
+			{Timestamp: now.Add(time.Second), Value: []byte("b"), Topic: "sensor/temp", Retained: false},
+		},
+	}
+
+	topic.KeepLastRetainedMessage()
+
+	if len(topic.Messages) != 0 {
+		t.Errorf("Expected 0 messages when no retained messages, got %d", len(topic.Messages))
+	}
+}
+
+func TestTopic_KeepLastRetainedMessage_Empty(t *testing.T) {
+	topic := &Topic{Messages: []Message{}}
+	topic.KeepLastRetainedMessage() // should not panic
+	if len(topic.Messages) != 0 {
+		t.Errorf("Expected 0 messages, got %d", len(topic.Messages))
+	}
+}

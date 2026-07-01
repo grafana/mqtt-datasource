@@ -111,13 +111,15 @@ func (c *client) IsConnected() bool {
 	return c.client.IsConnectionOpen()
 }
 
-func (c *client) HandleMessage(topic string, payload []byte) {
+func (c *client) HandleMessage(fanOutKey string, actualTopic string, payload []byte, retained bool) {
 	message := Message{
 		Timestamp: time.Now(),
 		Value:     payload,
+		Topic:     actualTopic,
+		Retained:  retained,
 	}
 
-	c.topics.AddMessage(topic, message)
+	c.topics.AddMessage(fanOutKey, message)
 }
 
 func (c *client) GetTopic(reqPath string) (*Topic, bool) {
@@ -167,7 +169,9 @@ func (c *client) Subscribe(reqPath string, logger log.Logger) (*Topic, error) {
 		if token := c.client.Subscribe(topic, 0, func(_ paho.Client, m paho.Message) {
 			// Use mqttPath (the encoded topic) as the fan-out key so AddMessage dispatches
 			// to every Topic entry that shares the same underlying MQTT topic.
-			c.HandleMessage(mqttPath, []byte(m.Payload()))
+			// Pass m.Topic() as the actual topic so KeepLastRetainedMessage can retain the last
+			// message per unique sub-topic for wildcard subscriptions.
+			c.HandleMessage(mqttPath, m.Topic(), m.Payload(), m.Retained())
 		}); token.Wait() && token.Error() != nil {
 			return nil, backend.DownstreamErrorf("error subscribing to MQTT topic %s: %s", topic, token.Error())
 		}

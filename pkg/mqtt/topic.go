@@ -3,6 +3,7 @@ package mqtt
 import (
 	"encoding/base64"
 	"path"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -14,6 +15,8 @@ import (
 type Message struct {
 	Timestamp time.Time
 	Value     []byte
+	Topic     string // actual MQTT topic (differs from subscription path for wildcards)
+	Retained  bool
 }
 
 // Topic represents a MQTT topic.
@@ -40,10 +43,39 @@ func (t *Topic) ToDataFrame(logger log.Logger) (*data.Frame, error) {
 	return t.framer.toFrame(t.Messages, logger)
 }
 
-// KeepLastMessage keeps only the last message in the topic's message list.
-// This is useful for retained topics.
-func (t *Topic) KeepLastMessage() {
-	t.Messages = t.Messages[len(t.Messages)-1:]
+// KeepLastRetainedMessage keeps only the last retained message per unique MQTT
+// topic in the topic's message list. Non-retained messages are discarded. For
+// wildcard subscriptions this preserves the latest retained message from every
+// distinct sub-topic.
+func (t *Topic) KeepLastRetainedMessage() {
+	if len(t.Messages) == 0 {
+		return
+	}
+
+	// Walk backwards and keep the first retained message seen for each unique MQTT topic.
+	lastMsgSeen := make(map[string]struct{}, len(t.Messages))
+	lastMsg := make([]Message, 0, len(t.Messages))
+	for _, message := range slices.Backward(t.Messages) {
+		if !message.Retained {
+			continue
+		}
+		if _, seen := lastMsgSeen[message.Topic]; !seen {
+			lastMsgSeen[message.Topic] = struct{}{}
+			lastMsg = append(lastMsg, message)
+		}
+	}
+
+	slices.SortFunc(lastMsg, func(a, b Message) int {
+		if a.Timestamp.Before(b.Timestamp) {
+			return -1
+		}
+		if a.Timestamp.After(b.Timestamp) {
+			return 1
+		}
+		return 0
+	})
+
+	t.Messages = lastMsg
 }
 
 // TopicMap is a thread-safe map of topics

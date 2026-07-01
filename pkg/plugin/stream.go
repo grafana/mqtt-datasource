@@ -62,7 +62,7 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 				break
 			}
 			frame.Name = refID
-			topic.KeepLastMessage()
+			topic.KeepLastRetainedMessage()
 			if err := sender.SendFrame(frame, data.IncludeAll); err != nil {
 				logger.Error("failed to send data frame", "path", req.Path, "error", backend.DownstreamError(err))
 			}

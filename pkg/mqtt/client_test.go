@@ -70,10 +70,11 @@ func (m *mockClient) Dispose() {
 	m.subscriptions = make(map[string]bool)
 }
 
-func (m *mockClient) HandleMessage(topicPath string, payload []byte) {
+func (m *mockClient) HandleMessage(topicPath string, payload []byte, retained bool) {
 	message := Message{
 		Timestamp: time.Now(),
 		Value:     payload,
+		Retained:  retained,
 	}
 	m.topics.AddMessage(topicPath, message)
 }
@@ -298,7 +299,7 @@ func TestClient_MessageHandling_WithStreamingKeys(t *testing.T) {
 	// Simulate MQTT message arrival - uses only the encoded MQTT topic (mqttPath),
 	// which causes AddMessage to fan out to ALL topics sharing the same MQTT topic.
 	mqttTopicPath := "dGVzdC90b3BpYw"
-	c.HandleMessage(mqttTopicPath, []byte("test message"))
+	c.HandleMessage(mqttTopicPath, []byte("test message"), false)
 
 	// Both topics share the same underlying MQTT topic, so both receive the message.
 	updatedTopic1, _ := c.GetTopic(reqPath1)
@@ -356,7 +357,7 @@ func TestClient_Subscribe_MQTTSubscriptionDeduplication(t *testing.T) {
 	}
 
 	// A single MQTT message must fan out to all three streams.
-	c.HandleMessage(mqttPath, []byte("hello"))
+	c.HandleMessage(mqttPath, []byte("hello"), false)
 
 	for i, rp := range []string{reqPath1, reqPath2, reqPath3} {
 		topic, ok := c.GetTopic(rp)
