@@ -111,12 +111,11 @@ func (c *client) IsConnected() bool {
 	return c.client.IsConnectionOpen()
 }
 
-func (c *client) HandleMessage(fanOutKey string, actualTopic string, payload []byte, retained bool) {
+func (c *client) HandleMessage(fanOutKey string, actualTopic string, payload []byte) {
 	message := Message{
 		Timestamp: time.Now(),
 		Value:     payload,
 		Topic:     actualTopic,
-		Retained:  retained,
 	}
 
 	c.topics.AddMessage(fanOutKey, message)
@@ -161,26 +160,35 @@ func (c *client) Subscribe(reqPath string, logger log.Logger) (*Topic, error) {
 
 	logger.Debug("Subscribing to MQTT topic", "topic", topic)
 
+	// Check subscription status BEFORE storing the topic in the map, because
+	// HasSubscription searches the map by Path and would find the entry we are
+	// about to add, causing every subscribe to be skipped.
+	alreadySubscribed := c.topics.HasSubscription(mqttPath)
+
+	// Store the topic BEFORE calling c.client.Subscribe so the paho callback
+	// can find it in the map when the broker delivers a retained message
+	// immediately upon subscription (before token.Wait() returns).
+	c.topics.Map.Store(reqPath, t)
+
 	// Only register the MQTT subscription once per real MQTT topic.
 	// If another Topic entry with the same mqttPath already exists, the MQTT broker
 	// subscription (and its callback) is already active. Calling c.client.Subscribe
 	// again would replace the paho callback, silencing all existing streams.
-	if !c.topics.HasSubscription(mqttPath) {
+	if !alreadySubscribed {
 		if token := c.client.Subscribe(topic, 0, func(_ paho.Client, m paho.Message) {
 			// Use mqttPath (the encoded topic) as the fan-out key so AddMessage dispatches
 			// to every Topic entry that shares the same underlying MQTT topic.
-			// Pass m.Topic() as the actual topic so KeepLastRetainedMessage can retain the last
+			// Pass m.Topic() as the actual topic so KeepLastMessage can retain the last
 			// message per unique sub-topic for wildcard subscriptions.
-			c.HandleMessage(mqttPath, m.Topic(), m.Payload(), m.Retained())
+			c.HandleMessage(mqttPath, m.Topic(), m.Payload())
 		}); token.Wait() && token.Error() != nil {
+			c.topics.Map.Delete(reqPath)
 			return nil, backend.DownstreamErrorf("error subscribing to MQTT topic %s: %s", topic, token.Error())
 		}
 	} else {
 		logger.Debug("Already subscribed to MQTT topic, skipping broker subscription", "topic", topic)
 	}
 
-	// Store the topic using reqPath as the key (which includes streaming key)
-	c.topics.Map.Store(reqPath, t)
 	return t, nil
 }
 
