@@ -1,5 +1,10 @@
 # Contributing to the MQTT Datasource Plugin
 
+## Signed commits are required
+
+> [!IMPORTANT]
+> All commits must be [signed](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits) (GPG, SSH, or S/MIME) to be merged into this repository. Pull requests with unsigned commits will need to be re-committed with signatures before they can be merged.
+
 ## Prerequisites
 
 - Node.js (v24 or later)
