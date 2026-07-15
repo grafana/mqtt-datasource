@@ -22,7 +22,7 @@
   "author": "Grafana Labs <team@grafana.com> (https://grafana.com)",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@babel/core": "7.29.7",
+    "@babel/core": "8.0.1",
     "@changesets/cli": "2.31.0",
     "@grafana/e2e-selectors": "13.1.0",
     "@grafana/eslint-config": "9.0.0",
