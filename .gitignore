@@ -37,3 +37,5 @@ e2e-results/
 
 .eslintcache
 install-state.gz
+
+*.pem

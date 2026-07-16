@@ -1,20 +1,23 @@
-const aedes = require('aedes')();
-const fs = require('fs');
-const path = require('path');
+import { Aedes } from 'aedes';
+import { readFileSync } from 'node:fs';
+import { join } from 'path';
+import { createServer } from 'node:net';
+import { createServer as createServerTLS  } from 'node:tls';
 
-let server = require('net').createServer(aedes.handle);
+const broker = await Aedes.createBroker()
+let server = createServer(broker.handle);
 let PORT = 1883;
 
-if (process.argv[2] === 'tls') {
+if (process.argv[2] === '--tls') {
   const options = {
-    key: fs.readFileSync(path.join(__dirname, '../testdata/server-key.pem')),
-    cert: fs.readFileSync(path.join(__dirname, '../testdata/server-cert.pem')),
-    ca: fs.readFileSync(path.join(__dirname, '../testdata/ca-cert.pem')),
+    key: readFileSync(join(import.meta.dirname, '../testdata/server-key.pem')),
+    cert: readFileSync(join(import.meta.dirname, '../testdata/server-cert.pem')),
+    ca: readFileSync(join(import.meta.dirname, '../testdata/ca-cert.pem')),
     requestCert: true,
     rejectUnauthorized: true,
   };
   PORT = 8883;
-  server = require('tls').createServer(options, aedes.handle);
+  server = createServerTLS(options, broker.handle);
 }
 
 const toMillis = {
@@ -49,7 +52,7 @@ const createPublisher = ({ topic, qos }) => {
         payload = JSON.stringify({ a: payload, b: { c: { d: [payload] } } });
       }
 
-      aedes.publish({
+      broker.publish({
         topic,
         cmd: 'publish',
         qos,
@@ -62,8 +65,8 @@ const createPublisher = ({ topic, qos }) => {
 
 server.listen(PORT, () => {
   console.log('server started and listening on port ', PORT);
-  aedes.on('subscribe', (subscriptions) => subscriptions.forEach(createPublisher));
-  aedes.on('connectionError', console.error);
-  aedes.on('clientDisconnect', (client) => console.log(`disconnect: ${client.id}`));
-  aedes.on('client', (client) => console.log(`connect: ${client.id}`));
+  broker.on('subscribe', (subscriptions) => subscriptions.forEach(createPublisher));
+  broker.on('connectionError', console.error);
+  broker.on('clientDisconnect', (client) => console.log(`disconnect: ${client.id}`));
+  broker.on('client', (client) => console.log(`connect: ${client.id}`));
 });
