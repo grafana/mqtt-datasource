@@ -9,8 +9,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
-	"github.com/grafana/mqtt-datasource/pkg/mqtt"
 )
 
 func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
@@ -21,9 +19,13 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 	logger := log.DefaultLogger.FromContext(ctx)
 
 	chunks := strings.Split(topicKey, "/")
-	if len(chunks) < 2 {
+
+	// Expected format: {interval}/{encodedTopic}/{dsUid}/{hash}/{orgId}/{refId}
+	if len(chunks) < 6 {
 		return backend.DownstreamErrorf("invalid topic key: %s", topicKey)
 	}
+
+	refID := chunks[len(chunks)-1]
 
 	interval, err := time.ParseDuration(chunks[0])
 	if err != nil {
@@ -59,7 +61,8 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 				logger.Error("failed to convert topic to data frame", "path", req.Path, "error", backend.DownstreamError(err))
 				break
 			}
-			topic.Messages = []mqtt.Message{}
+			frame.Name = refID
+			topic.KeepLastMessage()
 			if err := sender.SendFrame(frame, data.IncludeAll); err != nil {
 				logger.Error("failed to send data frame", "path", req.Path, "error", backend.DownstreamError(err))
 			}
@@ -70,15 +73,15 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 
 func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	// Extract orgId from the streaming key embedded in the channel path
-	// Channel: {interval}/{topic}/{datasourceUid}/{hash}/{orgId}
+	// Channel: {interval}/{topic}/{datasourceUid}/{hash}/{orgId}/{refId}
 	pathParts := strings.Split(req.Path, "/")
-	if len(pathParts) < 5 {
+	if len(pathParts) < 6 {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
 		}, backend.DownstreamErrorf("invalid channel path format")
 	}
 
-	orgId, err := strconv.ParseInt(pathParts[len(pathParts)-1], 10, 64)
+	orgId, err := strconv.ParseInt(pathParts[len(pathParts)-2], 10, 64)
 	if err != nil {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,

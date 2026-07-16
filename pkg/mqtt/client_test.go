@@ -1,7 +1,6 @@
 package mqtt
 
 import (
-	"path"
 	"strings"
 	"testing"
 	"time"
@@ -39,19 +38,21 @@ func (m *mockClient) Subscribe(reqPath string, logger log.Logger) (*Topic, error
 		return nil, err
 	}
 
-	topicPath := path.Join(chunks[1:]...)
+	mqttPath := chunks[1]
 	t := &Topic{
-		Path:     topicPath,
-		Interval: interval,
-		Messages: []Message{},
+		Path:         mqttPath,
+		StreamingKey: strings.Join(chunks[2:], "/"),
+		Interval:     interval,
+		Messages:     []Message{},
 	}
 
-	// Track MQTT subscription (simplified for testing)
-	if m.subscriptions == nil {
-		m.subscriptions = make(map[string]bool)
+	// Mirror the real client: only register the MQTT subscription once per mqttPath.
+	if !m.topics.HasSubscription(mqttPath) {
+		if m.subscriptions == nil {
+			m.subscriptions = make(map[string]bool)
+		}
+		m.subscriptions[mqttPath] = true
 	}
-	// For testing, assume we decode the topic properly
-	m.subscriptions["test/topic"] = true
 
 	// Store with reqPath as key
 	m.topics.Map.Store(reqPath, t)
@@ -98,7 +99,7 @@ func TestClient_Subscribe_WithStreamingKey(t *testing.T) {
 			name:         "subscribe with streaming key",
 			reqPath:      "1s/dGVzdC90b3BpYw/user1/hash123/org456",
 			expectTopic:  true,
-			expectedPath: "dGVzdC90b3BpYw/user1/hash123/org456",
+			expectedPath: "dGVzdC90b3BpYw",
 		},
 		{
 			name:         "subscribe without streaming key",
@@ -294,18 +295,76 @@ func TestClient_MessageHandling_WithStreamingKeys(t *testing.T) {
 		t.Fatal("Expected both topics to be created")
 	}
 
-	// Simulate MQTT message arrival
-	mqttTopicPath := "dGVzdC90b3BpYw/user1/hash123/org456" // This is what HandleMessage receives
+	// Simulate MQTT message arrival - uses only the encoded MQTT topic (mqttPath),
+	// which causes AddMessage to fan out to ALL topics sharing the same MQTT topic.
+	mqttTopicPath := "dGVzdC90b3BpYw"
 	c.HandleMessage(mqttTopicPath, []byte("test message"))
 
-	// Check that only the matching topic received the message
+	// Both topics share the same underlying MQTT topic, so both receive the message.
 	updatedTopic1, _ := c.GetTopic(reqPath1)
 	updatedTopic2, _ := c.GetTopic(reqPath2)
 
 	if len(updatedTopic1.Messages) != 1 {
 		t.Errorf("Expected 1 message in topic1, got %d", len(updatedTopic1.Messages))
 	}
-	if len(updatedTopic2.Messages) != 0 {
-		t.Errorf("Expected 0 messages in topic2, got %d", len(updatedTopic2.Messages))
+	if len(updatedTopic2.Messages) != 1 {
+		t.Errorf("Expected 1 message in topic2, got %d", len(updatedTopic2.Messages))
+	}
+}
+
+// TestClient_Subscribe_MQTTSubscriptionDeduplication verifies that the paho MQTT subscription
+// is only registered once when multiple panels subscribe to the same underlying MQTT topic
+// (i.e. same mqttPath but different streaming keys / refIds).
+// Registering the paho subscription more than once replaces the callback, causing all but
+// the last-registered panel to stop receiving messages.
+func TestClient_Subscribe_MQTTSubscriptionDeduplication(t *testing.T) {
+	c := newMockClient()
+
+	// Three panels on the same MQTT topic, each with a distinct streaming key (different refId).
+	reqPath1 := "1s/dGVzdC90b3BpYw/uid/hash1/1/A"
+	reqPath2 := "1s/dGVzdC90b3BpYw/uid/hash1/1/B"
+	reqPath3 := "1s/dGVzdC90b3BpYw/uid/hash1/1/C"
+
+	if _, err := c.Subscribe(reqPath1, log.DefaultLogger); err != nil {
+		t.Fatalf("Subscribe 1 failed: %v", err)
+	}
+	if _, err := c.Subscribe(reqPath2, log.DefaultLogger); err != nil {
+		t.Fatalf("Subscribe 2 failed: %v", err)
+	}
+	if _, err := c.Subscribe(reqPath3, log.DefaultLogger); err != nil {
+		t.Fatalf("Subscribe 3 failed: %v", err)
+	}
+
+	// The MQTT subscription must have been registered exactly once.
+	mqttPath := "dGVzdC90b3BpYw"
+	if !c.subscriptions[mqttPath] {
+		t.Errorf("Expected MQTT subscription to be registered for %s", mqttPath)
+	}
+
+	if len(c.subscriptions) != 1 {
+		t.Errorf("Expected exactly 1 MQTT subscription entry, got %d", len(c.subscriptions))
+	}
+
+	// All three Topic entries must be present in the topic map.
+	topicCount := 0
+	c.topics.Range(func(_, _ any) bool {
+		topicCount++
+		return true
+	})
+	if topicCount != 3 {
+		t.Errorf("Expected 3 topic entries in the map, got %d", topicCount)
+	}
+
+	// A single MQTT message must fan out to all three streams.
+	c.HandleMessage(mqttPath, []byte("hello"))
+
+	for i, rp := range []string{reqPath1, reqPath2, reqPath3} {
+		topic, ok := c.GetTopic(rp)
+		if !ok {
+			t.Fatalf("Topic %d not found", i+1)
+		}
+		if len(topic.Messages) != 1 {
+			t.Errorf("Panel %d: expected 1 message, got %d", i+1, len(topic.Messages))
+		}
 	}
 }
