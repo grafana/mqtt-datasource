@@ -15,7 +15,7 @@
     "vendor/**",
     "renovate.json",
     "package.json",
-    "yarn.lock",
+    "package-lock.json",
     ".eslintcache"
   ],
   "words": [

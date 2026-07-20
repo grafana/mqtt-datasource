@@ -7,10 +7,10 @@
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",
     "e2e": "playwright test",
     "lint": "eslint --cache .",
-    "lint:fix": "yarn run lint --fix && prettier --write --list-different .",
+    "lint:fix": "npm run lint -- --fix && prettier --write --list-different .",
     "sign": "sign-plugin",
     "spellcheck": "cspell -c cspell.config.json \"**/*.{ts,tsx,js,go,md,mdx,yml,yaml,json,scss,css}\"",
-    "start": "yarn dev",
+    "start": "npm run dev",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --passWithNoTests --maxWorkers 4",
     "typecheck": "tsc --noEmit",
@@ -90,7 +90,7 @@
   },
   "engines": {
     "node": ">=24",
-    "yarn": ">=4.15.0"
+    "npm": ">=11.12.1"
   },
-  "packageManager": "yarn@4.17.1"
+  "packageManager": "npm@11.18.0"
 }
