@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.4
+
+⚙️ Updated frontend & backend dependencies
+
 ## 1.3.3
 
 ⚙️ Updated frontend & backend dependencies

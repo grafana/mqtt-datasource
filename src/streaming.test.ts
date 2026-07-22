@@ -1,12 +1,12 @@
-import { getLiveStreamKey } from './streaming';
 import { config } from '@grafana/runtime';
+import { getLiveStreamKey } from './streaming';
 
 // Mock the @grafana/runtime module
 jest.mock('@grafana/runtime', () => ({
   config: {
     bootData: {
-      user: {
-        orgId: 1,
+      settings: {
+        namespace: 'stacks-123',
       },
     },
   },
@@ -32,7 +32,7 @@ describe('getLiveStreamKey', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset to default orgId
-    (config.bootData.user as any).orgId = 1;
+    (config.bootData.settings as any).namespace = 'stacks-123';
   });
 
   it('should generate a consistent key for the same query', async () => {
@@ -50,7 +50,7 @@ describe('getLiveStreamKey', () => {
     const key2 = await getLiveStreamKey(datasourceUid, topic);
 
     expect(key1).toBe(key2);
-    expect(key1).toBe('mqtt-datasource-uid/123456789abcdef0/1');
+    expect(key1).toBe('mqtt-datasource-uid/123456789abcdef0/stacks-123');
   });
 
   it('should generate different keys for different topics', async () => {
@@ -62,9 +62,7 @@ describe('getLiveStreamKey', () => {
     const mockHashArray2 = new Uint8Array(mockHashBuffer2);
     mockHashArray2.set([0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00]);
 
-    mockDigest
-      .mockResolvedValueOnce(mockHashBuffer1)
-      .mockResolvedValueOnce(mockHashBuffer2);
+    mockDigest.mockResolvedValueOnce(mockHashBuffer1).mockResolvedValueOnce(mockHashBuffer2);
 
     const datasourceUid = 'mqtt-datasource-uid';
     const topic1 = 'sensor/temperature';
@@ -74,28 +72,28 @@ describe('getLiveStreamKey', () => {
     const key2 = await getLiveStreamKey(datasourceUid, topic2);
 
     expect(key1).not.toBe(key2);
-    expect(key1).toBe('mqtt-datasource-uid/1122334455667788/1');
-    expect(key2).toBe('mqtt-datasource-uid/99aabbccddeeff00/1');
+    expect(key1).toBe('mqtt-datasource-uid/1122334455667788/stacks-123');
+    expect(key2).toBe('mqtt-datasource-uid/99aabbccddeeff00/stacks-123');
   });
 
-  it('should include orgId in the key', async () => {
+  it('should include namespace in the key', async () => {
     const mockHashBuffer = new ArrayBuffer(20);
     const mockHashArray = new Uint8Array(mockHashBuffer);
     mockHashArray.set([0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0]);
     mockDigest.mockResolvedValue(mockHashBuffer);
 
-    // Test with different orgId
-    (config.bootData.user as any).orgId = 42;
+    // Test with different namespace
+    (config.bootData.settings as any).namespace = 'stacks-42';
 
     const datasourceUid = 'mqtt-datasource-uid';
     const topic = 'sensor/temperature';
 
     const key = await getLiveStreamKey(datasourceUid, topic);
 
-    expect(key).toBe('mqtt-datasource-uid/123456789abcdef0/42');
+    expect(key).toBe('mqtt-datasource-uid/123456789abcdef0/stacks-42');
   });
 
-  it('should generate different keys for different organizations', async () => {
+  it('should generate different keys for different namespaces', async () => {
     const mockHashBuffer = new ArrayBuffer(20);
     const mockHashArray = new Uint8Array(mockHashBuffer);
     mockHashArray.set([0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0]);
@@ -104,17 +102,17 @@ describe('getLiveStreamKey', () => {
     const datasourceUid = 'mqtt-datasource-uid';
     const topic = 'sensor/temperature';
 
-    // Test with orgId 1
-    (config.bootData.user as any).orgId = 1;
+    // Test with namespace stacks-123
+    (config.bootData.settings as any).namespace = 'stacks-123';
     const key1 = await getLiveStreamKey(datasourceUid, topic);
 
-    // Test with orgId 2
-    (config.bootData.user as any).orgId = 2;
+    // Test with namespace stacks-42
+    (config.bootData.settings as any).namespace = 'stacks-42';
     const key2 = await getLiveStreamKey(datasourceUid, topic);
 
     expect(key1).not.toBe(key2);
-    expect(key1).toBe('mqtt-datasource-uid/123456789abcdef0/1');
-    expect(key2).toBe('mqtt-datasource-uid/123456789abcdef0/2');
+    expect(key1).toBe('mqtt-datasource-uid/123456789abcdef0/stacks-123');
+    expect(key2).toBe('mqtt-datasource-uid/123456789abcdef0/stacks-42');
   });
 
   it('should handle undefined topic', async () => {
@@ -128,13 +126,10 @@ describe('getLiveStreamKey', () => {
 
     const key = await getLiveStreamKey(datasourceUid, topic);
 
-    expect(key).toBe('mqtt-datasource-uid/123456789abcdef0/1');
-    
+    expect(key).toBe('mqtt-datasource-uid/123456789abcdef0/stacks-123');
+
     // Verify that JSON.stringify was called with undefined topic
-    expect(mockDigest).toHaveBeenCalledWith(
-      'SHA-1',
-      new TextEncoder().encode(JSON.stringify({ topic: undefined }))
-    );
+    expect(mockDigest).toHaveBeenCalledWith('SHA-1', new TextEncoder().encode(JSON.stringify({ topic: undefined })));
   });
 
   it('should handle missing datasource uid', async () => {
@@ -148,7 +143,7 @@ describe('getLiveStreamKey', () => {
 
     const key = await getLiveStreamKey(datasourceUid, topic);
 
-    expect(key).toBe('undefined/123456789abcdef0/1');
+    expect(key).toBe('undefined/123456789abcdef0/stacks-123');
   });
 
   it('should use SHA-1 hashing correctly', async () => {
@@ -178,7 +173,7 @@ describe('getLiveStreamKey', () => {
     const key = await getLiveStreamKey(datasourceUid, topic);
 
     // Should only include first 8 bytes (01, 02, 03, 04, 05, 06, 07, 08)
-    expect(key).toBe('mqtt-datasource-uid/0102030405060708/1');
+    expect(key).toBe('mqtt-datasource-uid/0102030405060708/stacks-123');
   });
 
   it('should pad hex values with leading zeros', async () => {
@@ -194,10 +189,10 @@ describe('getLiveStreamKey', () => {
     const key = await getLiveStreamKey(datasourceUid, topic);
 
     // Should pad single digit hex values with leading zeros
-    expect(key).toBe('mqtt-datasource-uid/0102030a0b0c0d0e/1');
+    expect(key).toBe('mqtt-datasource-uid/0102030a0b0c0d0e/stacks-123');
   });
 
-  describe('removing definition of crypto.subtle', ()  => {
+  describe('removing definition of crypto.subtle', () => {
     beforeAll(() => {
       Object.defineProperty(global, 'crypto', {
         value: {
@@ -218,7 +213,7 @@ describe('getLiveStreamKey', () => {
       const key = await getLiveStreamKey(datasourceUid, topic);
 
       // 8885fa14e6baa4b6 are the first 8 bytes of the hash of '{"topic":"sensor/temperature"}'
-      expect(key).toBe('mqtt-datasource-uid/8885fa14e6baa4b6/1');
+      expect(key).toBe('mqtt-datasource-uid/8885fa14e6baa4b6/stacks-123');
     });
   });
 });
