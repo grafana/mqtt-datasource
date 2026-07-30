@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 
 openssl genrsa 2048 > testdata/ca-key.pem
 

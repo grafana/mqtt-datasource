@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.3.5
+
+⚙️ Updated frontend & backend dependencies
+
+## 1.3.4
+
+Failed to publish. Use 1.3.5 instead.
+
+## 1.3.3
+
+⚙️ Updated frontend & backend dependencies
+
+## 1.3.2
+
+⚙️ Updated frontend dependencies
+
 ## 1.3.1
 
 ⚙️ Updated backend/go version to 1.26.0 from 1.25.6 which resolves CVE-2025-68121

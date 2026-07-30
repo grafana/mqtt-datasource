@@ -1,8 +1,13 @@
 # Contributing to the MQTT Datasource Plugin
 
+## Signed commits are required
+
+> [!IMPORTANT]
+> All commits must be [signed](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits) (GPG, SSH, or S/MIME) to be merged into this repository. Pull requests with unsigned commits will need to be re-committed with signatures before they can be merged.
+
 ## Prerequisites
 
-- Node.js (v20 or later)
+- Node.js (v24 or later)
 - Go (latest stable version)
 - Yarn (v1.22 or later — Yarn classic and Berry are both supported)
 - Mage — install after Go is set up:
@@ -58,11 +63,13 @@ Start the test broker with TLS:
 yarn broker:tls
 ```
 
-This will start a test MQTT broker on `tls://localhost:8883` with TLS enabled. The TLS certificates are located in the `testdata` folder. If they need to be regenerated, run:
+This will start a test MQTT broker on `tls://localhost:8883` with TLS enabled. Before running this for the first time, generate the TLS certificates by running:
 
 ```
 yarn broker:pki
 ```
+
+This will create the required certificates in the `testdata` folder.
 
 When testing with the test broker you can subscribe to test data streams using the following topic patterns:
 
