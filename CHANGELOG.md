@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.5
+
+⚙️ Updated frontend & backend dependencies
+
+## 1.3.4
+
+Failed to publish. Use 1.3.5 instead.
+
 ## 1.3.3
 
 ⚙️ Updated frontend & backend dependencies

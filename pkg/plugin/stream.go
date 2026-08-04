@@ -2,7 +2,6 @@ package plugin
 
 import (
 	"context"
-	"strconv"
 	"strings"
 	"time"
 
@@ -72,8 +71,8 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 }
 
 func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	// Extract orgId from the streaming key embedded in the channel path
-	// Channel: {interval}/{topic}/{datasourceUid}/{hash}/{orgId}/{refId}
+	// Extract namespace from the streaming key embedded in the channel path
+	// Channel: {interval}/{topic}/{datasourceUid}/{hash}/{namespace}/{refId}
 	pathParts := strings.Split(req.Path, "/")
 	if len(pathParts) < 6 {
 		return &backend.SubscribeStreamResponse{
@@ -81,18 +80,12 @@ func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.Subs
 		}, backend.DownstreamErrorf("invalid channel path format")
 	}
 
-	orgId, err := strconv.ParseInt(pathParts[len(pathParts)-2], 10, 64)
-	if err != nil {
-		return &backend.SubscribeStreamResponse{
-			Status: backend.SubscribeStreamStatusNotFound,
-		}, backend.DownstreamErrorf("unable to determine orgId from request")
-	}
-
+	namespace := pathParts[len(pathParts)-2]
 	pluginCfg := backend.PluginConfigFromContext(ctx)
-	if orgId != pluginCfg.OrgID {
+	if namespace != pluginCfg.Namespace {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusPermissionDenied,
-		}, backend.DownstreamErrorf("invalid orgId supplied in request")
+		}, backend.DownstreamErrorf("invalid namespace supplied in request")
 	}
 
 	return &backend.SubscribeStreamResponse{
