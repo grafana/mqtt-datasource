@@ -49,7 +49,6 @@ func NewMQTTInstance(ctx context.Context, s backend.DataSourceInstanceSettings) 
 
 type MQTTDatasource struct {
 	Client            mqtt.Client
-	RefIds            RefIDs
 	channelPrefix     string
 	enablePublishing  bool
 	publishingTimeout time.Duration

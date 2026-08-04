@@ -45,8 +45,6 @@ func (ds *MQTTDatasource) query(query backend.DataQuery) backend.DataResponse {
 			Channel: path.Join(ds.channelPrefix, t.Key()),
 		})
 
-		ds.RefIds.Set(t.Key(), query.RefID)
-
 		response.Frames = append(response.Frames, frame)
 		return response
 	}
