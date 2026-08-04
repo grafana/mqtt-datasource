@@ -2,11 +2,15 @@
 
 ## 1.4.0
 
-### Minor Changes
-
 🚀 Experimental publishing support via different query
 
-### Patch Changes
+## 1.3.5
+
+⚙️ Updated frontend & backend dependencies
+
+## 1.3.4
+
+Failed to publish. Use 1.3.5 instead.
 
 ## 1.3.3
 
