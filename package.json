@@ -92,5 +92,9 @@
     "node": ">=24",
     "yarn": ">=4.15.0"
   },
+  "resolutions": {
+    "react-router@npm:6.30.3": "6.30.4",
+    "@remix-run/router": "1.23.3"
+  },
   "packageManager": "yarn@4.17.1"
 }
