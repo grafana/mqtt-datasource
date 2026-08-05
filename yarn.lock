@@ -11335,7 +11335,7 @@ __metadata:
   dependencies:
     "@remix-run/router": "npm:1.23.2"
     history: "npm:^5.3.0"
-    react-router: "npm:6.30.4"
+    react-router: "npm:6.30.3"
   peerDependencies:
     react: ">=16.8"
     react-dom: ">=16.8"
