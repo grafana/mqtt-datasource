@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.6
+
+🐛 Security: bump out-of-SLO react-router to 6.30.4
+
+⚙️ Updated frontend & backend dependencies
+
+📝 Docs: Update contributing document
+
 ## 1.3.5
 
 ⚙️ Updated frontend & backend dependencies
