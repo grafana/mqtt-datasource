@@ -16,7 +16,7 @@ jest.mock('@grafana/runtime', () => ({
 const mockDigest = jest.fn();
 
 function setupDigestMock() {
-  Object.defineProperty(global, 'crypto', {
+  Object.defineProperty(globalThis, 'crypto', {
     value: {
       subtle: {
         digest: mockDigest,
@@ -194,7 +194,7 @@ describe('getLiveStreamKey', () => {
 
   describe('removing definition of crypto.subtle', () => {
     beforeAll(() => {
-      Object.defineProperty(global, 'crypto', {
+      Object.defineProperty(globalThis, 'crypto', {
         value: {
           subtle: undefined,
         },
