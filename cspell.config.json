@@ -45,6 +45,7 @@
     "mosquitto",
     "jsonencode",
     "magefile",
-    "healthcheck"
+    "healthcheck",
+    "combobox"
   ]
 }
