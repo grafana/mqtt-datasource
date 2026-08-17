@@ -77,10 +77,11 @@ test.describe('Config editor', () => {
     }) => {
       await createDataSourceConfigPage({ type: PLUGIN_TYPE });
 
-      const caCertToggle = fieldToggle(page, 'With CA Cert');
-      await caCertToggle.scrollIntoViewIfNeeded();
-      // Label intercepts pointer events on some Grafana versions.
-      await caCertToggle.click({ force: true });
+      const caCertLabel = page.getByText('With CA Cert', { exact: true });
+      await caCertLabel.scrollIntoViewIfNeeded();
+      // Grafana Switch hides the <input>. Playwright click (even force) fails
+      // on 11.0/11.2 because that input is outside the viewport.
+      await fieldToggle(page, 'With CA Cert').evaluate((el: HTMLInputElement) => el.click());
       await expect(page.getByRole('heading', { name: 'TLS Configuration', exact: true })).toBeVisible();
       await expect(page.getByText('TLS CA Certificate')).toBeVisible();
     });
