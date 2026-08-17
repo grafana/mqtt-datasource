@@ -39,3 +39,4 @@ e2e-results/
 install-state.gz
 
 *.pem
+.DS_Store
