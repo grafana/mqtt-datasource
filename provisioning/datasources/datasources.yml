@@ -1,0 +1,14 @@
+apiVersion: 1
+
+datasources:
+  - name: MQTT
+    type: grafana-mqtt-datasource
+    uid: mqtt
+    access: proxy
+    isDefault: true
+    editable: true
+    jsonData:
+      uri: tcp://mqtt-broker:1883
+      tlsAuth: false
+      tlsAuthWithCACert: false
+      tlsSkipVerify: false
