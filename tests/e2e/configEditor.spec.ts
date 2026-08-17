@@ -23,6 +23,17 @@ async function configurePDC(page: Page, networkName: string) {
   await page.getByText(networkName).click();
 }
 
+// Grafana Field keeps the label and Switch in one container. The number of
+// page-level role=switch controls varies by Grafana version (Default toggle,
+// PDC, Switch vs checkbox), so never index getByRole('switch').
+function fieldToggle(page: Page, label: string) {
+  return page
+    .getByText(label, { exact: true })
+    .locator('xpath=ancestor::*[.//*[@role="switch"] or .//input[@type="checkbox"]][1]')
+    .locator('[role="switch"], input[type="checkbox"]')
+    .first();
+}
+
 test.describe('Config editor', () => {
   test.describe('rendering', () => {
     test(
@@ -66,10 +77,10 @@ test.describe('Config editor', () => {
     }) => {
       await createDataSourceConfigPage({ type: PLUGIN_TYPE });
 
-      // The TLS switches have no accessible name; the wrapping label intercepts
-      // pointer events, so force the click. Index 3 is "With CA Cert"
-      // (Default, Use TLS Client Auth, Skip TLS Verification, With CA Cert).
-      await page.getByRole('switch').nth(3).click({ force: true });
+      const caCertToggle = fieldToggle(page, 'With CA Cert');
+      await caCertToggle.scrollIntoViewIfNeeded();
+      // Label intercepts pointer events on some Grafana versions.
+      await caCertToggle.click({ force: true });
       await expect(page.getByRole('heading', { name: 'TLS Configuration', exact: true })).toBeVisible();
       await expect(page.getByText('TLS CA Certificate')).toBeVisible();
     });
