@@ -96,5 +96,5 @@
     "react-router@npm:6.30.3": "6.30.4",
     "@remix-run/router": "1.23.3"
   },
-  "packageManager": "npm@11.18.0"
+  "packageManager": "npm@12.0.2"
 }
