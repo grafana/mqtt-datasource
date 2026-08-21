@@ -63,6 +63,13 @@ func (m *mockClient) Unsubscribe(reqPath string, logger log.Logger) error {
 	return nil
 }
 
+func (m *mockClient) Resubscribe(reqPath string, logger log.Logger) (*Topic, error) {
+	// Unsubscribe first
+	m.topics.Delete(reqPath)
+	// Then re-subscribe (calls Subscribe which handles the full logic)
+	return m.Subscribe(reqPath, logger)
+}
+
 func (m *mockClient) Dispose() {
 	// Clear all topics and subscriptions
 	m.topics = TopicMap{}
@@ -307,5 +314,47 @@ func TestClient_MessageHandling_WithStreamingKeys(t *testing.T) {
 	}
 	if len(updatedTopic2.Messages) != 0 {
 		t.Errorf("Expected 0 messages in topic2, got %d", len(updatedTopic2.Messages))
+	}
+}
+
+func TestClient_Resubscribe(t *testing.T) {
+	c := newMockClient()
+
+	reqPath := "1s/dGVzdC90b3BpYw/user1/hash123/org456"
+
+	// Subscribe first time
+	topic1, err := c.Subscribe(reqPath, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
+	if topic1 == nil {
+		t.Fatal("Expected topic to be created")
+	}
+
+	// Add a message to verify old topic state
+	c.HandleMessage("dGVzdC90b3BpYw/user1/hash123/org456", []byte("old message"))
+	updatedTopic1, _ := c.GetTopic(reqPath)
+	if len(updatedTopic1.Messages) != 1 {
+		t.Errorf("Expected 1 message before resubscribe, got %d", len(updatedTopic1.Messages))
+	}
+
+	// Resubscribe should create a new topic (unsubscribes first, then subscribes)
+	topic2, err := c.Resubscribe(reqPath, log.DefaultLogger)
+	if err != nil {
+		t.Fatalf("Resubscribe failed: %v", err)
+	}
+	if topic2 == nil {
+		t.Fatal("Expected topic to be returned after resubscribe")
+	}
+
+	// Verify the new topic is different (messages should be cleared)
+	updatedTopic2, _ := c.GetTopic(reqPath)
+	if len(updatedTopic2.Messages) != 0 {
+		t.Errorf("Expected 0 messages after resubscribe (new subscription), got %d", len(updatedTopic2.Messages))
+	}
+
+	// Verify the new topic is a different instance
+	if topic1 == topic2 {
+		t.Error("Expected different topic instance after resubscribe")
 	}
 }

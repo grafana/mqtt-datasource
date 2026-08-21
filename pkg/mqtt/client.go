@@ -21,6 +21,9 @@ type Client interface {
 	Subscribe(string, log.Logger) (*Topic, error)
 	Unsubscribe(string, log.Logger) error
 	Dispose()
+	// Resubscribe unsubscribes and re-subscribes to force retained message delivery.
+	// Used on dashboard refresh to ensure retained messages are resent.
+	Resubscribe(string, log.Logger) (*Topic, error)
 }
 
 type Options struct {
@@ -195,6 +198,19 @@ func (c *client) Unsubscribe(reqPath string, logger log.Logger) error {
 	}
 
 	return nil
+}
+
+// Resubscribe unsubscribes from the topic and re-subscribes to force
+// the MQTT broker to resend retained messages. This is needed when a
+// dashboard is refreshed and the old stream's messages were cleared.
+func (c *client) Resubscribe(reqPath string, logger log.Logger) (*Topic, error) {
+	// Unsubscribe first to clear the old subscription
+	if err := c.Unsubscribe(reqPath, logger); err != nil {
+		return nil, err
+	}
+	// Now subscribe again - this will create a new subscription
+	// and the broker will resend retained messages
+	return c.Subscribe(reqPath, logger)
 }
 
 func (c *client) Dispose() {

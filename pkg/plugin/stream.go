@@ -29,9 +29,19 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 		return backend.DownstreamErrorf("invalid interval: %s", chunks[0])
 	}
 
-	_, err = ds.Client.Subscribe(topicKey, logger)
-	if err != nil {
-		return err
+	// Check if this topic already has an active subscription.
+	// If so, force a resubscription to ensure retained messages are resent.
+	// This fixes issue #107/#36 where dashboard refresh loses retained messages.
+	if _, ok := ds.Client.GetTopic(topicKey); ok && ds.Client.IsConnected() {
+		logger.Debug("Resubscribing to force retained message delivery", "topicKey", topicKey)
+		if _, err := ds.Client.Resubscribe(topicKey, logger); err != nil {
+			return err
+		}
+	} else {
+		_, err = ds.Client.Subscribe(topicKey, logger)
+		if err != nil {
+			return err
+		}
 	}
 	defer func() {
 		if unsubErr := ds.Client.Unsubscribe(topicKey, logger); unsubErr != nil {
