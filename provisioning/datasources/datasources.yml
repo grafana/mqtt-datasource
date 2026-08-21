@@ -1,14 +1,14 @@
 apiVersion: 1
 
 datasources:
-  - name: 'mqtt'
-    type: 'mqtt-datasource'
+  - name: MQTT
+    type: mqtt-datasource
+    uid: mqtt
     access: proxy
-    isDefault: false
-    orgId: 1
-    version: 1
+    isDefault: true
     editable: true
     jsonData:
-      path: '/resources'
-    secureJsonData:
-      apiKey: 'api-key'
+      uri: tcp://mqtt-broker:1883
+      tlsAuth: false
+      tlsAuthWithCACert: false
+      tlsSkipVerify: false
