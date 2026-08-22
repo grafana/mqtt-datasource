@@ -23,7 +23,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@babel/core": "7.29.7",
-    "@changesets/cli": "2.31.0",
+    "@changesets/cli": "3.0.1",
     "@grafana/e2e-selectors": "13.1.1",
     "@grafana/eslint-config": "9.0.0",
     "@grafana/plugin-e2e": "3.9.2",
