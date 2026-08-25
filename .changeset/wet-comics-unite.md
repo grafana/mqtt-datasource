@@ -2,4 +2,4 @@
 'grafana-mqtt-datasource': patch
 ---
 
-Update contributing document
+Switch package manager from yarn to npm
