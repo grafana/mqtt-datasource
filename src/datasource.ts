@@ -1,9 +1,4 @@
-import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  ScopedVars,
-} from '@grafana/data';
+import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { MqttDataSourceOptions, MqttQuery } from './types';
 import { Observable, from, switchMap } from 'rxjs';

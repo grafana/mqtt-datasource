@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0
+
+🚀 Experimental publishing support via different query
+
 ## 1.3.6
 
 🐛 Security: bump out-of-SLO react-router to 6.30.4

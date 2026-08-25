@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"path"
@@ -18,20 +20,23 @@ import (
 type Client interface {
 	GetTopic(string) (*Topic, bool)
 	IsConnected() bool
+	Publish(string, map[string]any, string, time.Duration) (json.RawMessage, error)
 	Subscribe(string, log.Logger) (*Topic, error)
 	Unsubscribe(string, log.Logger) error
 	Dispose()
 }
 
 type Options struct {
-	URI           string `json:"uri"`
-	Username      string `json:"username"`
-	Password      string `json:"password"`
-	ClientID      string `json:"clientID"`
-	TLSCACert     string `json:"tlsCACert"`
-	TLSClientCert string `json:"tlsClientCert"`
-	TLSClientKey  string `json:"tlsClientKey"`
-	TLSSkipVerify bool   `json:"tlsSkipVerify"`
+	URI               string `json:"uri"`
+	Username          string `json:"username"`
+	Password          string `json:"password"`
+	ClientID          string `json:"clientID"`
+	TLSCACert         string `json:"tlsCACert"`
+	TLSClientCert     string `json:"tlsClientCert"`
+	TLSClientKey      string `json:"tlsClientKey"`
+	TLSSkipVerify     bool   `json:"tlsSkipVerify"`
+	EnablePublishing  bool   `json:"enablePublishing"`
+	PublishingTimeout string `json:"publishingTimeout"`
 }
 
 type client struct {
@@ -165,8 +170,10 @@ func (c *client) Subscribe(reqPath string, logger log.Logger) (*Topic, error) {
 	}); token.Wait() && token.Error() != nil {
 		return nil, backend.DownstreamErrorf("error subscribing to MQTT topic %s: %s", topic, token.Error())
 	}
-	// Store the topic using reqPath as the key (which includes streaming key)
-	c.topics.Map.Store(reqPath, t)
+
+	// Store the topic
+	c.topics.Store(t)
+
 	return t, nil
 }
 
@@ -195,6 +202,46 @@ func (c *client) Unsubscribe(reqPath string, logger log.Logger) error {
 	}
 
 	return nil
+}
+
+func (c *client) Publish(topic string, payload map[string]any, responseTopic string, timeout time.Duration) (json.RawMessage, error) {
+	var response json.RawMessage
+	var err error
+	done := make(chan struct{}, 1)
+
+	if responseTopic != "" {
+		token := c.client.Subscribe(responseTopic, 2, func(c paho.Client, m paho.Message) {
+			response = m.Payload()
+			done <- struct{}{}
+		})
+
+		if err := paho.WaitTokenTimeout(token, timeout); err != nil {
+			return response, err
+		}
+
+		defer c.client.Unsubscribe(responseTopic)
+	} else {
+		done <- struct{}{}
+	}
+
+	data, err := json.Marshal(&payload)
+	if err != nil {
+		return response, err
+	}
+
+	token := c.client.Publish(topic, 2, false, data)
+
+	if err := paho.WaitTokenTimeout(token, timeout); err != nil {
+		return response, err
+	}
+
+	select {
+	case <-done:
+	case <-time.After(timeout):
+		return response, errors.New("response timeout")
+	}
+
+	return response, nil
 }
 
 func (c *client) Dispose() {
