@@ -154,8 +154,62 @@ describe('getLiveStreamKey', () => {
 
     expect(mockDigest).toHaveBeenCalledWith(
       'SHA-1',
-      new TextEncoder().encode(JSON.stringify({ topic: 'sensor/temperature' }))
+      new TextEncoder().encode(JSON.stringify({ topic: 'sensor/temperature', refId: undefined }))
     );
+  });
+
+  it('should include refId in the key when provided', async () => {
+    const mockHashBuffer = new ArrayBuffer(20);
+    const mockHashArray = new Uint8Array(mockHashBuffer);
+    mockHashArray.set([0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0]);
+    mockDigest.mockResolvedValue(mockHashBuffer);
+
+    const key = await getLiveStreamKey('mqtt-datasource-uid', 'sensor/temperature', 'A');
+
+    expect(key).toBe('mqtt-datasource-uid/123456789abcdef0/stacks-123/A');
+  });
+
+  it('should generate different keys for different refIds on the same topic', async () => {
+    const mockHashBuffer1 = new ArrayBuffer(20);
+    const mockHashArray1 = new Uint8Array(mockHashBuffer1);
+    mockHashArray1.set([0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88]);
+
+    const mockHashBuffer2 = new ArrayBuffer(20);
+    const mockHashArray2 = new Uint8Array(mockHashBuffer2);
+    mockHashArray2.set([0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00]);
+
+    mockDigest.mockResolvedValueOnce(mockHashBuffer1).mockResolvedValueOnce(mockHashBuffer2);
+
+    const keyA = await getLiveStreamKey('uid', 'sensor/temperature', 'A');
+    const keyB = await getLiveStreamKey('uid', 'sensor/temperature', 'B');
+
+    expect(keyA).not.toBe(keyB);
+    expect(keyA).toBe('uid/1122334455667788/stacks-123/A');
+    expect(keyB).toBe('uid/99aabbccddeeff00/stacks-123/B');
+  });
+
+  it('should include refId in the hash input', async () => {
+    const datasourceUid = 'mqtt-datasource-uid';
+    const topic = 'sensor/temperature';
+    const refId = 'A';
+
+    await getLiveStreamKey(datasourceUid, topic, refId);
+
+    expect(mockDigest).toHaveBeenCalledWith(
+      'SHA-1',
+      new TextEncoder().encode(JSON.stringify({ topic: 'sensor/temperature', refId: 'A' }))
+    );
+  });
+
+  it('should omit refId suffix from key when refId is undefined', async () => {
+    const mockHashBuffer = new ArrayBuffer(20);
+    const mockHashArray = new Uint8Array(mockHashBuffer);
+    mockHashArray.set([0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0]);
+    mockDigest.mockResolvedValue(mockHashBuffer);
+
+    const key = await getLiveStreamKey('mqtt-datasource-uid', 'sensor/temperature');
+
+    expect(key).toBe('mqtt-datasource-uid/123456789abcdef0/stacks-123');
   });
 
   it('should only use first 8 bytes of hash', async () => {

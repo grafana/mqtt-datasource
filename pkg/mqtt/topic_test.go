@@ -8,12 +8,12 @@ import (
 func TestTopic_Key(t *testing.T) {
 	tests := []struct {
 		name        string
-		topic       Topic
+		topic       *Topic
 		expectedKey string
 	}{
 		{
 			name: "topic without streaming key",
-			topic: Topic{
+			topic: &Topic{
 				Path:     "sensor/temperature",
 				Interval: 1 * time.Second,
 			},
@@ -21,7 +21,7 @@ func TestTopic_Key(t *testing.T) {
 		},
 		{
 			name: "topic with streaming key",
-			topic: Topic{
+			topic: &Topic{
 				Path:         "sensor/temperature",
 				Interval:     1 * time.Second,
 				StreamingKey: "ds123/abc456def/789",
@@ -30,7 +30,7 @@ func TestTopic_Key(t *testing.T) {
 		},
 		{
 			name: "topic with complex path and streaming key",
-			topic: Topic{
+			topic: &Topic{
 				Path:         "building/floor1/room2/sensor/temp",
 				Interval:     5 * time.Second,
 				StreamingKey: "datasource-uid/hash123/456",
@@ -39,7 +39,7 @@ func TestTopic_Key(t *testing.T) {
 		},
 		{
 			name: "topic with empty streaming key",
-			topic: Topic{
+			topic: &Topic{
 				Path:         "simple/topic",
 				Interval:     10 * time.Second,
 				StreamingKey: "",
@@ -60,19 +60,17 @@ func TestTopic_Key(t *testing.T) {
 
 func TestTopic_KeyUniqueness(t *testing.T) {
 	// Test that different streaming keys produce different keys
-	baseTopic := Topic{
-		Path:     "sensor/temp",
-		Interval: 1 * time.Second,
+	newTopic := func(streamingKey string) *Topic {
+		return &Topic{
+			Path:         "sensor/temp",
+			Interval:     1 * time.Second,
+			StreamingKey: streamingKey,
+		}
 	}
 
-	topic1 := baseTopic
-	topic1.StreamingKey = "user1/hash123/org456"
-
-	topic2 := baseTopic
-	topic2.StreamingKey = "user2/hash456/org456"
-
-	topic3 := baseTopic
-	topic3.StreamingKey = "user1/hash123/org789"
+	topic1 := newTopic("user1/hash123/org456")
+	topic2 := newTopic("user2/hash456/org456")
+	topic3 := newTopic("user1/hash123/org789")
 
 	key1 := topic1.Key()
 	key2 := topic2.Key()
@@ -176,5 +174,67 @@ func TestTopicMap_AddMessage_WithStreamingKey(t *testing.T) {
 	}
 	if len(updatedTopic2.Messages) != 1 {
 		t.Errorf("Expected 1 message in topic2, got %d", len(updatedTopic2.Messages))
+	}
+}
+
+func TestTopic_KeepLastMessage_NonWildcard(t *testing.T) {
+	now := time.Now()
+	topic := &Topic{
+		Messages: []Message{
+			{Timestamp: now, Value: []byte("a"), Topic: "sensor/temp"},
+			{Timestamp: now.Add(time.Second), Value: []byte("b"), Topic: "sensor/temp"},
+			{Timestamp: now.Add(2 * time.Second), Value: []byte("c"), Topic: "sensor/temp"},
+		},
+	}
+
+	topic.KeepLastMessage()
+
+	if len(topic.Messages) != 1 {
+		t.Fatalf("Expected 1 message, got %d", len(topic.Messages))
+	}
+	if string(topic.Messages[0].Value) != "c" {
+		t.Errorf("Expected last message value 'c', got '%s'", topic.Messages[0].Value)
+	}
+}
+
+func TestTopic_KeepLastMessage_Wildcard(t *testing.T) {
+	now := time.Now()
+	topic := &Topic{
+		Messages: []Message{
+			{Timestamp: now, Value: []byte("temp1"), Topic: "sensor/temp"},
+			{Timestamp: now.Add(time.Second), Value: []byte("hum1"), Topic: "sensor/humidity"},
+			{Timestamp: now.Add(2 * time.Second), Value: []byte("temp2"), Topic: "sensor/temp"},
+			{Timestamp: now.Add(3 * time.Second), Value: []byte("hum2"), Topic: "sensor/humidity"},
+			{Timestamp: now.Add(4 * time.Second), Value: []byte("pres1"), Topic: "sensor/pressure"},
+		},
+	}
+
+	topic.KeepLastMessage()
+
+	if len(topic.Messages) != 3 {
+		t.Fatalf("Expected 3 messages (one per unique topic), got %d", len(topic.Messages))
+	}
+
+	byTopic := make(map[string]string)
+	for _, m := range topic.Messages {
+		byTopic[m.Topic] = string(m.Value)
+	}
+
+	if byTopic["sensor/temp"] != "temp2" {
+		t.Errorf("Expected last temp message 'temp2', got '%s'", byTopic["sensor/temp"])
+	}
+	if byTopic["sensor/humidity"] != "hum2" {
+		t.Errorf("Expected last humidity message 'hum2', got '%s'", byTopic["sensor/humidity"])
+	}
+	if byTopic["sensor/pressure"] != "pres1" {
+		t.Errorf("Expected last pressure message 'pres1', got '%s'", byTopic["sensor/pressure"])
+	}
+}
+
+func TestTopic_KeepLastMessage_Empty(t *testing.T) {
+	topic := &Topic{Messages: []Message{}}
+	topic.KeepLastMessage() // should not panic
+	if len(topic.Messages) != 0 {
+		t.Errorf("Expected 0 messages, got %d", len(topic.Messages))
 	}
 }
