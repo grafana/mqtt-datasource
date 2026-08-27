@@ -24,7 +24,9 @@ type Topic struct {
 	StreamingKey string `json:"streamingKey,omitempty"`
 	Interval     time.Duration
 	Messages     []Message
-	framer       *framer
+
+	mu     sync.Mutex
+	framer *framer
 }
 
 // Key returns the key for the topic.
@@ -39,13 +41,28 @@ func (t *Topic) ToDataFrame(logger log.Logger) (*data.Frame, error) {
 	if t.framer == nil {
 		t.framer = newFramer()
 	}
-	return t.framer.toFrame(t.Messages, logger)
+
+	t.mu.Lock()
+	messages := slices.Clone(t.Messages)
+	t.mu.Unlock()
+
+	return t.framer.toFrame(messages, logger)
+}
+
+// AppendMessage appends a message to the topic.
+func (t *Topic) AppendMessage(message Message) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.Messages = append(t.Messages, message)
 }
 
 // KeepLastMessage keeps only the last message per unique MQTT topic in the
 // topic's message list. For wildcard subscriptions this preserves the latest
 // message from every distinct sub-topic.
 func (t *Topic) KeepLastMessage() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	if len(t.Messages) == 0 {
 		return
 	}
@@ -94,11 +111,10 @@ func (tm *TopicMap) AddMessage(path string, message Message) {
 	tm.Range(func(key, t any) bool {
 		topic, ok := t.(*Topic)
 		if !ok {
-			return false
+			return true // this shouldn't happen, but continue iterating
 		}
 		if topic.Path == path {
-			topic.Messages = append(topic.Messages, message)
-			tm.Store(topic)
+			topic.AppendMessage(message)
 		}
 		return true
 	})

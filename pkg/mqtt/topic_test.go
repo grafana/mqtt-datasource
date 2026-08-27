@@ -8,12 +8,12 @@ import (
 func TestTopic_Key(t *testing.T) {
 	tests := []struct {
 		name        string
-		topic       Topic
+		topic       *Topic
 		expectedKey string
 	}{
 		{
 			name: "topic without streaming key",
-			topic: Topic{
+			topic: &Topic{
 				Path:     "sensor/temperature",
 				Interval: 1 * time.Second,
 			},
@@ -21,7 +21,7 @@ func TestTopic_Key(t *testing.T) {
 		},
 		{
 			name: "topic with streaming key",
-			topic: Topic{
+			topic: &Topic{
 				Path:         "sensor/temperature",
 				Interval:     1 * time.Second,
 				StreamingKey: "ds123/abc456def/789",
@@ -30,7 +30,7 @@ func TestTopic_Key(t *testing.T) {
 		},
 		{
 			name: "topic with complex path and streaming key",
-			topic: Topic{
+			topic: &Topic{
 				Path:         "building/floor1/room2/sensor/temp",
 				Interval:     5 * time.Second,
 				StreamingKey: "datasource-uid/hash123/456",
@@ -39,7 +39,7 @@ func TestTopic_Key(t *testing.T) {
 		},
 		{
 			name: "topic with empty streaming key",
-			topic: Topic{
+			topic: &Topic{
 				Path:         "simple/topic",
 				Interval:     10 * time.Second,
 				StreamingKey: "",
@@ -60,19 +60,17 @@ func TestTopic_Key(t *testing.T) {
 
 func TestTopic_KeyUniqueness(t *testing.T) {
 	// Test that different streaming keys produce different keys
-	baseTopic := Topic{
-		Path:     "sensor/temp",
-		Interval: 1 * time.Second,
+	newTopic := func(streamingKey string) *Topic {
+		return &Topic{
+			Path:         "sensor/temp",
+			Interval:     1 * time.Second,
+			StreamingKey: streamingKey,
+		}
 	}
 
-	topic1 := baseTopic
-	topic1.StreamingKey = "user1/hash123/org456"
-
-	topic2 := baseTopic
-	topic2.StreamingKey = "user2/hash456/org456"
-
-	topic3 := baseTopic
-	topic3.StreamingKey = "user1/hash123/org789"
+	topic1 := newTopic("user1/hash123/org456")
+	topic2 := newTopic("user2/hash456/org456")
+	topic3 := newTopic("user1/hash123/org789")
 
 	key1 := topic1.Key()
 	key2 := topic2.Key()
