@@ -178,10 +178,6 @@ test.describe('Config editor', () => {
       page,
     }) => {
       test.skip(
-        !process.env.CI && !process.env.DS_INSTANCE_HOST,
-        'MQTT broker must be reachable from inside Grafana; set DS_INSTANCE_HOST or run in CI'
-      );
-      test.skip(
         isCloudRun,
         'Ad-hoc save & test connectivity is not reliable on the shared Cloud instance; covered by the provisioned health check.'
       );
