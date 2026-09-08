@@ -3,3 +3,44 @@ services:
     extends:
       file: .config/docker-compose-base.yaml
       service: grafana
+    environment:
+      # Grafana 13 enables splashScreen by default; the overlay blocks Playwright interactions.
+      GF_FEATURE_TOGGLES_splashScreen: 'false'
+    depends_on:
+      mqtt-broker:
+        condition: service_healthy
+      mqtt-publisher:
+        condition: service_started
+
+  mqtt-broker:
+    image: eclipse-mosquitto:2
+    ports:
+      - '1883:1883'
+    volumes:
+      - ./tests/e2e/fixtures/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'mosquitto_pub -h 127.0.0.1 -t e2e/healthcheck -m ok || exit 1']
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+
+  # Long-running publisher. MQTT is a live stream with no stored retention, so
+  # fixture data cannot be loaded once and queried later — it must be published
+  # continuously. The topic matches the Cloud data-generator default.
+  mqtt-publisher:
+    image: eclipse-mosquitto:2
+    depends_on:
+      mqtt-broker:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        i=0
+        while true; do
+          mosquitto_pub -h mqtt-broker -t grafana/world_data -m "{\"value\": $$i, \"temperature\": 21.5}"
+          i=$$((i + 1))
+          sleep 1
+        done
