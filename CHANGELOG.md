@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.7
+
+### Patch Changes
+
+⚙️ Updated frontend & backend dependencies
+⚙️ Switch package manager from yarn to npm
+
 ## 1.3.6
 
 🐛 Security: bump out-of-SLO react-router to 6.30.4
