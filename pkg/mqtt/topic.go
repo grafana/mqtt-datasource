@@ -3,6 +3,7 @@ package mqtt
 import (
 	"encoding/base64"
 	"path"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -14,6 +15,7 @@ import (
 type Message struct {
 	Timestamp time.Time
 	Value     []byte
+	Topic     string // actual MQTT topic (differs from subscription path for wildcards)
 }
 
 // Topic represents a MQTT topic.
@@ -22,7 +24,9 @@ type Topic struct {
 	StreamingKey string `json:"streamingKey,omitempty"`
 	Interval     time.Duration
 	Messages     []Message
-	framer       *framer
+
+	mu     sync.Mutex
+	framer *framer
 }
 
 // Key returns the key for the topic.
@@ -37,7 +41,53 @@ func (t *Topic) ToDataFrame(logger log.Logger) (*data.Frame, error) {
 	if t.framer == nil {
 		t.framer = newFramer()
 	}
-	return t.framer.toFrame(t.Messages, logger)
+
+	t.mu.Lock()
+	messages := slices.Clone(t.Messages)
+	t.mu.Unlock()
+
+	return t.framer.toFrame(messages, logger)
+}
+
+// AppendMessage appends a message to the topic.
+func (t *Topic) AppendMessage(message Message) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.Messages = append(t.Messages, message)
+}
+
+// KeepLastMessage keeps only the last message per unique MQTT topic in the
+// topic's message list. For wildcard subscriptions this preserves the latest
+// message from every distinct sub-topic.
+func (t *Topic) KeepLastMessage() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	if len(t.Messages) == 0 {
+		return
+	}
+
+	// Walk backwards and keep the first message seen for each unique MQTT topic.
+	lastMsgSeen := make(map[string]struct{}, len(t.Messages))
+	lastMsg := make([]Message, 0, len(t.Messages))
+	for _, message := range slices.Backward(t.Messages) {
+		if _, seen := lastMsgSeen[message.Topic]; !seen {
+			lastMsgSeen[message.Topic] = struct{}{}
+			lastMsg = append(lastMsg, message)
+		}
+	}
+
+	slices.SortFunc(lastMsg, func(a, b Message) int {
+		if a.Timestamp.Before(b.Timestamp) {
+			return -1
+		}
+		if a.Timestamp.After(b.Timestamp) {
+			return 1
+		}
+		return 0
+	})
+
+	t.Messages = lastMsg
 }
 
 // TopicMap is a thread-safe map of topics
@@ -61,11 +111,10 @@ func (tm *TopicMap) AddMessage(path string, message Message) {
 	tm.Range(func(key, t any) bool {
 		topic, ok := t.(*Topic)
 		if !ok {
-			return false
+			return true // this shouldn't happen, but continue iterating
 		}
 		if topic.Path == path {
-			topic.Messages = append(topic.Messages, message)
-			tm.Store(topic)
+			topic.AppendMessage(message)
 		}
 		return true
 	})

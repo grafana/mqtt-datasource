@@ -19,14 +19,14 @@ func TestMQTTDatasource_SubscribeStream_Security(t *testing.T) {
 	}{
 		{
 			name:           "valid namespace matches",
-			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/stacks-456",
+			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/stacks-456/A",
 			userNamespace:  "stacks-456",
 			expectedStatus: backend.SubscribeStreamStatusOK,
 			expectError:    false,
 		},
 		{
 			name:           "invalid namespace mismatch",
-			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/stacks-456",
+			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/stacks-456/A",
 			userNamespace:  "stacks-789",
 			expectedStatus: backend.SubscribeStreamStatusPermissionDenied,
 			expectError:    true,
@@ -40,7 +40,7 @@ func TestMQTTDatasource_SubscribeStream_Security(t *testing.T) {
 		},
 		{
 			name:           "different user same namespace - should work",
-			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/different-hash/stacks-456",
+			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/different-hash/stacks-456/A",
 			userNamespace:  "stacks-456",
 			expectedStatus: backend.SubscribeStreamStatusOK,
 			expectError:    false,
@@ -88,17 +88,17 @@ func TestMQTTDatasource_SubscribeStream_PathParsing(t *testing.T) {
 	}{
 		{
 			name:              "simple streaming key",
-			requestPath:       "ds/uid123/1s/sensor/temp/datasource-uid/hash123/stacks-456",
+			requestPath:       "ds/uid123/1s/sensor/temp/datasource-uid/hash123/stacks-456/A",
 			expectedNamespace: "stacks-456",
 		},
 		{
 			name:              "complex topic path",
-			requestPath:       "ds/uid123/5s/building/floor1/room2/sensor/temp/datasource-uid/hash456/stacks-789",
+			requestPath:       "ds/uid123/5s/building/floor1/room2/sensor/temp/datasource-uid/hash456/stacks-789/B",
 			expectedNamespace: "stacks-789",
 		},
 		{
 			name:              "streaming key with multiple segments",
-			requestPath:       "ds/uid123/10s/simple/topic/my-datasource/complex-hash-value/stacks-123",
+			requestPath:       "ds/uid123/10s/simple/topic/my-datasource/complex-hash-value/stacks-123/C",
 			expectedNamespace: "stacks-123",
 		},
 	}
@@ -153,7 +153,7 @@ func TestMQTTDatasource_SubscribeStream_EdgeCases(t *testing.T) {
 		},
 		{
 			name:           "very long path",
-			requestPath:    "ds/uid123/1s/very/long/topic/path/with/many/segments/datasource-uid/hash123/stacks-456",
+			requestPath:    "ds/uid123/1s/very/long/topic/path/with/many/segments/datasource-uid/hash123/stacks-456/A",
 			userNamespace:  "stacks-456",
 			expectedStatus: backend.SubscribeStreamStatusOK,
 		},
@@ -189,7 +189,7 @@ func TestMQTTDatasource_SubscribeStream_MultiTenantSecurity(t *testing.T) {
 	// User from namespace stacks-456 tries to access their own data - should work
 	pCtx456 := backend.PluginContext{Namespace: "stacks-456"}
 	ctx456 := backend.WithPluginContext(context.Background(), pCtx456)
-	req456 := &backend.SubscribeStreamRequest{Path: basePath + "stacks-456"}
+	req456 := &backend.SubscribeStreamRequest{Path: basePath + "stacks-456/A"}
 
 	resp456, err456 := ds.SubscribeStream(ctx456, req456)
 	if err456 != nil {
@@ -200,7 +200,7 @@ func TestMQTTDatasource_SubscribeStream_MultiTenantSecurity(t *testing.T) {
 	}
 
 	// User from namespace stacks-456 tries to access namespace stacks-789's data - should fail
-	req789Data := &backend.SubscribeStreamRequest{Path: basePath + "stacks-789"}
+	req789Data := &backend.SubscribeStreamRequest{Path: basePath + "stacks-789/A"}
 
 	resp789, err789 := ds.SubscribeStream(ctx456, req789Data)
 	if err789 == nil {
