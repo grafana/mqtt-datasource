@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.8
+
+### Patch Changes
+
+🐛 Fix security vulnerabilities (CVE-2026-40181, CVE-2026-85730)
+
 ## 1.3.7
 
 ### Patch Changes
