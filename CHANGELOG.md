@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.3.8
+
+### Patch Changes
+
+🐛 Fix security vulnerabilities (CVE-2026-40181, CVE-2026-85730)
+
+## 1.3.7
+
+### Patch Changes
+
+⚙️ Updated frontend & backend dependencies
+⚙️ Switch package manager from yarn to npm
+
 ## 1.3.6
 
 🐛 Security: bump out-of-SLO react-router to 6.30.4
