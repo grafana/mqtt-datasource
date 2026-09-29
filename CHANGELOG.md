@@ -1,14 +1,14 @@
 # Changelog
 
-## 1.3.8
+## 1.4.0
 
-### Patch Changes
+🚀 Experimental publishing support via different query
+
+## 1.3.8
 
 🐛 Fix security vulnerabilities (CVE-2026-40181, CVE-2026-85730)
 
 ## 1.3.7
-
-### Patch Changes
 
 ⚙️ Updated frontend & backend dependencies
 ⚙️ Switch package manager from yarn to npm
