@@ -8,8 +8,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
-	"github.com/grafana/mqtt-datasource/pkg/mqtt"
 )
 
 func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
@@ -20,9 +18,13 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 	logger := log.DefaultLogger.FromContext(ctx)
 
 	chunks := strings.Split(topicKey, "/")
-	if len(chunks) < 2 {
+
+	// Expected format: {interval}/{encodedTopic}/{dsUid}/{hash}/{orgId}/{refId}
+	if len(chunks) < 6 {
 		return backend.DownstreamErrorf("invalid topic key: %s", topicKey)
 	}
+
+	refID := chunks[len(chunks)-1]
 
 	interval, err := time.ParseDuration(chunks[0])
 	if err != nil {
@@ -58,7 +60,9 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 				logger.Error("failed to convert topic to data frame", "path", req.Path, "error", backend.DownstreamError(err))
 				break
 			}
-			topic.Messages = []mqtt.Message{}
+			frame.Name = refID
+			frame = frame.SetRefID(refID)
+			topic.KeepLastMessage()
 			if err := sender.SendFrame(frame, data.IncludeAll); err != nil {
 				logger.Error("failed to send data frame", "path", req.Path, "error", backend.DownstreamError(err))
 			}
@@ -68,21 +72,21 @@ func (ds *MQTTDatasource) RunStream(ctx context.Context, req *backend.RunStreamR
 }
 
 func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	// Extract orgId from the streaming key embedded in the channel path
-	// Channel: {interval}/{topic}/{datasourceUid}/{hash}/{orgId}
+	// Extract namespace from the streaming key embedded in the channel path
+	// Channel: {interval}/{topic}/{datasourceUid}/{hash}/{namespace}/{refId}
 	pathParts := strings.Split(req.Path, "/")
-	if len(pathParts) < 5 {
+	if len(pathParts) < 6 {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
 		}, backend.DownstreamErrorf("invalid channel path format")
 	}
 
-	namespace := pathParts[len(pathParts)-1]
+	namespace := pathParts[len(pathParts)-2]
 	pluginCfg := backend.PluginConfigFromContext(ctx)
 	if namespace != pluginCfg.Namespace {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusPermissionDenied,
-		}, backend.DownstreamErrorf("invalid orgId supplied in request")
+		}, backend.DownstreamErrorf("invalid namespace supplied in request")
 	}
 
 	return &backend.SubscribeStreamResponse{

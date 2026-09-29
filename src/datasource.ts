@@ -1,9 +1,4 @@
-import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  ScopedVars,
-} from '@grafana/data';
+import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { MqttDataSourceOptions, MqttQuery } from './types';
 import { Observable, from, switchMap } from 'rxjs';
@@ -20,7 +15,7 @@ export class DataSource extends DataSourceWithBackend<MqttQuery, MqttDataSourceO
       Promise.all(
         request.targets.map(async (target) => ({
           ...target,
-          streamingKey: await getLiveStreamKey(this.uid, target.topic),
+          streamingKey: await getLiveStreamKey(this.uid, target.topic, target.refId),
         }))
       )
     ).pipe(
