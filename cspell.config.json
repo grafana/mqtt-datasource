@@ -44,6 +44,8 @@
     "mqtts",
     "mosquitto",
     "jsonencode",
-    "magefile"
+    "magefile",
+    "healthcheck",
+    "combobox"
   ]
 }
