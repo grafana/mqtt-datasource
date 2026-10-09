@@ -1,6 +1,6 @@
 {
   "name": "grafana-mqtt-datasource",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "description": "MQTT Datasource Plugin",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
@@ -95,6 +95,12 @@
   "resolutions": {
     "react-router@npm:6.30.3": "6.30.4",
     "@remix-run/router": "1.23.3"
+  },
+  "overrides": {
+    "brace-expansion@1": "1.1.21",
+    "brace-expansion@2": "2.1.7",
+    "brace-expansion@5": "5.0.12",
+    "basic-ftp": "6.2.2"
   },
   "packageManager": "npm@11.18.0"
 }
