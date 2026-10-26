@@ -13,7 +13,7 @@ services:
         condition: service_started
 
   mqtt-broker:
-    image: eclipse-mosquitto:2
+    image: eclipse-mosquitto:2@sha256:860aeb5d63ce509508f6dcfb2bc8a1c1dd2bc60555b562b45ce90e52d8dabb0f
     ports:
       - '1883:1883'
     volumes:
@@ -29,7 +29,7 @@ services:
   # fixture data cannot be loaded once and queried later — it must be published
   # continuously. The topic matches the Cloud data-generator default.
   mqtt-publisher:
-    image: eclipse-mosquitto:2
+    image: eclipse-mosquitto:2@sha256:860aeb5d63ce509508f6dcfb2bc8a1c1dd2bc60555b562b45ce90e52d8dabb0f
     depends_on:
       mqtt-broker:
         condition: service_healthy
