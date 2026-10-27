@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-⚙️ Update backend dependencies, including github.com/andybalholm/brotli to v1.2.7
+⚙️ Update backend dependencies
 ⚙️ Update Node.js to v24.22.1
 
 ## 1.3.10
