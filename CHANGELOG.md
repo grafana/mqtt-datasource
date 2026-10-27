@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.11
+
+### Patch Changes
+
+⚙️ Update backend dependencies
+⚙️ Update Node.js to v24.22.1
+
 ## 1.3.10
 
 ### Patch Changes
