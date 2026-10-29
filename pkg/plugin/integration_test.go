@@ -263,6 +263,10 @@ func (m *mockMQTTClient) Unsubscribe(reqPath string, logger log.Logger) error {
 	return nil
 }
 
+func (m *mockMQTTClient) Publish(_ string, _ byte, _ bool, _ []byte) error {
+	return nil
+}
+
 func (m *mockMQTTClient) Dispose() {
 	m.topics = make(map[string]*mqtt.Topic)
 	m.subscriptions = make(map[string]bool)
