@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"path"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -36,7 +37,7 @@ func (ds *MQTTDatasource) query(query backend.DataQuery) backend.DataResponse {
 		return backend.ErrorResponseWithErrorSource(backend.DownstreamErrorf("topic path is required"))
 	}
 
-	t.Interval = query.Interval
+	t.Interval = streamInterval(query.Interval)
 
 	frame := data.NewFrame("")
 	frame.SetMeta(&data.FrameMeta{
@@ -45,4 +46,16 @@ func (ds *MQTTDatasource) query(query backend.DataQuery) backend.DataResponse {
 
 	response.Frames = append(response.Frames, frame)
 	return response
+}
+
+// maxStreamInterval caps the push interval of a stream. Grafana derives the
+// query interval from the dashboard range (range / maxDataPoints), so without a
+// cap zooming out would create a new channel that pushes only every few minutes.
+const maxStreamInterval = time.Second
+
+func streamInterval(interval time.Duration) time.Duration {
+	if interval <= 0 || interval > maxStreamInterval {
+		return maxStreamInterval
+	}
+	return interval
 }
