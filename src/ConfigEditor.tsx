@@ -10,6 +10,7 @@ import {
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { Field, Input, SecretInput, SecureSocksProxySettings, Switch } from '@grafana/ui';
 import { Divider } from './Divider';
+import { PublishConfig } from './PublishConfig';
 import { TLSSecretsConfig } from './TLSConfig';
 import { MqttDataSourceOptions, MqttSecureJsonData } from './types';
 import { config } from '@grafana/runtime';
@@ -120,6 +121,10 @@ export const ConfigEditor = (props: DataSourcePluginOptionsEditorProps<MqttDataS
           </ConfigSection>
         </>
       ) : null}
+
+      <Divider />
+
+      <PublishConfig {...props} />
 
       {config.secureSocksDSProxyEnabled && (
         <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />

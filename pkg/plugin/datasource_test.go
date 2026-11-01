@@ -42,7 +42,16 @@ func TestCheckHealthHandler(t *testing.T) {
 }
 
 type fakeMQTTClient struct {
-	connected bool
+	connected  bool
+	published  []fakePublish
+	publishErr error
+}
+
+type fakePublish struct {
+	topic   string
+	qos     byte
+	retain  bool
+	payload string
 }
 
 func (c *fakeMQTTClient) GetTopic(_ string) (*mqtt.Topic, bool) {
@@ -55,4 +64,8 @@ func (c *fakeMQTTClient) IsConnected() bool {
 
 func (c *fakeMQTTClient) Subscribe(_ string, _ log.Logger) (*mqtt.Topic, error) { return nil, nil }
 func (c *fakeMQTTClient) Unsubscribe(_ string, _ log.Logger) error              { return nil }
-func (c *fakeMQTTClient) Dispose()                                              {}
+func (c *fakeMQTTClient) Publish(topic string, qos byte, retain bool, payload []byte) error {
+	c.published = append(c.published, fakePublish{topic: topic, qos: qos, retain: retain, payload: string(payload)})
+	return c.publishErr
+}
+func (c *fakeMQTTClient) Dispose() {}

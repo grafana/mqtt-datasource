@@ -18,6 +18,7 @@ var (
 	_ backend.QueryDataHandler      = (*MQTTDatasource)(nil)
 	_ backend.CheckHealthHandler    = (*MQTTDatasource)(nil)
 	_ backend.StreamHandler         = (*MQTTDatasource)(nil)
+	_ backend.CallResourceHandler   = (*MQTTDatasource)(nil)
 	_ instancemgmt.InstanceDisposer = (*MQTTDatasource)(nil)
 )
 
@@ -33,12 +34,16 @@ func NewMQTTInstance(ctx context.Context, s backend.DataSourceInstanceSettings) 
 		return nil, err
 	}
 
-	return NewMQTTDatasource(client, s.UID), nil
+	ds := NewMQTTDatasource(client, s.UID)
+	ds.Publisher = newPublisherFromInstanceSettings(s)
+	return ds, nil
 }
 
 type MQTTDatasource struct {
 	Client        mqtt.Client
 	channelPrefix string
+	// Publisher is nil when publishing is not configured.
+	Publisher *Publisher
 }
 
 // NewMQTTDatasource creates a new datasource instance.

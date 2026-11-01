@@ -20,8 +20,11 @@ type Client interface {
 	IsConnected() bool
 	Subscribe(string, log.Logger) (*Topic, error)
 	Unsubscribe(string, log.Logger) error
+	Publish(topic string, qos byte, retain bool, payload []byte) error
 	Dispose()
 }
+
+const publishTimeout = 10 * time.Second
 
 type Options struct {
 	URI           string `json:"uri"`
@@ -194,6 +197,17 @@ func (c *client) Unsubscribe(reqPath string, logger log.Logger) error {
 		return backend.DownstreamErrorf("error unsubscribing from MQTT topic %s: %s", t.Path, token.Error())
 	}
 
+	return nil
+}
+
+func (c *client) Publish(topic string, qos byte, retain bool, payload []byte) error {
+	token := c.client.Publish(topic, qos, retain, payload)
+	if !token.WaitTimeout(publishTimeout) {
+		return fmt.Errorf("timeout publishing to MQTT topic %s", topic)
+	}
+	if err := token.Error(); err != nil {
+		return fmt.Errorf("error publishing to MQTT topic %s: %w", topic, err)
+	}
 	return nil
 }
 

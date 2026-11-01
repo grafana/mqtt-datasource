@@ -147,6 +147,61 @@ resource "grafana_data_source" "mqtt" {
 
 Replace the `<PLACEHOLDER>` values with your broker-specific settings. Omit any `secure_json_data_encoded` fields that don't apply to your configuration.
 
+## Publishing
+
+The data source can publish MQTT messages on behalf of signed-in users, for example from a form panel. Publishing is disabled unless `jsonData.publish.enabled` is `true`.
+
+Permission is granted through Grafana teams: only members of one of the configured teams may publish. Grafana doesn't pass team membership to plugins, so the plugin reads it through the Grafana HTTP API with a service account token. The service account needs permission to read teams (`teams:read`, in Grafana OSS the organization role **Admin**). Membership is matched by login and cached for `teamCacheSeconds`. If the team lookup fails, publishing is refused.
+
+```yaml
+jsonData:
+  publish:
+    enabled: true
+    allowedTeams: ['Writers']
+    allowedTopics: ['plant/control/+/+'] # MQTT topic filters
+    deniedTopics: ['plant/control/raw/#'] # take precedence over allowedTopics
+    qos: 1 # default 1
+    retain: false # default false
+    payloadFormat: envelope # raw (default) or envelope
+    origin: grafana # origin in the envelope, default grafana
+    maxPayloadBytes: 256 # limit of the published payload, default 256
+    teamCacheSeconds: 60 # default 60
+    rateLimitPerMinute: 10 # per user, default 10, negative disables
+    grafanaUrl: http://localhost:3000 # used for the team lookup, default http://localhost:3000
+secureJsonData:
+  publishServiceAccountToken: <SERVICE_ACCOUNT_TOKEN>
+```
+
+Use an internal `grafanaUrl`. A public URL behind a reverse proxy works, but adds a needless round trip.
+
+### Publish API
+
+```http
+POST /api/datasources/uid/<UID>/resources/publish
+Content-Type: application/json
+
+{ "topic": "plant/control/boiler/target", "value": "65" }
+```
+
+- `topic` must be a concrete topic without wildcards that matches `allowedTopics` and no `deniedTopics`.
+- `value` is a string or number without control characters.
+- With `payloadFormat: raw`, the value is published as is. With `envelope`, the plugin publishes `{"value":"65","origin":"grafana","user":"<login>"}`. `origin` comes from the configuration and `user` from the signed-in Grafana user, so callers can't set them.
+- QoS and retain come from the configuration only.
+
+| Status | Meaning |
+| ------ | ------- |
+| `200` | `{"published": true}` |
+| `400` | Invalid request, topic, or value, or payload too large |
+| `403` | Publishing disabled, no signed-in user, user not in an allowed team, or topic not allowed |
+| `429` | Rate limit exceeded |
+| `503` | Configuration invalid, team lookup failed, or broker unavailable |
+
+Error responses contain `{"published": false, "error": "<reason>"}`. Every attempt is logged with user, topic, value, and result.
+
+`GET /api/datasources/uid/<UID>/resources/publish/permissions` returns `{"canPublish": true}` or `{"canPublish": false, "reason": "..."}`, so panels can disable inputs for users without permission.
+
+**Save & test** also checks the publishing configuration and the team lookup.
+
 ## Next steps
 
 - [MQTT query editor](https://grafana.com/docs/plugins/grafana-mqtt-datasource/latest/query-editor/) -- Subscribe to topics and understand how data is formatted.
