@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -77,9 +78,9 @@ func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.Subs
 		}, backend.DownstreamErrorf("invalid channel path format")
 	}
 
-	namespace := pathParts[len(pathParts)-1]
+	streamNamespace := pathParts[len(pathParts)-1]
 	pluginCfg := backend.PluginConfigFromContext(ctx)
-	if namespace != pluginCfg.Namespace {
+	if !streamingNamespaceAllowed(streamNamespace, pluginCfg) {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusPermissionDenied,
 		}, backend.DownstreamErrorf("invalid orgId supplied in request")
@@ -88,6 +89,25 @@ func (ds *MQTTDatasource) SubscribeStream(ctx context.Context, req *backend.Subs
 	return &backend.SubscribeStreamResponse{
 		Status: backend.SubscribeStreamStatusOK,
 	}, nil
+}
+
+// streamingNamespaceAllowed checks that the namespace embedded in the streaming key
+// matches the tenant for this request. Grafana 12.3.x sends bootData.settings.namespace
+// ("default" on OSS) in the key before PluginContext.Namespace is populated on stream RPCs.
+func streamingNamespaceAllowed(streamNamespace string, pCtx backend.PluginContext) bool {
+	if streamNamespace == pCtx.Namespace && pCtx.Namespace != "" {
+		return true
+	}
+
+	if orgID, err := strconv.ParseInt(streamNamespace, 10, 64); err == nil {
+		return orgID == pCtx.OrgID // nolint:staticcheck
+	}
+
+	if streamNamespace == "default" && (pCtx.Namespace == "" || pCtx.Namespace == "default") {
+		return pCtx.OrgID > 0 // nolint:staticcheck
+	}
+
+	return false
 }
 
 func (ds *MQTTDatasource) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
