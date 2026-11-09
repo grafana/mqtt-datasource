@@ -2,11 +2,16 @@ package mqtt
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -18,7 +23,7 @@ func getDefaultPortForScheme(scheme string) string {
 	switch scheme {
 	case "tcp", "mqtt":
 		return "1883"
-	case "ssl", "tls", "tcps", "mqtts":
+	case "ssl", "tls", "tcps", "mqtts", "mqtt+ssl":
 		return "8883"
 	case "ws":
 		return "80"
@@ -88,6 +93,11 @@ func TestBuildAddress(t *testing.T) {
 			expectedAddress: "broker.example.com:8883",
 		},
 		{
+			name:            "mqtt+ssl without port",
+			uri:             "mqtt+ssl://broker.example.com",
+			expectedAddress: "broker.example.com:8883",
+		},
+		{
 			name:            "ws without port (should default to 80)",
 			uri:             "ws://broker.example.com",
 			expectedAddress: "broker.example.com:80",
@@ -152,6 +162,7 @@ func TestGetDefaultPortForScheme(t *testing.T) {
 		{"tls", "8883"},
 		{"tcps", "8883"},
 		{"mqtts", "8883"},
+		{"mqtt+ssl", "8883"},
 		{"ws", "80"},
 		{"wss", "443"},
 		{"unknown", "1883"}, // fallback
@@ -440,4 +451,256 @@ func TestNewProxyConnectionFunc_WithPort(t *testing.T) {
 	require.Len(t, mockDialer.callLog, 1)
 	assert.Equal(t, "tcp", mockDialer.callLog[0].network)
 	assert.Equal(t, "broker.example.com:9999", mockDialer.callLog[0].address)
+}
+
+// TestNewProxyConnectionFunc_HandshakeHonoursConnectTimeout tests that a broker which
+// accepts the connection and then never answers the TLS handshake fails at ConnectTimeout.
+func TestNewProxyConnectionFunc_HandshakeHonoursConnectTimeout(t *testing.T) {
+	// net.Pipe is an in-memory connection. Nothing reads the server side, so the
+	// handshake can never finish, like a broker that goes silent.
+	client, server := net.Pipe()
+	t.Cleanup(func() {
+		_ = client.Close()
+		_ = server.Close()
+	})
+
+	// Safety net: without a deadline the handshake would block forever, so
+	// unblock it after 5 seconds and let the elapsed time check below fail.
+	safetyNet := time.AfterFunc(5*time.Second, func() { _ = server.Close() })
+	defer safetyNet.Stop()
+
+	mockDialer := &mockProxyDialer{
+		dialFunc: func(network, address string) (net.Conn, error) {
+			return client, nil
+		},
+	}
+	connFunc := newProxyConnectionFunc(mockDialer, backend.NewLoggerWith("logger", "test"))
+
+	uri, err := url.Parse("tls://broker.example.com:8883")
+	require.NoError(t, err)
+
+	start := time.Now()
+	_, err = connFunc(uri, paho.ClientOptions{ConnectTimeout: 200 * time.Millisecond})
+
+	require.Error(t, err)
+	assert.Less(t, time.Since(start), 2*time.Second, "the handshake should give up at ConnectTimeout")
+}
+
+// newTLSBroker starts a local TLS server and returns a dialer that always connects to it,
+// plus a TLS config that trusts its certificate. The server is Go's built-in HTTPS test
+// server. We only need something that completes a TLS handshake, not a real broker.
+// Its certificate is valid for example.com, 127.0.0.1 and ::1.
+func newTLSBroker(t *testing.T) (*mockProxyDialer, *tls.Config) {
+	t.Helper()
+
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	t.Cleanup(server.Close)
+
+	trusted := x509.NewCertPool()
+	trusted.AddCert(server.Certificate())
+
+	dialer := &mockProxyDialer{
+		dialFunc: func(network, address string) (net.Conn, error) {
+			return net.Dial("tcp", server.Listener.Addr().String())
+		},
+	}
+	return dialer, &tls.Config{RootCAs: trusted}
+}
+
+// TestNewProxyConnectionFunc_TLSSchemesStartTLS tests that every TLS scheme gets a TLS connection.
+func TestNewProxyConnectionFunc_TLSSchemesStartTLS(t *testing.T) {
+	for _, scheme := range []string{"tls", "ssl", "mqtts", "mqtt+ssl", "tcps"} {
+		t.Run(scheme, func(t *testing.T) {
+			dialer, trustedConfig := newTLSBroker(t)
+			connFunc := newProxyConnectionFunc(dialer, backend.NewLoggerWith("logger", "test"))
+
+			uri, err := url.Parse(scheme + "://example.com:8883")
+			require.NoError(t, err)
+
+			conn, err := connFunc(uri, paho.ClientOptions{TLSConfig: trustedConfig})
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = conn.Close() })
+
+			_, isTLS := conn.(*tls.Conn)
+			assert.True(t, isTLS, "expected a TLS connection for %s", scheme)
+		})
+	}
+}
+
+// TestNewProxyConnectionFunc_PlainSchemesAreNotWrapped tests that tcp and mqtt URIs are returned as is, without TLS.
+func TestNewProxyConnectionFunc_PlainSchemesAreNotWrapped(t *testing.T) {
+	for _, scheme := range []string{"tcp", "mqtt"} {
+		t.Run(scheme, func(t *testing.T) {
+			client, server := net.Pipe()
+			t.Cleanup(func() {
+				_ = client.Close()
+				_ = server.Close()
+			})
+
+			mockDialer := &mockProxyDialer{
+				dialFunc: func(network, address string) (net.Conn, error) {
+					return client, nil
+				},
+			}
+			connFunc := newProxyConnectionFunc(mockDialer, backend.NewLoggerWith("logger", "test"))
+
+			uri, err := url.Parse(scheme + "://broker.example.com:1883")
+			require.NoError(t, err)
+
+			conn, err := connFunc(uri, paho.ClientOptions{})
+			require.NoError(t, err)
+
+			assert.Same(t, client, conn, "a plain connection should be returned as is")
+		})
+	}
+}
+
+// TestNewProxyConnectionFunc_VerifiesCertificate tests that the datasource's TLS settings are used.
+func TestNewProxyConnectionFunc_VerifiesCertificate(t *testing.T) {
+	t.Run("trusted certificate connects", func(t *testing.T) {
+		dialer, trustedConfig := newTLSBroker(t)
+		connFunc := newProxyConnectionFunc(dialer, backend.NewLoggerWith("logger", "test"))
+
+		uri, err := url.Parse("tls://example.com:8883")
+		require.NoError(t, err)
+
+		conn, err := connFunc(uri, paho.ClientOptions{TLSConfig: trustedConfig})
+		require.NoError(t, err)
+		_ = conn.Close()
+	})
+
+	t.Run("untrusted certificate is rejected", func(t *testing.T) {
+		dialer, _ := newTLSBroker(t)
+		connFunc := newProxyConnectionFunc(dialer, backend.NewLoggerWith("logger", "test"))
+
+		uri, err := url.Parse("tls://example.com:8883")
+		require.NoError(t, err)
+
+		// No TLSConfig, so the broker's certificate is not in the trusted list.
+		_, err = connFunc(uri, paho.ClientOptions{})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "certificate")
+	})
+
+	t.Run("certificate for another hostname is rejected", func(t *testing.T) {
+		dialer, trustedConfig := newTLSBroker(t)
+		connFunc := newProxyConnectionFunc(dialer, backend.NewLoggerWith("logger", "test"))
+
+		// The certificate is only valid for example.com, 127.0.0.1 and ::1.
+		uri, err := url.Parse("tls://other.test:8883")
+		require.NoError(t, err)
+
+		_, err = connFunc(uri, paho.ClientOptions{TLSConfig: trustedConfig})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "certificate")
+	})
+
+	t.Run("skip verify connects without a trusted certificate", func(t *testing.T) {
+		dialer, _ := newTLSBroker(t)
+		connFunc := newProxyConnectionFunc(dialer, backend.NewLoggerWith("logger", "test"))
+
+		uri, err := url.Parse("tls://other.test:8883")
+		require.NoError(t, err)
+
+		conn, err := connFunc(uri, paho.ClientOptions{TLSConfig: &tls.Config{InsecureSkipVerify: true}})
+		require.NoError(t, err)
+		_ = conn.Close()
+	})
+}
+
+// TestNewProxyConnectionFunc_ServerNameDefaultsToHost tests that the broker hostname from the URI
+// is used to check the certificate when the TLS config has no server name.
+func TestNewProxyConnectionFunc_ServerNameDefaultsToHost(t *testing.T) {
+	dialer, trustedConfig := newTLSBroker(t)
+	connFunc := newProxyConnectionFunc(dialer, backend.NewLoggerWith("logger", "test"))
+
+	uri, err := url.Parse("tls://example.com:8883")
+	require.NoError(t, err)
+
+	conn, err := connFunc(uri, paho.ClientOptions{TLSConfig: trustedConfig})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+
+	tlsConn, ok := conn.(*tls.Conn)
+	require.True(t, ok)
+	assert.Equal(t, "example.com", tlsConn.ConnectionState().ServerName)
+	assert.Empty(t, trustedConfig.ServerName, "the caller's TLS config should not be changed")
+}
+
+// TestNewProxyConnectionFunc_DeadlineClearedAfterHandshake tests that the handshake deadline does not
+// stay on the connection, which would break reads and writes once ConnectTimeout has passed.
+func TestNewProxyConnectionFunc_DeadlineClearedAfterHandshake(t *testing.T) {
+	dialer, trustedConfig := newTLSBroker(t)
+	connFunc := newProxyConnectionFunc(dialer, backend.NewLoggerWith("logger", "test"))
+
+	uri, err := url.Parse("tls://example.com:8883")
+	require.NoError(t, err)
+
+	conn, err := connFunc(uri, paho.ClientOptions{TLSConfig: trustedConfig, ConnectTimeout: 200 * time.Millisecond})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+
+	// Wait past ConnectTimeout, then write. This fails with an i/o timeout if the deadline is still set.
+	time.Sleep(400 * time.Millisecond)
+	_, err = conn.Write([]byte("x"))
+	assert.NoError(t, err)
+}
+
+// TestNewProxyConnectionFunc_SendsTLSClientHello is the end to end test that a TLS URI starts with a
+// TLS handshake over the proxy. It connects a real paho client and checks the first byte the broker
+// receives. 0x16 is a TLS ClientHello. 0x10 is an MQTT CONNECT, which means TLS was skipped.
+func TestNewProxyConnectionFunc_SendsTLSClientHello(t *testing.T) {
+	// net.Pipe is an in-memory connection. The broker side is read directly by the test.
+	clientEnd, brokerEnd := net.Pipe()
+	t.Cleanup(func() {
+		_ = clientEnd.Close()
+		_ = brokerEnd.Close()
+	})
+
+	mockDialer := &mockProxyDialer{
+		dialFunc: func(network, address string) (net.Conn, error) {
+			return clientEnd, nil
+		},
+	}
+
+	opts := paho.NewClientOptions()
+	opts.AddBroker("tls://broker.example.com:8883")
+	opts.SetClientID("test")
+	opts.SetConnectTimeout(2 * time.Second)
+	opts.SetAutoReconnect(false)
+	opts.SetCustomOpenConnectionFn(newProxyConnectionFunc(mockDialer, backend.NewLoggerWith("logger", "test")))
+
+	client := paho.NewClient(opts)
+	client.Connect() // runs in the background and never completes, the test only reads what it sends
+	defer client.Disconnect(250)
+
+	require.NoError(t, brokerEnd.SetReadDeadline(time.Now().Add(3*time.Second)))
+	firstByte := make([]byte, 1)
+	_, err := brokerEnd.Read(firstByte)
+	require.NoError(t, err)
+
+	assert.Equal(t, byte(0x16), firstByte[0], "0x10 would mean the MQTT CONNECT was sent without TLS")
+}
+
+// TestNewProxyConnectionFunc_RejectsWebSocketSchemes tests that ws and wss are refused
+// before the proxy is dialled, so no MQTT packet can reach the wire.
+func TestNewProxyConnectionFunc_RejectsWebSocketSchemes(t *testing.T) {
+	for _, scheme := range []string{"ws", "wss"} {
+		t.Run(scheme, func(t *testing.T) {
+			logger := backend.NewLoggerWith("logger", "test")
+			mockDialer := &mockProxyDialer{}
+
+			connFunc := newProxyConnectionFunc(mockDialer, logger)
+
+			uri, err := url.Parse(scheme + "://broker.example.com:8883")
+			require.NoError(t, err)
+
+			conn, err := connFunc(uri, paho.ClientOptions{})
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), scheme)
+			assert.Nil(t, conn)
+			assert.Empty(t, mockDialer.callLog, "the proxy must not be dialled for websocket schemes")
+		})
+	}
 }
