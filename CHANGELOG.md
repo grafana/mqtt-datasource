@@ -1,5 +1,44 @@
 # Changelog
 
+## 1.3.12
+
+### Patch Changes
+
+⚙️ Chore: dependency updates
+🐛 Fix a connection freeze between Grafana and the plugin under heavy query load by updating google.golang.org/grpc to v1.85.0 ([grpc/grpc-go#9330](https://github.com/grpc/grpc-go/issues/9330))
+
+## 1.3.11
+
+### Patch Changes
+
+⚙️ Update backend dependencies
+⚙️ Update Node.js to v24.22.1
+
+## 1.3.10
+
+### Patch Changes
+
+⚙️ Update Go to 1.27.3
+
+## 1.3.9
+
+### Patch Changes
+
+🐛 Fix security vulnerabilities (CVE-2026-102278, CVE-2026-102276, CVE-2026-102990)
+
+## 1.3.8
+
+### Patch Changes
+
+🐛 Fix security vulnerabilities (CVE-2026-40181, CVE-2026-85730)
+
+## 1.3.7
+
+### Patch Changes
+
+⚙️ Updated frontend & backend dependencies
+⚙️ Switch package manager from yarn to npm
+
 ## 1.3.6
 
 🐛 Security: bump out-of-SLO react-router to 6.30.4
