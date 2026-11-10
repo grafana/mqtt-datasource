@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.13
+
+### Patch Changes
+
+🐛 Security: bump moment, ip-address and fast-uri to patched versions, and pin `@grafana/*` packages to 13.1.9
+🐛 Apply TLS to broker connections made through the secure socks proxy
+
 ## 1.3.12
 
 ### Patch Changes
