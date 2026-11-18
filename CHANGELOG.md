@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.14
+
+### Patch Changes
+
+🐛 Security: update frontend dependencies to fix CVEs
+
 ## 1.3.13
 
 ### Patch Changes
