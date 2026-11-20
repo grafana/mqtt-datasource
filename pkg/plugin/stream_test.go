@@ -45,6 +45,27 @@ func TestMQTTDatasource_SubscribeStream_Security(t *testing.T) {
 			expectedStatus: backend.SubscribeStreamStatusOK,
 			expectError:    false,
 		},
+		{
+			name:           "OSS default namespace with empty plugin context namespace",
+			requestPath:    "ds/uid123/5s/brokers/+/stats/datasource-uid/hash123/default",
+			userNamespace:  "",
+			expectedStatus: backend.SubscribeStreamStatusOK,
+			expectError:    false,
+		},
+		{
+			name:           "legacy numeric org id in streaming key",
+			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/1",
+			userNamespace:  "",
+			expectedStatus: backend.SubscribeStreamStatusOK,
+			expectError:    false,
+		},
+		{
+			name:           "default namespace mismatch with cloud tenant",
+			requestPath:    "ds/uid123/1s/sensor/temp/datasource-uid/hash123/default",
+			userNamespace:  "stacks-456",
+			expectedStatus: backend.SubscribeStreamStatusPermissionDenied,
+			expectError:    true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -52,6 +73,7 @@ func TestMQTTDatasource_SubscribeStream_Security(t *testing.T) {
 			// Create context with plugin config
 			pCtx := backend.PluginContext{
 				Namespace: tt.userNamespace,
+				OrgID:     1, // nolint:staticcheck
 			}
 			ctx := backend.WithPluginContext(context.Background(), pCtx)
 
