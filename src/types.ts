@@ -14,6 +14,22 @@ export interface MqttDataSourceOptions extends DataSourceJsonData {
   tlsAuth: boolean;
   tlsAuthWithCACert: boolean;
   tlsSkipVerify: boolean;
+  publish?: MqttPublishOptions;
+}
+
+export interface MqttPublishOptions {
+  enabled?: boolean;
+  allowedTeams?: string[];
+  allowedTopics?: string[];
+  deniedTopics?: string[];
+  qos?: number;
+  retain?: boolean;
+  payloadFormat?: 'raw' | 'envelope';
+  origin?: string;
+  maxPayloadBytes?: number;
+  teamCacheSeconds?: number;
+  grafanaUrl?: string;
+  rateLimitPerMinute?: number;
 }
 
 export interface MqttSecureJsonData {
@@ -21,4 +37,5 @@ export interface MqttSecureJsonData {
   tlsCACert?: string;
   tlsClientKey?: string;
   tlsClientCert?: string;
+  publishServiceAccountToken?: string;
 }
