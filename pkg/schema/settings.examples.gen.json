@@ -1,0 +1,243 @@
+{
+  "examples": {
+    "": {
+      "summary": "Anonymous TCP broker",
+      "value": {
+        "apiVersion": "grafana-mqtt-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "mqtt"
+        },
+        "spec": {
+          "jsonData": {
+            "uri": "tcp://localhost:1883"
+          },
+          "title": "MQTT"
+        }
+      }
+    },
+    "brokerCredentials": {
+      "summary": "Broker username and password over TLS",
+      "value": {
+        "apiVersion": "grafana-mqtt-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "mqtt"
+        },
+        "secure": {
+          "password": {
+            "create": "\u003cPASSWORD\u003e"
+          }
+        },
+        "spec": {
+          "jsonData": {
+            "uri": "tls://broker.example.com:8883",
+            "username": "\u003cUSERNAME\u003e"
+          },
+          "title": "MQTT"
+        }
+      }
+    },
+    "combinedAuth": {
+      "summary": "Broker credentials and mutual TLS with a private CA",
+      "value": {
+        "apiVersion": "grafana-mqtt-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "mqtt"
+        },
+        "secure": {
+          "password": {
+            "create": "\u003cPASSWORD\u003e"
+          },
+          "tlsCACert": {
+            "create": "\u003cCA_CERTIFICATE_PEM\u003e"
+          },
+          "tlsClientCert": {
+            "create": "\u003cCLIENT_CERTIFICATE_PEM\u003e"
+          },
+          "tlsClientKey": {
+            "create": "\u003cCLIENT_KEY_PEM\u003e"
+          }
+        },
+        "spec": {
+          "jsonData": {
+            "tlsAuth": true,
+            "tlsAuthWithCACert": true,
+            "uri": "tls://broker.example.com:8883",
+            "username": "\u003cUSERNAME\u003e"
+          },
+          "title": "MQTT"
+        }
+      }
+    },
+    "mutualTLS": {
+      "summary": "Mutual TLS",
+      "value": {
+        "apiVersion": "grafana-mqtt-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "mqtt"
+        },
+        "secure": {
+          "tlsClientCert": {
+            "create": "\u003cCLIENT_CERTIFICATE_PEM\u003e"
+          },
+          "tlsClientKey": {
+            "create": "\u003cCLIENT_KEY_PEM\u003e"
+          }
+        },
+        "spec": {
+          "jsonData": {
+            "tlsAuth": true,
+            "uri": "tls://broker.example.com:8883"
+          },
+          "title": "MQTT"
+        }
+      }
+    },
+    "privateCA": {
+      "summary": "TLS with a private CA",
+      "value": {
+        "apiVersion": "grafana-mqtt-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "mqtt"
+        },
+        "secure": {
+          "tlsCACert": {
+            "create": "\u003cCA_CERTIFICATE_PEM\u003e"
+          }
+        },
+        "spec": {
+          "jsonData": {
+            "tlsAuthWithCACert": true,
+            "uri": "tls://broker.example.com:8883"
+          },
+          "title": "MQTT"
+        }
+      }
+    },
+    "privateDataSourceConnect": {
+      "summary": "TLS through Private Data Source Connect",
+      "value": {
+        "apiVersion": "grafana-mqtt-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "mqtt"
+        },
+        "spec": {
+          "jsonData": {
+            "enableSecureSocksProxy": true,
+            "uri": "tls://broker.example.com:8883"
+          },
+          "title": "MQTT"
+        }
+      }
+    },
+    "proxyCredentials": {
+      "summary": "Private Data Source Connect with proxy credentials",
+      "value": {
+        "apiVersion": "grafana-mqtt-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "mqtt"
+        },
+        "secure": {
+          "secureSocksProxyPassword": {
+            "create": "\u003cPROXY_PASSWORD\u003e"
+          }
+        },
+        "spec": {
+          "jsonData": {
+            "enableSecureSocksProxy": true,
+            "secureSocksProxyUsername": "\u003cPROXY_USERNAME\u003e",
+            "uri": "tls://broker.example.com:8883"
+          },
+          "title": "MQTT"
+        }
+      }
+    },
+    "secureWebSocket": {
+      "summary": "Secure WebSocket broker",
+      "value": {
+        "apiVersion": "grafana-mqtt-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "mqtt"
+        },
+        "spec": {
+          "jsonData": {
+            "uri": "wss://broker.example.com/mqtt"
+          },
+          "title": "MQTT"
+        }
+      }
+    },
+    "serverTLS": {
+      "summary": "TLS with system trust roots",
+      "value": {
+        "apiVersion": "grafana-mqtt-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "mqtt"
+        },
+        "spec": {
+          "jsonData": {
+            "uri": "tls://broker.example.com:8883"
+          },
+          "title": "MQTT"
+        }
+      }
+    },
+    "unixSocket": {
+      "summary": "Local Unix domain socket",
+      "value": {
+        "apiVersion": "grafana-mqtt-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "mqtt"
+        },
+        "spec": {
+          "jsonData": {
+            "uri": "unix:///path/to/mqtt.sock"
+          },
+          "title": "MQTT"
+        }
+      }
+    },
+    "usernameOnly": {
+      "summary": "Broker username without a password",
+      "value": {
+        "apiVersion": "grafana-mqtt-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "mqtt"
+        },
+        "spec": {
+          "jsonData": {
+            "uri": "tcp://localhost:1883",
+            "username": "\u003cUSERNAME\u003e"
+          },
+          "title": "MQTT"
+        }
+      }
+    },
+    "webSocket": {
+      "summary": "WebSocket broker",
+      "value": {
+        "apiVersion": "grafana-mqtt-datasource.datasource.grafana.app/v0alpha1",
+        "kind": "DataSource",
+        "metadata": {
+          "name": "mqtt"
+        },
+        "spec": {
+          "jsonData": {
+            "uri": "ws://broker.example.com/mqtt"
+          },
+          "title": "MQTT"
+        }
+      }
+    }
+  }
+}

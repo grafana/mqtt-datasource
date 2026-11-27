@@ -1,0 +1,87 @@
+{
+  "spec": {
+    "type": "object",
+    "properties": {
+      "jsonData": {
+        "type": "object",
+        "required": [
+          "uri"
+        ],
+        "properties": {
+          "clientID": {
+            "description": "Client identifier sent to the broker. If empty, Grafana prefixes a random number with grafana_.",
+            "type": "string"
+          },
+          "enableSecureSocksProxy": {
+            "description": "Route the broker connection through Private Data Source Connect (PDC). Available when Grafana enables the secure SOCKS proxy. Use TCP or TLS with PDC.",
+            "type": "boolean",
+            "default": false
+          },
+          "keepAlive": {
+            "description": "TCP keep-alive interval for the PDC proxy connection, in seconds. The SDK drops fractional seconds. Provisioning only.",
+            "type": "number",
+            "default": 30,
+            "x-dsconfig-depends-on": "false"
+          },
+          "secureSocksProxyUsername": {
+            "description": "SOCKS username for PDC. Defaults to the data source UID. Provisioning only.",
+            "type": "string",
+            "x-dsconfig-depends-on": "false"
+          },
+          "timeout": {
+            "description": "Time to wait for the PDC proxy connection, in seconds. The SDK drops fractional seconds. Provisioning only.",
+            "type": "number",
+            "default": 30,
+            "x-dsconfig-depends-on": "false"
+          },
+          "tlsAuth": {
+            "description": "Show the client certificate and private key inputs for mutual TLS.",
+            "type": "boolean",
+            "default": false
+          },
+          "tlsAuthWithCACert": {
+            "description": "Show the CA certificate input for verifying the broker.",
+            "type": "boolean",
+            "default": false
+          },
+          "tlsSkipVerify": {
+            "description": "Skip verification of the broker certificate chain and host name for TLS connections.",
+            "type": "boolean",
+            "default": false
+          },
+          "uri": {
+            "description": "MQTT broker URI. Include the port for direct TCP or TLS, for example tcp://localhost:1883 or tls://broker.example.com:8883. Use ws:// or wss:// with the broker's WebSocket path, or unix:///path/to/socket for a local Unix domain socket. The URI is public. Use jsonData.username and secureJsonData.password for credentials. A username or password in the URI overrides its corresponding setting.",
+            "type": "string",
+            "minLength": 1
+          },
+          "username": {
+            "description": "Username sent to the broker. Leave empty for anonymous or certificate-only authentication.",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "secureValues": [
+    {
+      "key": "password",
+      "description": "Optional broker password. The MQTT client sends a password only when it has a username from jsonData.username or the broker URI. A password in the URI overrides this value."
+    },
+    {
+      "key": "tlsCACert",
+      "description": "PEM-encoded CA certificates used in place of the system trust roots to verify the broker."
+    },
+    {
+      "key": "tlsClientCert",
+      "description": "PEM-encoded client certificate presented to the broker for mutual TLS. Supply the matching private key."
+    },
+    {
+      "key": "tlsClientKey",
+      "description": "PEM-encoded private key for the client certificate presented to the broker."
+    },
+    {
+      "key": "secureSocksProxyPassword",
+      "description": "SOCKS password for PDC. Provisioning only."
+    }
+  ]
+}
