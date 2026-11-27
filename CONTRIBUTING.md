@@ -102,6 +102,21 @@ If you've added new functionality, please add appropriate tests.
 - `scripts/` - Utility scripts
 - `testdata/` - Test certificates and data
 
+## Data source configuration schema
+
+Edit `pkg/schema/dsconfig.json` when a connection setting changes. Keep its fields, storage keys and groups in sync with the editor and loader. The format is documented in [dsconfig/schema.md](https://github.com/grafana/dsconfig/blob/main/dsconfig/schema.md). Keep the schema URL pinned to the `github.com/grafana/dsconfig/dsconfig` version in `go.mod`.
+
+The conformance test in `pkg/schema/dsconfig_test.go` reads the public JSON tags from `mqtt.Options`. Update the test's `editorAndProxySettings` for settings read only by the editor or proxy SDK, `secureKeys` for secrets, and the examples for affected connection modes.
+
+From the repository root, regenerate and test the schema:
+
+```shell
+go generate ./pkg/schema
+go test ./pkg/schema
+```
+
+Generation writes `pkg/schema/schema.gen.json`, `pkg/schema/settings.gen.json` and `pkg/schema/settings.examples.gen.json`. The production build (`npm run build`) copies these three files and the handwritten schema into `dist/schema/`.
+
 ## Running Against a Local Grafana Instance
 
 > **Most contributors should use `npm run server` instead.** Docker Compose is the recommended development setup — it starts a pre-configured Grafana instance with no manual setup required.

@@ -1,0 +1,274 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/dsconfig/refs/tags/dsconfig/v0.0.13/dsconfig/schema.json",
+  "schemaVersion": "v1",
+  "pluginType": "grafana-mqtt-datasource",
+  "pluginName": "MQTT",
+  "docURL": "https://grafana.com/docs/plugins/grafana-mqtt-datasource/latest/configure/",
+  "fields": [
+    {
+      "id": "jsonData_uri",
+      "key": "uri",
+      "label": "URI",
+      "valueType": "string",
+      "target": "jsonData",
+      "role": "endpoint.baseUrl",
+      "required": true,
+      "ui": {
+        "component": "input",
+        "placeholder": "TCP (tcp://), TLS (tls://), or WebSocket (ws://)"
+      },
+      "description": "MQTT broker URI. Include the port for direct TCP or TLS, for example tcp://localhost:1883 or tls://broker.example.com:8883. Use ws:// or wss:// with the broker's WebSocket path, or unix:///path/to/socket for a local Unix domain socket. The URI is public. Use jsonData.username and secureJsonData.password for credentials. A username or password in the URI overrides its corresponding setting.",
+      "validations": [
+        {
+          "type": "length",
+          "min": 1
+        }
+      ]
+    },
+    {
+      "id": "jsonData_clientID",
+      "key": "clientID",
+      "label": "Client ID",
+      "description": "Client identifier sent to the broker. If empty, Grafana prefixes a random number with grafana_.",
+      "valueType": "string",
+      "target": "jsonData",
+      "ui": {
+        "component": "input"
+      }
+    },
+    {
+      "id": "jsonData_username",
+      "key": "username",
+      "label": "Username",
+      "valueType": "string",
+      "target": "jsonData",
+      "role": "auth.basic.username",
+      "ui": {
+        "component": "input",
+        "placeholder": "Username"
+      },
+      "description": "Username sent to the broker. Leave empty for anonymous or certificate-only authentication."
+    },
+    {
+      "id": "secureJsonData_password",
+      "key": "password",
+      "label": "Password",
+      "valueType": "string",
+      "target": "secureJsonData",
+      "role": "auth.basic.password",
+      "ui": {
+        "component": "input",
+        "placeholder": "Password"
+      },
+      "description": "Optional broker password. The MQTT client sends a password only when it has a username from jsonData.username or the broker URI. A password in the URI overrides this value."
+    },
+    {
+      "id": "jsonData_tlsAuth",
+      "key": "tlsAuth",
+      "label": "Use TLS Client Auth",
+      "description": "Show the client certificate and private key inputs for mutual TLS.",
+      "valueType": "boolean",
+      "target": "jsonData",
+      "defaultValue": false,
+      "ui": {
+        "component": "switch"
+      }
+    },
+    {
+      "id": "jsonData_tlsSkipVerify",
+      "key": "tlsSkipVerify",
+      "label": "Skip TLS Verification",
+      "description": "Skip verification of the broker certificate chain and host name for TLS connections.",
+      "valueType": "boolean",
+      "target": "jsonData",
+      "role": "transport.tlsSkipVerify",
+      "defaultValue": false,
+      "ui": {
+        "component": "switch"
+      }
+    },
+    {
+      "id": "jsonData_tlsAuthWithCACert",
+      "key": "tlsAuthWithCACert",
+      "label": "With CA Cert",
+      "description": "Show the CA certificate input for verifying the broker.",
+      "valueType": "boolean",
+      "target": "jsonData",
+      "defaultValue": false,
+      "ui": {
+        "component": "switch"
+      }
+    },
+    {
+      "id": "secureJsonData_tlsCACert",
+      "key": "tlsCACert",
+      "label": "TLS CA Certificate",
+      "description": "PEM-encoded CA certificates used in place of the system trust roots to verify the broker.",
+      "valueType": "string",
+      "target": "secureJsonData",
+      "role": "tls.caCert",
+      "dependsOn": "jsonData_tlsAuthWithCACert == true",
+      "ui": {
+        "component": "textarea",
+        "placeholder": "-----BEGIN CERTIFICATE-----",
+        "rows": 7
+      }
+    },
+    {
+      "id": "secureJsonData_tlsClientCert",
+      "key": "tlsClientCert",
+      "label": "TLS Client Certificate",
+      "description": "PEM-encoded client certificate presented to the broker for mutual TLS. Supply the matching private key.",
+      "valueType": "string",
+      "target": "secureJsonData",
+      "role": "tls.clientCert",
+      "dependsOn": "jsonData_tlsAuth == true",
+      "ui": {
+        "component": "textarea",
+        "placeholder": "-----BEGIN CERTIFICATE-----",
+        "rows": 7
+      },
+      "requiredWhen": "secureJsonData_tlsClientKey != ''"
+    },
+    {
+      "id": "secureJsonData_tlsClientKey",
+      "key": "tlsClientKey",
+      "label": "TLS Client Key",
+      "description": "PEM-encoded private key for the client certificate presented to the broker.",
+      "valueType": "string",
+      "target": "secureJsonData",
+      "role": "tls.clientKey",
+      "dependsOn": "jsonData_tlsAuth == true",
+      "ui": {
+        "component": "textarea",
+        "placeholder": "-----BEGIN RSA PRIVATE KEY-----",
+        "rows": 7
+      },
+      "requiredWhen": "secureJsonData_tlsClientCert != ''"
+    },
+    {
+      "id": "jsonData_enableSecureSocksProxy",
+      "key": "enableSecureSocksProxy",
+      "label": "Enabled",
+      "description": "Route the broker connection through Private Data Source Connect (PDC). Available when Grafana enables the secure SOCKS proxy. Use TCP or TLS with PDC.",
+      "valueType": "boolean",
+      "target": "jsonData",
+      "defaultValue": false,
+      "ui": {
+        "component": "switch"
+      }
+    },
+    {
+      "id": "jsonData_secureSocksProxyUsername",
+      "key": "secureSocksProxyUsername",
+      "label": "Proxy username",
+      "description": "SOCKS username for PDC. Defaults to the data source UID. Provisioning only.",
+      "valueType": "string",
+      "target": "jsonData",
+      "dependsOn": "false"
+    },
+    {
+      "id": "secureJsonData_secureSocksProxyPassword",
+      "key": "secureSocksProxyPassword",
+      "label": "Proxy password",
+      "description": "SOCKS password for PDC. Provisioning only.",
+      "valueType": "string",
+      "target": "secureJsonData",
+      "dependsOn": "false"
+    },
+    {
+      "id": "jsonData_timeout",
+      "key": "timeout",
+      "label": "Proxy connection timeout",
+      "description": "Time to wait for the PDC proxy connection, in seconds. The SDK drops fractional seconds. Provisioning only.",
+      "valueType": "number",
+      "target": "jsonData",
+      "dependsOn": "false",
+      "defaultValue": 30
+    },
+    {
+      "id": "jsonData_keepAlive",
+      "key": "keepAlive",
+      "label": "Proxy keep-alive interval",
+      "description": "TCP keep-alive interval for the PDC proxy connection, in seconds. The SDK drops fractional seconds. Provisioning only.",
+      "valueType": "number",
+      "target": "jsonData",
+      "dependsOn": "false",
+      "defaultValue": 30
+    }
+  ],
+  "groups": [
+    {
+      "id": "connection",
+      "title": "Connection",
+      "order": 1,
+      "fieldRefs": [
+        "jsonData_uri",
+        "jsonData_clientID"
+      ]
+    },
+    {
+      "id": "authentication",
+      "title": "Authentication",
+      "order": 2,
+      "fieldRefs": [
+        "jsonData_username",
+        "secureJsonData_password",
+        "jsonData_tlsAuth",
+        "jsonData_tlsSkipVerify",
+        "jsonData_tlsAuthWithCACert"
+      ]
+    },
+    {
+      "id": "tls-configuration",
+      "title": "TLS Configuration",
+      "order": 3,
+      "fieldRefs": [
+        "secureJsonData_tlsCACert",
+        "secureJsonData_tlsClientCert",
+        "secureJsonData_tlsClientKey"
+      ]
+    },
+    {
+      "id": "secure-socks-proxy",
+      "title": "Secure Socks Proxy",
+      "order": 4,
+      "fieldRefs": [
+        "jsonData_enableSecureSocksProxy"
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "pair",
+      "fields": [
+        "secureJsonData_tlsClientCert",
+        "secureJsonData_tlsClientKey"
+      ],
+      "description": "The client certificate and its matching private key must be supplied together."
+    }
+  ],
+  "instructions": [
+    {
+      "msg": "Put the broker address in jsonData.uri. Use jsonData.username and secureJsonData.password for broker credentials. Omit both for an anonymous broker. Broker credentials can be combined with TLS client authentication.",
+      "tags": [
+        "llm",
+        "auth"
+      ]
+    },
+    {
+      "msg": "Use tls:// or wss:// for TLS. With public trust roots, omit CA and client secrets unless the broker requires them. For a private CA, set jsonData.tlsAuthWithCACert and supply secureJsonData.tlsCACert. For mutual TLS, set jsonData.tlsAuth and supply both secureJsonData.tlsClientCert and secureJsonData.tlsClientKey. The switches show the certificate fields in the editor. The client loads each non-empty certificate setting independently of the switches.",
+      "tags": [
+        "llm",
+        "tls"
+      ]
+    },
+    {
+      "msg": "Use an explicit port for direct TCP (tcp:// or mqtt://) and direct TLS (tls://, ssl://, tcps://, mqtts:// or mqtt+ssl://). Direct ws:// and wss:// use ports 80 and 443 respectively when omitted. A local Unix domain socket uses unix:///path/to/socket. For PDC, set jsonData.enableSecureSocksProxy and use a TCP or TLS broker URI. The proxy supplies ports 1883 and 8883 respectively when omitted. WebSockets are unsupported with PDC.",
+      "tags": [
+        "llm",
+        "connection"
+      ]
+    }
+  ]
+}
